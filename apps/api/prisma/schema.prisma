@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MASTER
+  ADMIN
+  EMPLOYEE
+}
+
+model User {
+  id             String        @id @default(uuid())
+  email          String        @unique
+  name           String?
+  passwordHash   String
+  role           Role          @default(EMPLOYEE)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@map("users")
+}
+
+model Organization {
+  id        String    @id @default(uuid())
+  name      String
+  ownerId   String
+  users     User[]
+  clients   Client[]
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("organizations")
+}
+
+enum PersonType {
+  FISICA
+  JURIDICA
+  ESTRANGEIRO
+}
+
+enum AddressType {
+  COMERCIAL
+  RESIDENCIAL
+}
+
+model Client {
+  id             String       @id @default(uuid())
+  name           String
+  fantasyName    String?
+  email          String?
+  personType     PersonType   @default(FISICA)
+  document       String       @unique
+  phone          String
+  isWhatsapp     Boolean      @default(false)
+  rg             String?
+  cep            String
+  addressType    AddressType?
+  address        String
+  addressNumber  String
+  complement     String?
+  neighborhood   String?
+  city           String
+  state          String
+  country        String       @default("Brasil")
+  notes          String?
+  active         Boolean      @default(true)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("clients")
+}
+
+model Product {
+  id             String       @id @default(uuid())
+  name           String
+  price          Decimal
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("products")
+}
