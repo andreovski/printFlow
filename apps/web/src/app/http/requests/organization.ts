@@ -1,4 +1,5 @@
 import { Organization } from '@magic-system/schemas';
+
 import { api } from '../api';
 
 export async function getOrganization() {

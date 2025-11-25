@@ -1,5 +1,6 @@
-import { api } from '../api';
 import { CreateProductBody, UpdateProductBody, UpdateProductParams } from '@magic-system/schemas';
+
+import { api } from '../api';
 
 export async function createProduct(data: CreateProductBody) {
   return api.post('products', { json: data }).json();
@@ -15,4 +16,8 @@ export async function getProduct(id: string) {
 
 export async function updateProduct({ id, ...data }: UpdateProductParams & UpdateProductBody) {
   return api.put(`products/${id}`, { json: data }).json();
+}
+
+export async function deleteProduct(id: string) {
+  return api.delete(`products/${id}`);
 }

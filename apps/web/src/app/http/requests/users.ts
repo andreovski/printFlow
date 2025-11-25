@@ -1,10 +1,11 @@
-import { api } from '../api';
 import {
   CreateUserBody,
   UpdateUserBody,
   UpdateUserParams,
   RegisterUserBody,
 } from '@magic-system/schemas';
+
+import { api } from '../api';
 
 export async function registerUser(data: RegisterUserBody) {
   return api.post('users', { json: data }).json();

@@ -1,29 +1,27 @@
 'use client';
 
-import * as React from 'react';
+import { X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import * as React from 'react';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { cn } from '@/lib/utils';
-import { UserRoundPlus, X } from 'lucide-react';
 
 export function ResponsiveDrawer({
   children,

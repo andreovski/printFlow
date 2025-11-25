@@ -1,8 +1,10 @@
-import Link from 'next/link';
-import { cookies } from 'next/headers';
-import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { cookies } from 'next/headers';
+import Link from 'next/link';
+
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
+
 import { columns, User } from './columns';
 
 async function getUsers(): Promise<User[]> {
@@ -20,8 +22,8 @@ async function getUsers(): Promise<User[]> {
     return [];
   }
 
-  const data = await res.json();
-  return data.users;
+  const response = await res.json();
+  return response.data;
 }
 
 export default async function AccessesLayout({ children }: { children: React.ReactNode }) {

@@ -1,4 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
+
 import { MetricsRepository } from '@/repositories/metrics.repository';
 
 export async function getMetricsController(request: FastifyRequest, reply: FastifyReply) {

@@ -1,14 +1,16 @@
 'use client';
 
-import { createClientAction, updateClientAction } from '../actions';
-import { Switch } from '@/components/ui/switch';
-
+import { Loader2, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+import { useFormState } from '@/app/hooks/useFormState';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -16,15 +18,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { BRAZILIAN_STATES } from '@/lib/constants';
 import { maskCNPJ, maskCPF, maskOnlyNumbers, maskPhone, maskCEP } from '@/lib/masks';
-import { ClientActionDialogs } from './client-action-dialogs';
-import { useFormState } from '@/app/hooks/useFormState';
-import { toast } from 'sonner';
-import { Textarea } from '@/components/ui/textarea';
 import { fetchAddressByCEP } from '@/lib/viacep';
-import { Loader2 } from 'lucide-react';
+
+import { createClientAction, updateClientAction } from '../actions';
+import { ClientActionDialogs } from './client-action-dialogs';
+
 interface ClientFormProps {
   id?: string;
   initialData?: {
@@ -496,6 +498,7 @@ export function ClientForm({ id, initialData }: ClientFormProps) {
                     className="w-1/2"
                     onClick={() => setIsDeleteOpen(true)}
                   >
+                    <Trash className="w-4 h-4 mr-2" />
                     Excluir
                   </Button>
                 </div>

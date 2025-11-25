@@ -1,5 +1,6 @@
-import { prisma } from '@/lib/prisma';
 import { Prisma, Client } from '@prisma/client';
+
+import { prisma } from '@/lib/prisma';
 
 export class ClientsRepository {
   async create(data: Prisma.ClientCreateInput): Promise<Client> {
@@ -9,13 +10,29 @@ export class ClientsRepository {
     return client;
   }
 
-  async findMany(organizationId: string): Promise<Client[]> {
-    const clients = await prisma.client.findMany({
-      where: {
-        organizationId,
-      },
-    });
-    return clients;
+  async findMany(
+    organizationId: string,
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<{ data: Client[]; total: number }> {
+    const skip = (page - 1) * pageSize;
+
+    const [data, total] = await Promise.all([
+      prisma.client.findMany({
+        where: {
+          organizationId,
+        },
+        skip,
+        take: pageSize,
+      }),
+      prisma.client.count({
+        where: {
+          organizationId,
+        },
+      }),
+    ]);
+
+    return { data, total };
   }
 
   async findById(id: string): Promise<Client | null> {

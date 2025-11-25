@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers';
-import { UpdateUserForm } from './_components/update-user-form';
+
 import { ResponsiveDrawer } from '@/components/responsive-drawer';
+
+import { UpdateUserForm } from './_components/update-user-form';
 
 async function getUser(id: string) {
   const token = cookies().get('token')?.value;

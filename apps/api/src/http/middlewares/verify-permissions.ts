@@ -1,6 +1,5 @@
+import { defineAbilityFor } from '@magic-system/auth';
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { defineAbilityFor, userSchema } from '@magic-system/auth';
-import { z } from 'zod';
 
 export function verifyUserRole(
   roleToVerify: 'MASTER' | 'ADMIN' | 'EMPLOYEE' | ('MASTER' | 'ADMIN' | 'EMPLOYEE')[]
@@ -9,6 +8,7 @@ export function verifyUserRole(
     const { role } = request.user as { role: string };
 
     if (Array.isArray(roleToVerify)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (!roleToVerify.includes(role as any)) {
         return reply.status(403).send({ message: 'Forbidden.' });
       }
@@ -21,7 +21,11 @@ export function verifyUserRole(
 // More advanced CASL middleware
 export function checkAbility(action: string, subject: string) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
-    const userPayload = request.user as any;
+    const userPayload = request.user as {
+      sub: string;
+      role: string;
+      organizationId: string;
+    };
 
     // We might need to fetch the full user from DB to get organizationId if not in token
     // For now, assume token has: sub (id), role, organizationId
@@ -32,6 +36,7 @@ export function checkAbility(action: string, subject: string) {
       organizationId: userPayload.organizationId,
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (ability.cannot(action, subject as any)) {
       return reply.status(403).send({ message: 'Forbidden.' });
     }

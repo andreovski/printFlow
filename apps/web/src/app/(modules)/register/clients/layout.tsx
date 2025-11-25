@@ -1,8 +1,10 @@
-import Link from 'next/link';
-import { cookies } from 'next/headers';
-import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { cookies } from 'next/headers';
+import Link from 'next/link';
+
+import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
+
 import { columns, Client } from './columns';
 
 async function getClients(): Promise<Client[]> {
@@ -20,8 +22,8 @@ async function getClients(): Promise<Client[]> {
     return [];
   }
 
-  const { clients } = await res.json();
-  return clients;
+  const { data } = await res.json();
+  return data;
 }
 
 export default async function ClientsLayout({ children }: { children: React.ReactNode }) {

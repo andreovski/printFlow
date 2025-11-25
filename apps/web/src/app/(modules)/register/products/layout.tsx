@@ -1,8 +1,10 @@
+import { Plus } from 'lucide-react';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
+
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
+
 import { columns, Product } from './columns';
 
 async function getProducts(): Promise<Product[]> {
@@ -20,8 +22,8 @@ async function getProducts(): Promise<Product[]> {
     return [];
   }
 
-  const data = await res.json();
-  return data.products;
+  const response = await res.json();
+  return response.data;
 }
 
 export default async function ProductsLayout({ children }: { children: React.ReactNode }) {
@@ -42,8 +44,8 @@ export default async function ProductsLayout({ children }: { children: React.Rea
       <DataTable
         columns={columns}
         data={products}
-        searchKey="name"
-        searchPlaceholder="Buscar por nome..."
+        searchKey="title"
+        searchPlaceholder="Buscar por título..."
       />
       {children}
     </div>

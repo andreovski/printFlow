@@ -1,10 +1,12 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
 import {
   createClientBodySchema,
   getClientParamsSchema,
   updateClientParamsSchema,
   updateClientBodySchema,
+  paginationQuerySchema,
 } from '@magic-system/schemas';
+import { FastifyReply, FastifyRequest } from 'fastify';
+
 import { ClientsRepository } from '@/repositories/clients.repository';
 
 export async function createClientController(request: FastifyRequest, reply: FastifyReply) {
@@ -30,12 +32,23 @@ export async function createClientController(request: FastifyRequest, reply: Fas
 
 export async function fetchClientsController(request: FastifyRequest, reply: FastifyReply) {
   const { organizationId } = request.user as { organizationId: string };
+  const { page, pageSize } = paginationQuerySchema.parse(request.query);
 
   const clientsRepository = new ClientsRepository();
 
-  const clients = await clientsRepository.findMany(organizationId);
+  const { data, total } = await clientsRepository.findMany(organizationId, page, pageSize);
 
-  return reply.status(200).send({ clients });
+  const totalPages = Math.ceil(total / pageSize);
+
+  return reply.status(200).send({
+    data,
+    meta: {
+      page,
+      pageSize,
+      total,
+      totalPages,
+    },
+  });
 }
 
 export async function getClientController(request: FastifyRequest, reply: FastifyReply) {

@@ -1,5 +1,6 @@
-import { prisma } from '@/lib/prisma';
 import { Prisma, User } from '@prisma/client';
+
+import { prisma } from '@/lib/prisma';
 
 export class UsersRepository {
   async create(data: Prisma.UserCreateInput): Promise<User> {
@@ -18,9 +19,21 @@ export class UsersRepository {
     return user;
   }
 
-  async findMany(): Promise<User[]> {
-    const users = await prisma.user.findMany();
-    return users;
+  async findMany(
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<{ data: User[]; total: number }> {
+    const skip = (page - 1) * pageSize;
+
+    const [data, total] = await Promise.all([
+      prisma.user.findMany({
+        skip,
+        take: pageSize,
+      }),
+      prisma.user.count(),
+    ]);
+
+    return { data, total };
   }
 
   async findById(id: string): Promise<User | null> {

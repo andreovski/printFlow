@@ -1,4 +1,3 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
 import {
   registerUserBodySchema,
   getUserParamsSchema,
@@ -6,11 +5,13 @@ import {
   updateUserParamsSchema,
   updateUserBodySchema,
   deleteUserParamsSchema,
+  paginationQuerySchema,
 } from '@magic-system/schemas';
-import { prisma } from '@/lib/prisma';
+import { Role } from '@prisma/client';
+import { FastifyReply, FastifyRequest } from 'fastify';
+
 import { UsersRepository } from '@/repositories/users.repository';
 import { UsersService } from '@/services/users.service';
-import { Role } from '@magic-system/auth';
 
 const usersRepository = new UsersRepository();
 const usersService = new UsersService(usersRepository);
@@ -35,8 +36,9 @@ export async function registerUserController(request: FastifyRequest, reply: Fas
 }
 
 export async function fetchUsersController(request: FastifyRequest, reply: FastifyReply) {
-  const { users } = await usersService.fetchUsers();
-  return reply.status(200).send({ users });
+  const { page, pageSize } = paginationQuerySchema.parse(request.query);
+  const response = await usersService.fetchUsers(page, pageSize);
+  return reply.status(200).send(response);
 }
 
 export async function getUserController(request: FastifyRequest, reply: FastifyReply) {
@@ -45,7 +47,7 @@ export async function getUserController(request: FastifyRequest, reply: FastifyR
   try {
     const { user } = await usersService.getUser(id);
     return reply.status(200).send({ user });
-  } catch (err) {
+  } catch (_err) {
     return reply.status(404).send({ message: 'User not found' });
   }
 }
@@ -59,7 +61,7 @@ export async function createUserController(request: FastifyRequest, reply: Fasti
       name,
       email,
       password,
-      role,
+      role: role as Role,
       organizationId,
     });
 

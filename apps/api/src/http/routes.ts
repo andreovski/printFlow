@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+
 import { authenticateController } from './controllers/authenticate.controller';
 import {
   createClientController,
@@ -7,13 +8,15 @@ import {
   updateClientController,
   deleteClientController,
 } from './controllers/clients.controller';
+import { getMetricsController } from './controllers/metrics.controller';
+import { getOrganizationController } from './controllers/organizations.controller';
 import {
   createProductController,
   fetchProductsController,
   getProductController,
   updateProductController,
+  deleteProductController,
 } from './controllers/products.controller';
-import { getMetricsController } from './controllers/metrics.controller';
 import {
   createUserController,
   deleteUserController,
@@ -24,7 +27,6 @@ import {
 } from './controllers/users.controller';
 import { verifyJwt } from './middlewares/verify-jwt';
 import { verifyUserRole } from './middlewares/verify-permissions';
-import { getOrganizationController } from './controllers/organizations.controller';
 
 export async function appRoutes(app: FastifyInstance) {
   app.post('/users', registerUserController);
@@ -49,6 +51,7 @@ export async function appRoutes(app: FastifyInstance) {
     authRoutes.get('/products', fetchProductsController);
     authRoutes.get('/products/:id', getProductController);
     authRoutes.put('/products/:id', updateProductController);
+    authRoutes.delete('/products/:id', deleteProductController);
 
     // Users Management (Admin/Master only)
     authRoutes.get(

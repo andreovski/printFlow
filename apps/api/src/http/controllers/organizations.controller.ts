@@ -1,4 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
+
 import { OrganizationRepository } from '@/repositories/organization.repository';
 
 export async function getOrganizationController(request: FastifyRequest, reply: FastifyReply) {

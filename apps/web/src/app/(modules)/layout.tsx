@@ -1,7 +1,8 @@
-import { cn } from '@/lib/utils';
-import { Sidebar } from '@/components/sidebar';
-import { cookies } from 'next/headers';
 import { Poppins } from 'next/font/google';
+import { cookies } from 'next/headers';
+
+import { Sidebar } from '@/components/sidebar';
+import { cn } from '@/lib/utils';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -21,7 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       const payload = JSON.parse(atob(token.split('.')[1]));
       role = payload.role;
       userId = payload.sub;
-    } catch (e) {
+    } catch (_e) {
       // Ignore invalid token
     }
   }
@@ -38,7 +39,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         userName = data.user.name || '';
         userEmail = data.user.email || '';
       }
-    } catch (e) {
+    } catch (_e) {
       // Ignore fetch errors
     }
   }

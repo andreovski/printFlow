@@ -1,32 +1,48 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { Button } from '@/components/ui/button';
 import { Pencil } from 'lucide-react';
 import Link from 'next/link';
 
+import { Button } from '@/components/ui/button';
+
 export type Product = {
   id: string;
-  name: string;
-  price: number;
+  title: string;
+  code?: string;
+  unitType: 'm2' | 'unidade';
+  stock: number;
+  category?: string[];
+  salePrice: number;
 };
 
 export const columns: ColumnDef<Product>[] = [
   {
-    accessorKey: 'name',
-    header: 'Nome',
-    cell: ({ row }) => <div className="font-medium">{row.getValue('name')}</div>,
+    accessorKey: 'title',
+    header: 'Título',
+    cell: ({ row }) => <div className="font-medium">{row.getValue('title')}</div>,
   },
   {
-    accessorKey: 'price',
-    header: 'Preço',
+    accessorKey: 'code',
+    header: 'Código',
+    cell: ({ row }) => <div>{row.getValue('code') || '-'}</div>,
+  },
+  {
+    accessorKey: 'unitType',
+    header: 'Unidade',
+    cell: ({ row }) => <div>{row.getValue('unitType')}</div>,
+  },
+  {
+    accessorKey: 'stock',
+    header: 'Estoque',
+    cell: ({ row }) => <div>{row.getValue('stock')}</div>,
+  },
+  {
+    accessorKey: 'category',
+    header: 'Categoria',
     cell: ({ row }) => {
-      const price = parseFloat(row.getValue('price'));
-      const formatted = new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-      }).format(price);
-      return <div>{formatted}</div>;
+      const categories = row.getValue('category') as string[] | undefined;
+      return <div>{categories?.join(', ') || '-'}</div>;
     },
   },
   {

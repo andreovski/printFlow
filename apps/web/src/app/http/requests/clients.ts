@@ -1,5 +1,6 @@
-import { api } from '../api';
 import { CreateClientBody, UpdateClientBody, UpdateClientParams } from '@magic-system/schemas';
+
+import { api } from '../api';
 
 export async function createClient(data: CreateClientBody) {
   return api.post('clients', { json: data }).json();

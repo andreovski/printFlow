@@ -1,15 +1,18 @@
-import { CreateProductForm } from './_components/create-product-form';
+import { PackagePlus } from 'lucide-react';
+
 import { ResponsiveDrawer } from '@/components/responsive-drawer';
+
+import { ProductForm } from '../_components/product-form';
 
 export default function CreateProductPage() {
   return (
     <ResponsiveDrawer
       title="Criar Produto"
       description="Preencha os dados abaixo para criar um novo produto."
+      className="max-w-[900px] md:w-[60vw]"
+      headerIcon={<PackagePlus className="w-5 h-5" />}
     >
-      <div className="p-4 pb-0">
-        <CreateProductForm />
-      </div>
+      <ProductForm />
     </ResponsiveDrawer>
   );
 }

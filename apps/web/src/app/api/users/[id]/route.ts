@@ -1,6 +1,6 @@
+import { revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   const token = cookies().get('token')?.value;
@@ -19,7 +19,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
     revalidateTag('users');
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

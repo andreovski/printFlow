@@ -1,5 +1,6 @@
-import { prisma } from '@/lib/prisma';
 import { Prisma, Product } from '@prisma/client';
+
+import { prisma } from '@/lib/prisma';
 
 export class ProductsRepository {
   async create(data: Prisma.ProductCreateInput): Promise<Product> {
@@ -9,13 +10,29 @@ export class ProductsRepository {
     return product;
   }
 
-  async findMany(organizationId: string): Promise<Product[]> {
-    const products = await prisma.product.findMany({
-      where: {
-        organizationId,
-      },
-    });
-    return products;
+  async findMany(
+    organizationId: string,
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<{ data: Product[]; total: number }> {
+    const skip = (page - 1) * pageSize;
+
+    const [data, total] = await Promise.all([
+      prisma.product.findMany({
+        where: {
+          organizationId,
+        },
+        skip,
+        take: pageSize,
+      }),
+      prisma.product.count({
+        where: {
+          organizationId,
+        },
+      }),
+    ]);
+
+    return { data, total };
   }
 
   async findById(id: string): Promise<Product | null> {
@@ -31,5 +48,11 @@ export class ProductsRepository {
       data,
     });
     return product;
+  }
+
+  async delete(id: string): Promise<void> {
+    await prisma.product.delete({
+      where: { id },
+    });
   }
 }

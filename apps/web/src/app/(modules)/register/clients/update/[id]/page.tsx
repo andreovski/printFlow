@@ -1,9 +1,11 @@
-import { cookies } from 'next/headers';
-import { ClientForm } from '../../_components/client-form';
-import { ResponsiveDrawer } from '@/components/responsive-drawer';
 import { Phone, PhoneCall, User } from 'lucide-react';
-import { formatDocument, formatPhone } from '@/lib/masks';
+import { cookies } from 'next/headers';
+
+import { ResponsiveDrawer } from '@/components/responsive-drawer';
 import { DialogDescription } from '@/components/ui/dialog';
+import { formatDocument, formatPhone } from '@/lib/masks';
+
+import { ClientForm } from '../../_components/client-form';
 // import { Whatsapp } from '@/assets/svg/whatsapp';
 
 async function getClient(id: string) {

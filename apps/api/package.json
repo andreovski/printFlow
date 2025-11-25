@@ -6,7 +6,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "studio": "prisma studio",
-    "seed": "prisma db seed"
+    "seed": "prisma db seed",
+    "lint": "eslint src --ext .ts"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",
@@ -22,6 +23,10 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.12.7",
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "@typescript-eslint/parser": "^8.48.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-import-helpers": "^2.0.1",
     "prisma": "^5.13.0",
     "tsx": "^4.7.2",
     "typescript": "^5.4.5"

@@ -1,21 +1,31 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
 import {
   createProductBodySchema,
   getProductParamsSchema,
   updateProductParamsSchema,
   updateProductBodySchema,
+  paginationQuerySchema,
 } from '@magic-system/schemas';
+import { FastifyReply, FastifyRequest } from 'fastify';
+
 import { ProductsRepository } from '@/repositories/products.repository';
 
 export async function createProductController(request: FastifyRequest, reply: FastifyReply) {
-  const { name, price } = createProductBodySchema.parse(request.body);
+  const { title, description, code, unitType, costPrice, salePrice, stock, category, active } =
+    createProductBodySchema.parse(request.body);
   const { organizationId } = request.user as { organizationId: string };
 
   const productsRepository = new ProductsRepository();
 
   const product = await productsRepository.create({
-    name,
-    price,
+    title,
+    description,
+    code,
+    unitType,
+    costPrice,
+    salePrice,
+    stock,
+    category,
+    active,
     organization: {
       connect: { id: organizationId },
     },
@@ -26,12 +36,23 @@ export async function createProductController(request: FastifyRequest, reply: Fa
 
 export async function fetchProductsController(request: FastifyRequest, reply: FastifyReply) {
   const { organizationId } = request.user as { organizationId: string };
+  const { page, pageSize } = paginationQuerySchema.parse(request.query);
 
   const productsRepository = new ProductsRepository();
 
-  const products = await productsRepository.findMany(organizationId);
+  const { data, total } = await productsRepository.findMany(organizationId, page, pageSize);
 
-  return reply.status(200).send({ products });
+  const totalPages = Math.ceil(total / pageSize);
+
+  return reply.status(200).send({
+    data,
+    meta: {
+      page,
+      pageSize,
+      total,
+      totalPages,
+    },
+  });
 }
 
 export async function getProductController(request: FastifyRequest, reply: FastifyReply) {
@@ -50,14 +71,32 @@ export async function getProductController(request: FastifyRequest, reply: Fasti
 
 export async function updateProductController(request: FastifyRequest, reply: FastifyReply) {
   const { id } = updateProductParamsSchema.parse(request.params);
-  const { name, price } = updateProductBodySchema.parse(request.body);
+  const { title, description, code, unitType, costPrice, salePrice, stock, category, active } =
+    updateProductBodySchema.parse(request.body);
 
   const productsRepository = new ProductsRepository();
 
   const product = await productsRepository.update(id, {
-    name,
-    price,
+    title,
+    description,
+    code,
+    unitType,
+    costPrice,
+    salePrice,
+    stock,
+    category,
+    active,
   });
 
   return reply.status(200).send({ product });
+}
+
+export async function deleteProductController(request: FastifyRequest, reply: FastifyReply) {
+  const { id } = updateProductParamsSchema.parse(request.params);
+
+  const productsRepository = new ProductsRepository();
+
+  await productsRepository.delete(id);
+
+  return reply.status(204).send();
 }

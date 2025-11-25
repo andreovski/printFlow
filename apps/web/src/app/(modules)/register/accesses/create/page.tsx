@@ -1,5 +1,6 @@
-import { CreateUserForm } from './_components/create-user-form';
 import { ResponsiveDrawer } from '@/components/responsive-drawer';
+
+import { CreateUserForm } from './_components/create-user-form';
 
 export default function CreateUserPage() {
   return (
@@ -7,9 +8,7 @@ export default function CreateUserPage() {
       title="Criar Acesso"
       description="Preencha os dados abaixo para criar um novo acesso."
     >
-      <div className="p-4 pb-0">
-        <CreateUserForm />
-      </div>
+      <CreateUserForm />
     </ResponsiveDrawer>
   );
 }

@@ -1,8 +1,10 @@
 import { Poppins } from 'next/font/google';
+
+import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
+
 import { AppContextProvider } from './hooks/useAppContext';
 import { getOrganization } from './http/requests/organization';
-import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
 const poppins = Poppins({

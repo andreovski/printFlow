@@ -1,10 +1,11 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export type User = {
   id: string;
@@ -65,6 +66,7 @@ export const columns: ColumnDef<User>[] = [
             onClick={() => {
               if (confirm('Tem certeza que deseja deletar este acesso?')) {
                 // A ação de deletar será implementada via API route
+                // TODO: Abstrair chamada para API
                 fetch(`/api/users/${user.id}`, { method: 'DELETE' })
                   .then(() => window.location.reload())
                   .catch((err) => console.error(err));

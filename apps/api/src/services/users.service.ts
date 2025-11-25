@@ -1,7 +1,7 @@
-import { UsersRepository } from '@/repositories/users.repository';
-import { User } from '@prisma/client';
+import { User, Role } from '@prisma/client';
 import { hash } from 'bcryptjs';
-import { z } from 'zod';
+
+import { UsersRepository } from '@/repositories/users.repository';
 
 interface RegisterUserRequest {
   name: string; // Not in DB yet, but assuming for future
@@ -36,9 +36,19 @@ export class UsersService {
     };
   }
 
-  async fetchUsers() {
-    const users = await this.usersRepository.findMany();
-    return { users };
+  async fetchUsers(page: number = 1, pageSize: number = 10) {
+    const { data, total } = await this.usersRepository.findMany(page, pageSize);
+    const totalPages = Math.ceil(total / pageSize);
+
+    return {
+      data,
+      meta: {
+        page,
+        pageSize,
+        total,
+        totalPages,
+      },
+    };
   }
 
   async getUser(id: string) {
@@ -51,7 +61,13 @@ export class UsersService {
     return { user };
   }
 
-  async createUser({ name, email, password, role, organizationId }: any) {
+  async createUser({
+    name,
+    email,
+    password,
+    role,
+    organizationId,
+  }: RegisterUserRequest & { role?: Role; organizationId: string }) {
     const passwordHash = await hash(password, 6);
     const userWithSameEmail = await this.usersRepository.findByEmail(email);
 
@@ -72,6 +88,7 @@ export class UsersService {
     return { user };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async updateUser(id: string, data: any) {
     const userToUpdate = await this.usersRepository.findById(id);
 

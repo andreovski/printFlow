@@ -1,9 +1,10 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { Button } from '@/components/ui/button';
 import { Pencil } from 'lucide-react';
 import Link from 'next/link';
+
+import { Button } from '@/components/ui/button';
 import { formatDocument, formatPhone } from '@/lib/masks';
 
 export type Client = {

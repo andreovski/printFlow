@@ -1,8 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
@@ -15,13 +12,17 @@ import {
   UserCog,
   FolderOpen,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { Separator } from '@/components/ui/separator';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+
 import { signOutAction } from '@/app/auth/actions';
 import { useAppContext } from '@/app/hooks/useAppContext';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 interface SidebarProps {
   role?: string;
@@ -195,6 +196,13 @@ export function Sidebar({ role, userName, userEmail }: SidebarProps) {
               <p className="text-sm font-medium truncate">{userName || 'Usuário'}</p>
               <p className="text-xs text-muted-foreground truncate">{userEmail || 'Sem email'}</p>
             </div>
+          )}
+          {!isCollapsed && (
+            <Button variant="ghost" asChild>
+              <Link href="/settings">
+                <UserCog className="h-4 w-4 shrink-0" />
+              </Link>
+            </Button>
           )}
         </div>
       </div>

@@ -47,3 +47,12 @@ export const formatDocument = (value: string) => {
 export const formatPhone = (value: string) => {
   return maskPhone(value);
 };
+
+export const maskCurrency = (value: string) => {
+  const cleanValue = value.replace(/\D/g, '');
+  const numberValue = Number(cleanValue) / 100;
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(numberValue);
+};

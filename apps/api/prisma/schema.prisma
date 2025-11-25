@@ -13,6 +13,30 @@ enum Role {
   EMPLOYEE
 }
 
+enum PersonType {
+  FISICA
+  JURIDICA
+  ESTRANGEIRO
+}
+
+enum AddressType {
+  COMERCIAL
+  RESIDENCIAL
+}
+
+// Novos Enums para o Módulo Financeiro > Budget
+enum BudgetStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  INACTIVE
+}
+
+enum DiscountType {
+  PERCENT
+  VALUE
+}
 model User {
   id             String        @id @default(uuid())
   email          String        @unique
@@ -31,24 +55,16 @@ model Organization {
   id        String    @id @default(uuid())
   name      String
   ownerId   String
+
   users     User[]
   clients   Client[]
   products  Product[]
+  budgets   Budget[] 
+  
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
   @@map("organizations")
-}
-
-enum PersonType {
-  FISICA
-  JURIDICA
-  ESTRANGEIRO
-}
-
-enum AddressType {
-  COMERCIAL
-  RESIDENCIAL
 }
 
 model Client {
@@ -57,7 +73,7 @@ model Client {
   fantasyName    String?
   email          String?
   personType     PersonType   @default(FISICA)
-  document       String       @unique
+  document       String      
   phone          String
   isWhatsapp     Boolean      @default(false)
   rg             String?
@@ -72,22 +88,91 @@ model Client {
   country        String       @default("Brasil")
   notes          String?
   active         Boolean      @default(true)
+  
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  budgets        Budget[]
+  
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
+  @@unique([document, organizationId]) 
   @@map("clients")
 }
 
 model Product {
   id             String       @id @default(uuid())
-  name           String
-  price          Decimal
+  title          String
+  description    String?
+  code           String?
+  unitType       String
+  costPrice      Decimal
+  salePrice      Decimal
+  stock          Int
+  category       String[]
+  active         Boolean      @default(true)
+  
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  budgetItems    BudgetItem[] 
+  
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
   @@map("products")
+}
+
+model Budget {
+  id             String       @id @default(uuid())
+  code           Int          @default(autoincrement())
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  clientId       String
+  client         Client       @relation(fields: [clientId], references: [id])
+
+  status         BudgetStatus @default(DRAFT)
+  expirationDate DateTime?    
+  
+  discountType   DiscountType?
+  discountValue  Decimal?      @db.Decimal(10, 2)
+  
+  subtotal       Decimal       @db.Decimal(10, 2)
+  total          Decimal       @db.Decimal(10, 2)
+  
+  notes          String?       @db.Text
+  
+  items          BudgetItem[]
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?    
+
+  @@map("budgets")
+}
+
+model BudgetItem {
+  id             String       @id @default(uuid())
+  
+  budgetId       String
+  budget         Budget       @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  
+  productId      String
+  product        Product      @relation(fields: [productId], references: [id])
+  
+  name           String       
+  costPrice      Decimal      @db.Decimal(10, 2) 
+  
+  quantity       Int
+  salePrice      Decimal      @db.Decimal(10, 2) 
+  
+  discountType   DiscountType?
+  discountValue  Decimal?      @db.Decimal(10, 2)
+  
+  total          Decimal       @db.Decimal(10, 2) 
+
+  @@map("budget_items")
 }

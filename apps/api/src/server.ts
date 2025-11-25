@@ -1,8 +1,10 @@
-import fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
-import { appRoutes } from './http/routes';
+import fastify from 'fastify';
 import { ZodError } from 'zod';
+
+import { appRoutes } from './http/routes';
+
 
 export const app = fastify();
 

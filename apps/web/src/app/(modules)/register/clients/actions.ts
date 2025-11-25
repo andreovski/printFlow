@@ -1,16 +1,10 @@
 'use server';
 
-import { redirect } from 'next/navigation';
-import { revalidateTag } from 'next/cache';
+import { createClientBodySchema, updateClientBodySchema } from '@magic-system/schemas';
 import { HTTPError } from 'ky';
+import { revalidateTag } from 'next/cache';
+
 import { createClient, updateClient, deleteClient } from '@/app/http/requests/clients';
-import {
-  createClientBodySchema,
-  updateClientBodySchema,
-  CreateClientBody,
-  UpdateClientBody,
-  UpdateClientParams,
-} from '@magic-system/schemas';
 import { validateDocument } from '@/lib/document';
 
 export async function createClientAction(formData: FormData) {
@@ -75,7 +69,7 @@ export async function createClientAction(formData: FormData) {
       try {
         const errorData = await err.response.json();
         message = errorData.message || message;
-      } catch (e) {
+      } catch (_e) {
         console.error('Error parsing error response:', e);
       }
       return {
@@ -138,8 +132,8 @@ export async function updateClientAction(formData: FormData, id: string) {
       try {
         const errorData = await err.response.json();
         message = errorData.message || message;
-      } catch (e) {
-        console.error('Error parsing error response:', e);
+      } catch (_e) {
+        console.error('Error parsing error response:', _e);
       }
       return {
         success: false,
