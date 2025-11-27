@@ -18,6 +18,15 @@ export async function signInAction(prevState: any, formData: FormData) {
     cookieStore.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    });
+
+    cookieStore.set('token-client', token, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
     });
@@ -32,6 +41,9 @@ export async function signInAction(prevState: any, formData: FormData) {
 }
 
 export async function signOutAction() {
-  cookies().delete('token');
-  redirect('/auth/sign-in');
+  const cookieStore = await cookies();
+  cookieStore.delete('token');
+  cookieStore.delete('token-client');
+
+  return redirect('/auth/sign-in');
 }

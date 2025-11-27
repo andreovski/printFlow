@@ -14,7 +14,7 @@ export async function createClientController(request: FastifyRequest, reply: Fas
   const { organizationId } = request.user as { organizationId: string };
 
   const clientsRepository = new ClientsRepository();
-  const clientExists = await clientsRepository.findByCpf(data.document);
+  const clientExists = await clientsRepository.findByCpf(data.document, organizationId);
 
   if (clientExists) {
     return reply.status(400).send({ message: 'Já existe um cliente com essas informações.' });
@@ -32,11 +32,11 @@ export async function createClientController(request: FastifyRequest, reply: Fas
 
 export async function fetchClientsController(request: FastifyRequest, reply: FastifyReply) {
   const { organizationId } = request.user as { organizationId: string };
-  const { page, pageSize } = paginationQuerySchema.parse(request.query);
+  const { page, pageSize, search } = paginationQuerySchema.parse(request.query);
 
   const clientsRepository = new ClientsRepository();
 
-  const { data, total } = await clientsRepository.findMany(organizationId, page, pageSize);
+  const { data, total } = await clientsRepository.findMany(organizationId, page, pageSize, search);
 
   const totalPages = Math.ceil(total / pageSize);
 

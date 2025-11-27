@@ -1,3 +1,4 @@
+import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import fastify from 'fastify';
@@ -5,15 +6,17 @@ import { ZodError } from 'zod';
 
 import { appRoutes } from './http/routes';
 
-
 export const app = fastify();
 
+app.register(cookie);
+
 app.register(cors, {
-  origin: '*', // TODO: Configure for production
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
 });
 
 app.register(jwt, {
-  secret: 'supersecret', // TODO: Move to env
+  secret: process.env.JWT_SECRET || 'supersecret',
 });
 
 app.register(appRoutes);

@@ -13,22 +13,32 @@ export class ClientsRepository {
   async findMany(
     organizationId: string,
     page: number = 1,
-    pageSize: number = 10
+    pageSize: number = 10,
+    search?: string
   ): Promise<{ data: Client[]; total: number }> {
     const skip = (page - 1) * pageSize;
 
+    const where: Prisma.ClientWhereInput = {
+      organizationId,
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: 'insensitive' } },
+              { document: { contains: search } },
+              { email: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
     const [data, total] = await Promise.all([
       prisma.client.findMany({
-        where: {
-          organizationId,
-        },
+        where,
         skip,
         take: pageSize,
       }),
       prisma.client.count({
-        where: {
-          organizationId,
-        },
+        where,
       }),
     ]);
 
@@ -52,10 +62,13 @@ export class ClientsRepository {
     return client;
   }
 
-  async findByCpf(cpf: string): Promise<Client | null> {
+  async findByCpf(cpf: string, organizationId: string): Promise<Client | null> {
     const client = await prisma.client.findUnique({
       where: {
-        document: cpf,
+        document_organizationId: {
+          document: cpf,
+          organizationId,
+        },
       },
     });
     return client;

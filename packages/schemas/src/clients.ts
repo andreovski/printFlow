@@ -62,3 +62,43 @@ export type CreateClientBody = z.infer<typeof createClientBodySchema>;
 export type GetClientParams = z.infer<typeof getClientParamsSchema>;
 export type UpdateClientParams = z.infer<typeof updateClientParamsSchema>;
 export type UpdateClientBody = z.infer<typeof updateClientBodySchema>;
+
+// Entity type
+export interface Client {
+  id: string;
+  name: string;
+  fantasyName: string | null;
+  email: string | null;
+  personType: 'FISICA' | 'JURIDICA' | 'ESTRANGEIRO';
+  document: string;
+  phone: string;
+  isWhatsapp: boolean;
+  rg: string | null;
+  cep: string;
+  addressType: 'COMERCIAL' | 'RESIDENCIAL' | null;
+  address: string;
+  addressNumber: string;
+  complement: string | null;
+  neighborhood: string | null;
+  city: string;
+  state: string;
+  country: string;
+  notes: string | null;
+  active: boolean;
+  organizationId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Response types
+export interface CreateClientResponse {
+  client: Client;
+}
+
+export interface GetClientResponse {
+  client: Client;
+}
+
+export interface UpdateClientResponse {
+  client: Client;
+}

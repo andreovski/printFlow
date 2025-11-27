@@ -36,11 +36,11 @@ export async function createProductController(request: FastifyRequest, reply: Fa
 
 export async function fetchProductsController(request: FastifyRequest, reply: FastifyReply) {
   const { organizationId } = request.user as { organizationId: string };
-  const { page, pageSize } = paginationQuerySchema.parse(request.query);
+  const { page, pageSize, search } = paginationQuerySchema.parse(request.query);
 
   const productsRepository = new ProductsRepository();
 
-  const { data, total } = await productsRepository.findMany(organizationId, page, pageSize);
+  const { data, total } = await productsRepository.findMany(organizationId, page, pageSize, search);
 
   const totalPages = Math.ceil(total / pageSize);
 

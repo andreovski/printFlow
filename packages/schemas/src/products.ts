@@ -40,3 +40,33 @@ export type CreateProductBody = z.infer<typeof createProductBodySchema>;
 export type GetProductParams = z.infer<typeof getProductParamsSchema>;
 export type UpdateProductParams = z.infer<typeof updateProductParamsSchema>;
 export type UpdateProductBody = z.infer<typeof updateProductBodySchema>;
+
+// Entity type
+export interface Product {
+  id: string;
+  title: string;
+  description: string | null;
+  code: string | null;
+  unitType: string;
+  costPrice: number;
+  salePrice: number;
+  stock: number;
+  category: string[];
+  active: boolean;
+  organizationId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Response types
+export interface CreateProductResponse {
+  product: Product;
+}
+
+export interface GetProductResponse {
+  product: Product;
+}
+
+export interface UpdateProductResponse {
+  product: Product;
+}

@@ -13,22 +13,31 @@ export class ProductsRepository {
   async findMany(
     organizationId: string,
     page: number = 1,
-    pageSize: number = 10
+    pageSize: number = 10,
+    search?: string
   ): Promise<{ data: Product[]; total: number }> {
     const skip = (page - 1) * pageSize;
 
+    const where: Prisma.ProductWhereInput = {
+      organizationId,
+      ...(search
+        ? {
+            OR: [
+              { title: { contains: search, mode: 'insensitive' } },
+              { code: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
     const [data, total] = await Promise.all([
       prisma.product.findMany({
-        where: {
-          organizationId,
-        },
+        where,
         skip,
         take: pageSize,
       }),
       prisma.product.count({
-        where: {
-          organizationId,
-        },
+        where,
       }),
     ]);
 
@@ -40,6 +49,15 @@ export class ProductsRepository {
       where: { id },
     });
     return product;
+  }
+
+  async findByIds(ids: string[]): Promise<Product[]> {
+    const products = await prisma.product.findMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+    return products;
   }
 
   async update(id: string, data: Prisma.ProductUpdateInput): Promise<Product> {

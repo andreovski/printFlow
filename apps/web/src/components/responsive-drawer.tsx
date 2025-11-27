@@ -29,21 +29,32 @@ export function ResponsiveDrawer({
   description,
   className,
   headerIcon,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: {
   children: React.ReactNode;
   title: string;
   description?: string | React.ReactNode;
   className?: string;
   headerIcon?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = React.useState(true);
+  const [internalOpen, setInternalOpen] = React.useState(true);
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const router = useRouter();
 
-  const onOpenChange = (open: boolean) => {
-    setOpen(open);
-    if (!open) {
-      router.back();
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+
+  const onOpenChange = (newOpen: boolean) => {
+    if (isControlled) {
+      controlledOnOpenChange?.(newOpen);
+    } else {
+      setInternalOpen(newOpen);
+      if (!newOpen) {
+        router.back();
+      }
     }
   };
 

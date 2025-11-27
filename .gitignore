@@ -40,7 +40,7 @@ next-env.d.ts
 
 # Editors
 .idea
-.vscode/*
+.vscode
 !.vscode/extensions.json
 !.vscode/settings.json
 !.vscode/launch.json

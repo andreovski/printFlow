@@ -2,6 +2,16 @@ import { FastifyInstance } from 'fastify';
 
 import { authenticateController } from './controllers/authenticate.controller';
 import {
+  createBudgetController,
+  fetchBudgetsController,
+  fetchArchivedBudgetsController,
+  getBudgetController,
+  updateBudgetController,
+  updateBudgetStatusController,
+  deleteBudgetController,
+  archiveBudgetController,
+} from './controllers/budgets.controller';
+import {
   createClientController,
   fetchClientsController,
   getClientController,
@@ -9,7 +19,10 @@ import {
   deleteClientController,
 } from './controllers/clients.controller';
 import { getMetricsController } from './controllers/metrics.controller';
-import { getOrganizationController } from './controllers/organizations.controller';
+import {
+  getOrganizationController,
+  updateOrganizationController,
+} from './controllers/organizations.controller';
 import {
   createProductController,
   fetchProductsController,
@@ -82,5 +95,20 @@ export async function appRoutes(app: FastifyInstance) {
 
     // Organization
     authRoutes.get('/organization', getOrganizationController);
+    authRoutes.put(
+      '/organization',
+      { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
+      updateOrganizationController
+    );
+
+    // Budgets
+    authRoutes.post('/budgets', createBudgetController);
+    authRoutes.get('/budgets', fetchBudgetsController);
+    authRoutes.get('/budgets/archived', fetchArchivedBudgetsController);
+    authRoutes.get('/budgets/:id', getBudgetController);
+    authRoutes.put('/budgets/:id', updateBudgetController);
+    authRoutes.patch('/budgets/:id/status', updateBudgetStatusController);
+    authRoutes.delete('/budgets/:id', deleteBudgetController);
+    authRoutes.patch('/budgets/:id/archive', archiveBudgetController);
   });
 }

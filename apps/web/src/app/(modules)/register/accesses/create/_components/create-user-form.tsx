@@ -22,7 +22,7 @@ export function CreateUserForm() {
   const [role, setRole] = useState('EMPLOYEE');
 
   return (
-    <Card className='border-0 shadow-none'>
+    <Card className="border-0 shadow-none p-4">
       <form action={action}>
         <CardContent className="space-y-4 pt-0 px-0">
           <div className="space-y-2">
@@ -65,8 +65,10 @@ export function CreateUserForm() {
           {state?.error && <div className="text-sm text-destructive">{state.error}</div>}
         </CardContent>
 
-        <CardFooter className='px-0 pt-6'>
-          <Button type="submit" className='w-full'>Criar Acesso</Button>
+        <CardFooter className="px-0 pt-6">
+          <Button type="submit" className="w-full">
+            Criar Acesso
+          </Button>
         </CardFooter>
       </form>
     </Card>

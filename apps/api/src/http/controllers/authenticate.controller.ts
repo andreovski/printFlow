@@ -11,7 +11,6 @@ export async function authenticateController(request: FastifyRequest, reply: Fas
   const authenticateService = new AuthenticateService(usersRepository);
 
   try {
-    console.log('🚀 ~ entrou');
     const { user } = await authenticateService.execute({
       email,
       password,

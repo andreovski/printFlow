@@ -29,8 +29,8 @@ export function defineAbilityFor(user: User) {
       can('read', 'Client', { organizationId: user.organizationId });
       can('read', 'Product', { organizationId: user.organizationId });
 
-      can('create', 'Client');
-      can('create', 'Product');
+      can('create', 'Client', { organizationId: user.organizationId });
+      can('create', 'Product', { organizationId: user.organizationId });
 
       can('update', 'Client', { organizationId: user.organizationId });
       can('update', 'Product', { organizationId: user.organizationId });

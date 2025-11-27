@@ -38,3 +38,35 @@ export type CreateUserBody = z.infer<typeof createUserBodySchema>;
 export type UpdateUserParams = z.infer<typeof updateUserParamsSchema>;
 export type UpdateUserBody = z.infer<typeof updateUserBodySchema>;
 export type DeleteUserParams = z.infer<typeof deleteUserParamsSchema>;
+
+// Entity type
+export interface User {
+  id: string;
+  email: string;
+  name: string | null;
+  role: Role;
+  organizationId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Response types
+export interface RegisterUserResponse {
+  user: User;
+}
+
+export interface CreateUserResponse {
+  user: User;
+}
+
+export interface GetUserResponse {
+  user: User;
+}
+
+export interface GetUsersResponse {
+  users: User[];
+}
+
+export interface UpdateUserResponse {
+  user: User;
+}

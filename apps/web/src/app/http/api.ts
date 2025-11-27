@@ -3,16 +3,29 @@ import { toast } from 'sonner';
 
 export const api = ky.create({
   prefixUrl: process.env.NEXT_PUBLIC_API_URL,
+  credentials: 'include',
   headers: {
     'Content-Type': 'application/json',
   },
   hooks: {
     beforeRequest: [
       async (request) => {
+        const { cookies } = await import('next/headers');
+        // For server-side requests (SSR), read token from httpOnly cookie
         if (typeof window === 'undefined') {
-          const { cookies } = await import('next/headers');
           const cookieStore = await cookies();
           const token = cookieStore.get('token')?.value;
+
+          if (token) {
+            request.headers.set('Authorization', `Bearer ${token}`);
+          }
+        } else {
+          // For client-side requests, read token from accessible cookie
+          const token = document.cookie
+            .split('; ')
+            .find((row) => row.startsWith('token-client='))
+            ?.split('=')[1];
+
           if (token) {
             request.headers.set('Authorization', `Bearer ${token}`);
           }
