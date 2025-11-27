@@ -2,6 +2,16 @@ import { FastifyInstance } from 'fastify';
 
 import { authenticateController } from './controllers/authenticate.controller';
 import {
+  createBoardController,
+  fetchBoardsController,
+  createCardController,
+  moveCardController,
+  updateCardController,
+  deleteCardController,
+  createColumnController,
+  deleteColumnController,
+} from './controllers/boards.controller';
+import {
   createBudgetController,
   fetchBudgetsController,
   fetchArchivedBudgetsController,
@@ -110,5 +120,15 @@ export async function appRoutes(app: FastifyInstance) {
     authRoutes.patch('/budgets/:id/status', updateBudgetStatusController);
     authRoutes.delete('/budgets/:id', deleteBudgetController);
     authRoutes.patch('/budgets/:id/archive', archiveBudgetController);
+
+    // Boards (Kanban)
+    authRoutes.post('/boards', createBoardController);
+    authRoutes.get('/boards', fetchBoardsController);
+    authRoutes.post('/columns', createColumnController);
+    authRoutes.delete('/columns/:columnId', deleteColumnController);
+    authRoutes.post('/columns/:columnId/cards', createCardController);
+    authRoutes.patch('/cards/move', moveCardController);
+    authRoutes.put('/cards/:id', updateCardController);
+    authRoutes.delete('/cards/:id', deleteCardController);
   });
 }

@@ -37,6 +37,13 @@ enum DiscountType {
   PERCENT
   VALUE
 }
+
+enum CardPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
 model User {
   id             String        @id @default(uuid())
   email          String        @unique
@@ -60,6 +67,7 @@ model Organization {
   clients   Client[]
   products  Product[]
   budgets   Budget[] 
+  boards    Board[] 
   
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -182,4 +190,55 @@ model BudgetItem {
   total          Decimal       @db.Decimal(10, 2) 
 
   @@map("budget_items")
+}
+
+model Board {
+  id             String       @id @default(uuid())
+  title          String
+  description    String?      @db.Text
+  isArchived     Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  columns        BoardColumn[]
+
+  @@map("boards")
+}
+
+model BoardColumn {
+  id        String   @id @default(uuid())
+  title     String
+  order     Int   
+
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  cards     Card[]  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([boardId])
+  @@map("board_columns")
+}
+
+model Card {
+  id          String       @id @default(uuid())
+  title       String       
+  description String?      @db.Text
+  position    Int          
+  priority    CardPriority @default(MEDIUM)
+  dueDate     DateTime?    
+
+  columnId    String
+  column      BoardColumn  @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([columnId])
+  @@map("cards")
 }

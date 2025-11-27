@@ -21,7 +21,7 @@ export async function registerUserController(request: FastifyRequest, reply: Fas
 
   try {
     const { user } = await usersService.register({
-      name,
+      name: name ?? '',
       email,
       password,
     });
@@ -58,7 +58,7 @@ export async function createUserController(request: FastifyRequest, reply: Fasti
 
   try {
     const { user } = await usersService.createUser({
-      name,
+      name: name ?? '',
       email,
       password,
       role: role as Role,

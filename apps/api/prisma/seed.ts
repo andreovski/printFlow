@@ -6,15 +6,20 @@ const prisma = new PrismaClient();
 async function main() {
   const passwordHash = await hash('123456', 6);
 
-  const org = await prisma.organization.create({
-    data: {
+  const org = await prisma.organization.upsert({
+    where: { id: 'default-org-id' },
+    update: {},
+    create: {
+      id: 'default-org-id',
       name: 'Acme Print Shop',
-      ownerId: 'temp-owner-id', // Will update after user creation
+      ownerId: 'temp-owner-id',
     },
   });
 
-  const user = await prisma.user.create({
-    data: {
+  const user = await prisma.user.upsert({
+    where: { email: 'admin@acme.com' },
+    update: {},
+    create: {
       name: 'Master',
       email: 'admin@acme.com',
       passwordHash,

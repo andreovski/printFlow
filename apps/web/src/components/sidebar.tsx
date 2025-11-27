@@ -38,8 +38,9 @@ export function Sidebar({ role, userName, userEmail }: SidebarProps) {
   const { value: collapsedValue, setValue: setCollapsedValue } =
     useCookieStorage('collapsed-sidebar');
 
-  const registerOpen = useDisclosure();
-  const financeOpen = useDisclosure();
+  const registerOpen = useDisclosure({ opened: true });
+  const financeOpen = useDisclosure({ opened: true });
+  const productionOpen = useDisclosure({ opened: true });
 
   const collapsed = useDisclosure({
     opened: collapsedValue === 'true',
@@ -60,6 +61,7 @@ export function Sidebar({ role, userName, userEmail }: SidebarProps) {
   ];
 
   const financeItems = [{ href: '/finance/budgets', label: 'Orçamentos', icon: FileText }];
+  const productionItems = [{ href: '/production/boards', label: 'Quadros', icon: LayoutDashboard }];
 
   const filteredRegisterItems = registerItems.filter((item) => {
     if (item.requiresRole) {
@@ -263,6 +265,88 @@ export function Sidebar({ role, userName, userEmail }: SidebarProps) {
               {financeOpen.isOpen && (
                 <div className="ml-4 space-y-1">
                   {financeItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = pathname.startsWith(item.href);
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          'flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-muted',
+                          isActive ? 'bg-muted text-foreground' : 'text-muted-foreground'
+                        )}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span className="text-sm">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Produção Submenu */}
+        <div className="space-y-1">
+          {collapsed.isOpen ? (
+            <HoverCard openDelay={0} closeDelay={100}>
+              <HoverCardTrigger asChild>
+                <button
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-muted text-muted-foreground justify-center px-2'
+                  )}
+                >
+                  <Package className="h-5 w-5 shrink-0" />
+                </button>
+              </HoverCardTrigger>
+              <HoverCardContent side="right" align="start" className="w-48 p-2">
+                <div className="px-2 py-1.5 text-sm font-semibold">Produção</div>
+                <Separator className="my-1" />
+                <div className="space-y-1">
+                  {productionItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = pathname.startsWith(item.href);
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          'flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer',
+                          isActive ? 'bg-muted text-foreground' : 'text-muted-foreground'
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          ) : (
+            <>
+              <button
+                onClick={() => productionOpen.toggle()}
+                className={cn(
+                  'w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-muted text-muted-foreground'
+                )}
+              >
+                <Package className="h-5 w-5 shrink-0" />
+                <span className="flex-1 text-left">Produção</span>
+                {productionOpen.isOpen ? (
+                  <ChevronUp className="h-4 w-4 shrink-0" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 shrink-0" />
+                )}
+              </button>
+
+              {/* Submenu items */}
+              {productionOpen.isOpen && (
+                <div className="ml-4 space-y-1">
+                  {productionItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname.startsWith(item.href);
 

@@ -1,0 +1,89 @@
+import { z } from 'zod';
+
+// Enums
+export const cardPriorityEnum = z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']);
+export type CardPriority = z.infer<typeof cardPriorityEnum>;
+
+// Card Schemas
+export const createCardBodySchema = z.object({
+  title: z.string().min(1, 'O título é obrigatório'),
+  description: z.string().optional(),
+  priority: cardPriorityEnum.default('MEDIUM'),
+  dueDate: z.string().datetime().optional(),
+});
+
+export const updateCardBodySchema = z.object({
+  title: z.string().min(1, 'O título é obrigatório').optional(),
+  description: z.string().optional(),
+  priority: cardPriorityEnum.optional(),
+  dueDate: z.string().datetime().optional(),
+});
+
+export const moveCardBodySchema = z.object({
+  cardId: z.string().uuid(),
+  destinationColumnId: z.string().uuid(),
+  newPosition: z.number().int().min(0),
+});
+
+// Board Schemas
+export const createBoardBodySchema = z.object({
+  title: z.string().min(1, 'O título é obrigatório'),
+  description: z.string().optional(),
+});
+
+export const createColumnBodySchema = z.object({
+  title: z.string().min(1, 'O título é obrigatório'),
+  boardId: z.string().uuid(),
+});
+
+// Params Schemas
+export const cardIdParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
+export const columnIdParamsSchema = z.object({
+  columnId: z.string().uuid(),
+});
+
+// Types
+export type CreateCardBody = z.infer<typeof createCardBodySchema>;
+export type UpdateCardBody = z.infer<typeof updateCardBodySchema>;
+export type MoveCardBody = z.infer<typeof moveCardBodySchema>;
+export type CreateBoardBody = z.infer<typeof createBoardBodySchema>;
+export type CreateColumnBody = z.infer<typeof createColumnBodySchema>;
+export type CardIdParams = z.infer<typeof cardIdParamsSchema>;
+export type ColumnIdParams = z.infer<typeof columnIdParamsSchema>;
+
+// Response Types
+export interface Card {
+  id: string;
+  title: string;
+  description?: string;
+  position: number;
+  priority: CardPriority;
+  dueDate?: string;
+  columnId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BoardColumn {
+  id: string;
+  title: string;
+  order: number;
+  cards: Card[];
+  boardId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Board {
+  id: string;
+  title: string;
+  description?: string;
+  isArchived: boolean;
+  columns: BoardColumn[];
+  organizationId: string;
+  createdAt: string;
+  updatedAt: string;
+}

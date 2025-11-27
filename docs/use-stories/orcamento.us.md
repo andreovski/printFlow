@@ -1,4 +1,4 @@
-# Especificação Técnica: Módulo de Orçamentos (SaaS Gráfica)
+# Especificação Técnica: Módulo de Orçamentos
 
 Este documento descreve os requisitos funcionais, regras de negócio e modelagem de dados para a implementação do módulo de Orçamentos.
 
@@ -54,7 +54,7 @@ Representa os produtos adicionados ao orçamento. Esta tabela garante o históri
 ### CRUD de Orçamentos
 
 - **Criar:** Deve ser possível criar um orçamento com status inicial `DRAFT`.
-- **Editar:** Permitido apenas se o status for `DRAFT` ou `REJECTED`. Se estiver `SENT`, o usuário deve ter opção de "Reabrir" (voltar para `DRAFT`) para editar.
+- **Editar:** Permitido apenas se o status for `DRAFT` ou `REJECTED`. Se estiver `SENT`, o usuário deve ter opção de reabir mudando o status para `DRAFT`.
 - **Listar:** Deve listar orçamentos com paginação.
 - **Excluir:** Implementar **Soft Delete** (apenas preencher `deletedAt`), não remover o registro físico do banco para manter histórico financeiro.
 - **Status:** Permitir transição de status conforme fluxo de negócio.

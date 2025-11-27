@@ -317,12 +317,7 @@ export const KanbanProvider = <
         sensors={sensors}
         {...props}
       >
-        <div
-          className={cn(
-            'grid size-full auto-cols-fr grid-flow-row md:grid-flow-col gap-4',
-            className
-          )}
-        >
+        <div className={cn('flex h-full gap-4', className)}>
           {columns.map((column) => children(column))}
         </div>
         {typeof window !== 'undefined' &&
