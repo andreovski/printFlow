@@ -13,6 +13,8 @@ import {
   FolderOpen,
   FileText,
   DollarSign,
+  Settings,
+  Tags,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -41,6 +43,7 @@ export function Sidebar({ role, userName, userEmail }: SidebarProps) {
   const registerOpen = useDisclosure({ opened: true });
   const financeOpen = useDisclosure({ opened: true });
   const productionOpen = useDisclosure({ opened: true });
+  const settingsOpen = useDisclosure({ opened: true });
 
   const collapsed = useDisclosure({
     opened: collapsedValue === 'true',
@@ -62,6 +65,7 @@ export function Sidebar({ role, userName, userEmail }: SidebarProps) {
 
   const financeItems = [{ href: '/finance/budgets', label: 'Orçamentos', icon: FileText }];
   const productionItems = [{ href: '/production/boards', label: 'Quadros', icon: LayoutDashboard }];
+  const settingsItems = [{ href: '/settings/tags', label: 'Tags', icon: Tags }];
 
   const filteredRegisterItems = registerItems.filter((item) => {
     if (item.requiresRole) {
@@ -123,7 +127,6 @@ export function Sidebar({ role, userName, userEmail }: SidebarProps) {
           <LayoutDashboard className="h-5 w-5 shrink-0" />
           {!collapsed.isOpen && <span>Dashboard</span>}
         </Link>
-
         {/* Cadastro (Register) Submenu */}
         <div className="space-y-1">
           {collapsed.isOpen ? (
@@ -205,7 +208,6 @@ export function Sidebar({ role, userName, userEmail }: SidebarProps) {
             </>
           )}
         </div>
-
         {/* Financeiro Submenu */}
         <div className="space-y-1">
           {collapsed.isOpen ? (
@@ -287,7 +289,6 @@ export function Sidebar({ role, userName, userEmail }: SidebarProps) {
             </>
           )}
         </div>
-
         {/* Produção Submenu */}
         <div className="space-y-1">
           {collapsed.isOpen ? (
@@ -347,6 +348,87 @@ export function Sidebar({ role, userName, userEmail }: SidebarProps) {
               {productionOpen.isOpen && (
                 <div className="ml-4 space-y-1">
                   {productionItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = pathname.startsWith(item.href);
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          'flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-muted',
+                          isActive ? 'bg-muted text-foreground' : 'text-muted-foreground'
+                        )}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span className="text-sm">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        {/* Configurações Submenu */}
+        <div className="space-y-1">
+          {collapsed.isOpen ? (
+            <HoverCard openDelay={0} closeDelay={100}>
+              <HoverCardTrigger asChild>
+                <button
+                  className={cn(
+                    'w-full flex items-center gap-3 py-2 rounded-md transition-colors hover:bg-muted text-muted-foreground justify-center px-2'
+                  )}
+                >
+                  <Settings className="h-5 w-5 shrink-0" />
+                </button>
+              </HoverCardTrigger>
+              <HoverCardContent side="right" align="start" className="w-48 p-2">
+                <div className="px-2 py-1.5 text-sm font-semibold">Configurações</div>
+                <Separator className="my-1" />
+                <div className="space-y-1">
+                  {settingsItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = pathname.startsWith(item.href);
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          'flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer',
+                          isActive ? 'bg-muted text-foreground' : 'text-muted-foreground'
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          ) : (
+            <>
+              <button
+                onClick={() => settingsOpen.toggle()}
+                className={cn(
+                  'w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-muted text-muted-foreground'
+                )}
+              >
+                <Settings className="h-5 w-5 shrink-0" />
+                <span className="flex-1 text-left">Configurações</span>
+                {settingsOpen.isOpen ? (
+                  <ChevronUp className="h-4 w-4 shrink-0" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 shrink-0" />
+                )}
+              </button>
+
+              {/* Submenu items */}
+              {settingsOpen.isOpen && (
+                <div className="ml-4 space-y-1">
+                  {settingsItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname.startsWith(item.href);
 

@@ -41,6 +41,13 @@ import {
   deleteProductController,
 } from './controllers/products.controller';
 import {
+  createTagController,
+  fetchTagsController,
+  getTagController,
+  updateTagController,
+  deleteTagController,
+} from './controllers/tags.controller';
+import {
   createUserController,
   deleteUserController,
   fetchUsersController,
@@ -130,5 +137,12 @@ export async function appRoutes(app: FastifyInstance) {
     authRoutes.patch('/cards/move', moveCardController);
     authRoutes.put('/cards/:id', updateCardController);
     authRoutes.delete('/cards/:id', deleteCardController);
+
+    // Tags
+    authRoutes.post('/tags', createTagController);
+    authRoutes.get('/tags', fetchTagsController);
+    authRoutes.get('/tags/:id', getTagController);
+    authRoutes.put('/tags/:id', updateTagController);
+    authRoutes.delete('/tags/:id', deleteTagController);
   });
 }

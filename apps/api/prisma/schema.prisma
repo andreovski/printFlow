@@ -44,6 +44,13 @@ enum CardPriority {
   HIGH
   URGENT
 }
+
+// Define onde a tag será visível
+enum TagScope {
+  GLOBAL      // Disponível em Orçamentos e Produção
+  BUDGET      // Apenas Orçamentos
+  PRODUCTION  // Apenas Produção
+}
 model User {
   id             String        @id @default(uuid())
   email          String        @unique
@@ -66,9 +73,10 @@ model Organization {
   users     User[]
   clients   Client[]
   products  Product[]
-  budgets   Budget[] 
-  boards    Board[] 
-  
+  budgets   Budget[]
+  boards    Board[]
+  tags      Tag[]
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
@@ -85,7 +93,7 @@ model Client {
   fantasyName    String?
   email          String?
   personType     PersonType   @default(FISICA)
-  document       String      
+  document       String
   phone          String
   isWhatsapp     Boolean      @default(false)
   rg             String?
@@ -100,16 +108,16 @@ model Client {
   country        String       @default("Brasil")
   notes          String?
   active         Boolean      @default(true)
-  
+
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
-  
+
   budgets        Budget[]
-  
+
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  @@unique([document, organizationId]) 
+  @@unique([document, organizationId])
   @@map("clients")
 }
 
@@ -124,12 +132,12 @@ model Product {
   stock          Int
   category       String[]
   active         Boolean      @default(true)
-  
+
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
-  
-  budgetItems    BudgetItem[] 
-  
+
+  budgetItems    BudgetItem[]
+
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -139,30 +147,30 @@ model Product {
 model Budget {
   id             String       @id @default(uuid())
   code           Int          @default(autoincrement())
-  
+
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
-  
+
   clientId       String
   client         Client       @relation(fields: [clientId], references: [id])
 
   status         BudgetStatus @default(DRAFT)
-  expirationDate DateTime?    
-  
+  expirationDate DateTime?
+
   discountType   DiscountType?
   discountValue  Decimal?      @db.Decimal(10, 2)
   advancePayment Decimal?      @db.Decimal(10, 2)
-  
+
   subtotal       Decimal       @db.Decimal(10, 2)
   total          Decimal       @db.Decimal(10, 2)
-  
+
   notes          String?       @db.Text
-  
+
   items          BudgetItem[]
 
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
-  deletedAt      DateTime?    
+  deletedAt      DateTime?
 
   archived       Boolean       @default(false)
 
@@ -171,23 +179,23 @@ model Budget {
 
 model BudgetItem {
   id             String       @id @default(uuid())
-  
+
   budgetId       String
   budget         Budget       @relation(fields: [budgetId], references: [id], onDelete: Cascade)
-  
+
   productId      String
   product        Product      @relation(fields: [productId], references: [id])
-  
-  name           String       
-  costPrice      Decimal      @db.Decimal(10, 2) 
-  
+
+  name           String
+  costPrice      Decimal      @db.Decimal(10, 2)
+
   quantity       Int
-  salePrice      Decimal      @db.Decimal(10, 2) 
-  
+  salePrice      Decimal      @db.Decimal(10, 2)
+
   discountType   DiscountType?
   discountValue  Decimal?      @db.Decimal(10, 2)
-  
-  total          Decimal       @db.Decimal(10, 2) 
+
+  total          Decimal       @db.Decimal(10, 2)
 
   @@map("budget_items")
 }
@@ -211,12 +219,12 @@ model Board {
 model BoardColumn {
   id        String   @id @default(uuid())
   title     String
-  order     Int   
+  order     Int
 
   boardId   String
   board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
 
-  cards     Card[]  
+  cards     Card[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -227,11 +235,11 @@ model BoardColumn {
 
 model Card {
   id          String       @id @default(uuid())
-  title       String       
+  title       String
   description String?      @db.Text
-  position    Int          
+  position    Int
   priority    CardPriority @default(MEDIUM)
-  dueDate     DateTime?    
+  dueDate     DateTime?
 
   columnId    String
   column      BoardColumn  @relation(fields: [columnId], references: [id], onDelete: Cascade)
@@ -241,4 +249,28 @@ model Card {
 
   @@index([columnId])
   @@map("cards")
+}
+
+model Tag {
+  id             String   @id @default(uuid())
+  name           String
+  color          String   // Formato HEX. Ex: "#EF4444"
+
+  // Escopo de utilização da tag
+  scope          TagScope @default(GLOBAL)
+
+  // Soft delete e controle de disponibilidade
+  active         Boolean  @default(true)
+
+  // Relacionamento Multi-tenant
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  // Garante que não existam duas tags com o mesmo nome na mesma empresa
+  @@unique([name, organizationId])
+  @@map("tags")
 }

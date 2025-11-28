@@ -341,7 +341,7 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
                         min="1"
                         {...form.register(`items.${index}.quantity`)}
                         disabled={isReadOnly}
-                        className="w-[50px]"
+                        className="w-[100px]"
                       />
                     </TableCell>
                     <TableCell>

@@ -208,11 +208,13 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
                     >
                       <div className="flex flex-col gap-2">
                         <span className="font-medium">{item.name}</span>
-                        {item.description && (
-                          <span className="text-xs text-muted-foreground line-clamp-2">
-                            {String(item.description)}
-                          </span>
-                        )}
+                        <>
+                          {item.description && (
+                            <span className="text-xs text-muted-foreground line-clamp-2">
+                              {String(item.description)}
+                            </span>
+                          )}
+                        </>
                       </div>
                     </EditCardDialog>
                   </KanbanCard>
