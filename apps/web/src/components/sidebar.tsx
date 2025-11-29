@@ -16,6 +16,7 @@ import {
   Settings,
   Tags,
   Kanban,
+  Building2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -67,6 +68,7 @@ export function Sidebar({ role, userName, userEmail }: SidebarProps) {
   const financeItems = [{ href: '/finance/budgets', label: 'Orçamentos', icon: FileText }];
   const productionItems = [{ href: '/production/boards', label: 'Quadros', icon: Kanban }];
   const settingsItems = [
+    { href: '/settings/company', label: 'Empresa', icon: Building2 },
     { href: '/settings/tags', label: 'Etiquetas', icon: Tags },
     { href: '/settings/templates', label: 'Templates', icon: FileText },
   ];

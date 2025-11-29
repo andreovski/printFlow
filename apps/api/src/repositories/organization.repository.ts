@@ -15,6 +15,21 @@ export class OrganizationRepository {
         budgetAutoInactive: true,
         budgetAutoArchive: true,
         budgetShowTotalInKanban: true,
+        // Company Information
+        cnpj: true,
+        enterpriseName: true,
+        fantasyName: true,
+        mainEmail: true,
+        mainPhone: true,
+        // Address
+        cep: true,
+        address: true,
+        addressNumber: true,
+        complement: true,
+        neighborhood: true,
+        city: true,
+        state: true,
+        country: true,
       },
     });
 
@@ -31,6 +46,21 @@ export class OrganizationRepository {
       budgetAutoInactive?: boolean;
       budgetAutoArchive?: boolean;
       budgetShowTotalInKanban?: boolean;
+      // Company Information
+      cnpj?: string;
+      enterpriseName?: string;
+      fantasyName?: string;
+      mainEmail?: string;
+      mainPhone?: string;
+      // Address
+      cep?: string;
+      address?: string;
+      addressNumber?: string;
+      complement?: string;
+      neighborhood?: string;
+      city?: string;
+      state?: string;
+      country?: string;
     }
   ) {
     const organization = await prisma.organization.update({

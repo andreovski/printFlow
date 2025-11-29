@@ -85,6 +85,23 @@ model Organization {
   budgetAutoArchive       Boolean @default(false)
   budgetShowTotalInKanban Boolean @default(false)
 
+  // Company Information
+  cnpj            String?
+  enterpriseName  String?
+  fantasyName     String?
+  mainEmail     String?
+  mainPhone     String?
+
+  // Address
+  cep           String?
+  address       String?
+  addressNumber String?
+  complement    String?
+  neighborhood  String?
+  city          String?
+  state         String?
+  country       String?   @default("Brasil")
+
   @@map("organizations")
 }
 

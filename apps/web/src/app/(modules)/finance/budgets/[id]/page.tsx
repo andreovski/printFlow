@@ -17,6 +17,7 @@ export default async function EditBudgetPage({ params }: { params: { id: string 
       description="Edite os detalhes do orçamento."
       className="max-w-[1200px] md:w-[80vw]"
       headerIcon={<FilePen />}
+      redirectTo="/finance/budgets"
     >
       <BudgetForm initialData={budget} />
     </ResponsiveDrawer>

@@ -23,6 +23,21 @@ export async function updateOrganizationController(request: FastifyRequest, repl
     budgetAutoInactive: z.boolean().optional(),
     budgetAutoArchive: z.boolean().optional(),
     budgetShowTotalInKanban: z.boolean().optional(),
+    // Company Information
+    cnpj: z.string().optional(),
+    enterpriseName: z.string().optional(),
+    fantasyName: z.string().optional(),
+    mainEmail: z.string().email().optional(),
+    mainPhone: z.string().optional(),
+    // Address
+    cep: z.string().optional(),
+    address: z.string().optional(),
+    addressNumber: z.string().optional(),
+    complement: z.string().optional(),
+    neighborhood: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    country: z.string().optional(),
   });
 
   const data = updateOrganizationBodySchema.parse(request.body);

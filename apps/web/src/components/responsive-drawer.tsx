@@ -31,6 +31,7 @@ export function ResponsiveDrawer({
   headerIcon,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
+  redirectTo,
 }: {
   children: React.ReactNode;
   title: string;
@@ -39,6 +40,7 @@ export function ResponsiveDrawer({
   headerIcon?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  redirectTo?: string;
 }) {
   const [internalOpen, setInternalOpen] = React.useState(true);
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -53,7 +55,11 @@ export function ResponsiveDrawer({
     } else {
       setInternalOpen(newOpen);
       if (!newOpen) {
-        router.back();
+        if (redirectTo) {
+          router.push(redirectTo);
+        } else {
+          router.back();
+        }
       }
     }
   };

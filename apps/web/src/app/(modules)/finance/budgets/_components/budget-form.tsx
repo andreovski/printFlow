@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { budgetStatusSchema, Template } from '@magic-system/schemas';
 import { useCurrentEditor } from '@tiptap/react';
-import { Archive, Copy, Package, Trash } from 'lucide-react';
+import { Archive, Copy, Package, Printer, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
@@ -68,7 +68,7 @@ const formSchema = z.object({
   discountType: z.enum(['PERCENT', 'VALUE']).optional(),
   discountValue: z.coerce.number().optional(),
   advancePayment: z.coerce.number().optional(),
-  notes: z.string().optional(),
+  notes: z.string().nullish(),
   status: budgetStatusSchema.default('DRAFT'),
   tagIds: z.array(z.string()).optional(),
   items: z
@@ -219,7 +219,7 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
         discountType: initialData.discountType,
         discountValue: initialData.discountValue,
         advancePayment: initialData.advancePayment,
-        notes: initialData.notes,
+        notes: initialData.notes || '',
         tagIds: initialData.tags?.map((t: any) => t.id) || [],
         items: initialData.items.map((i: any) => ({
           productId: i.productId,
@@ -268,6 +268,8 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
       console.error(error);
     }
   };
+
+  console.log(form.formState.errors);
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-2">
@@ -538,6 +540,17 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
           </div>
 
           <div className="flex gap-2">
+            {['ACCEPTED'].includes(initialData?.status) && (
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => window.open(`/receipt/${initialData.id}`, '_blank')}
+                disabled={isPending}
+                title="Imprimir Recibo"
+              >
+                <Printer className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="outline"
               type="button"
