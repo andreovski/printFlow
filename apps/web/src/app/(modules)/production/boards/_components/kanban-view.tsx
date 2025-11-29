@@ -1,11 +1,18 @@
 'use client';
 
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, ArrowUpDown, GripVertical } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { Board, moveCard, Card as ApiCard, deleteColumn } from '@/app/http/requests/boards';
+import {
+  Board,
+  moveCard,
+  Card as ApiCard,
+  deleteColumn,
+  moveColumn,
+} from '@/app/http/requests/boards';
+import { DialogAction } from '@/components/dialog-action';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -16,15 +23,16 @@ import {
 } from '@/components/ui/select';
 import {
   KanbanBoard,
-  KanbanCard,
   KanbanCards,
   KanbanHeader,
   KanbanProvider,
 } from '@/components/ui/shadcn-io/kanban';
+import { useDisclosure } from '@/hooks/use-disclosure';
+import { cn } from '@/lib/utils';
 
-import { CreateCardDialog } from './create-card-dialog';
+import { CreateCardDialog } from '../create/create-card-dialog';
 import { CreateColumnDialog } from './create-column-dialog';
-import { EditCardDialog } from './edit-card-dialog';
+import { ProductionKanbanCard } from './kanban-card';
 
 interface KanbanViewProps {
   boards: Board[];
@@ -34,13 +42,16 @@ interface KanbanViewProps {
 
 export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewProps) {
   const router = useRouter();
-  const [columns, setColumns] = useState(
-    (selectedBoard.columns || []).map((col) => ({
-      id: col.id,
-      name: col.title,
-    }))
-  );
 
+  const [columns, setColumns] = useState(
+    (selectedBoard.columns || [])
+      .sort((a, b) => a.order - b.order)
+      .map((col) => ({
+        id: col.id,
+        name: col.title,
+        order: col.order,
+      }))
+  );
   const [cards, setCards] = useState(
     (selectedBoard.columns || []).flatMap((col) =>
       (col.cards || []).map((card) => ({
@@ -50,15 +61,20 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
       }))
     )
   );
-
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [isReorderMode, setIsReorderMode] = useState(false);
+
+  const dialogDelete = useDisclosure();
 
   // Update columns and cards when selectedBoard changes
   useEffect(() => {
-    const newColumns = (selectedBoard.columns || []).map((col) => ({
-      id: col.id,
-      name: col.title,
-    }));
+    const newColumns = (selectedBoard.columns || [])
+      .sort((a, b) => a.order - b.order)
+      .map((col) => ({
+        id: col.id,
+        name: col.title,
+        order: col.order,
+      }));
     setColumns(newColumns);
 
     const newCards = (selectedBoard.columns || []).flatMap((col) =>
@@ -110,8 +126,6 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
   };
 
   const handleDeleteColumn = async (columnId: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta coluna?')) return;
-
     try {
       await deleteColumn(columnId);
       setColumns((prev) => prev.filter((c) => c.id !== columnId));
@@ -122,11 +136,29 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
     }
   };
 
+  const handleColumnsReorder = async (newColumns: typeof columns) => {
+    const previousColumns = columns;
+    setColumns(newColumns);
+
+    try {
+      await Promise.all(
+        newColumns.map((col, index) => moveColumn(col.id, selectedBoard.id, index))
+      );
+      toast.success('Colunas reordenadas com sucesso');
+
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao reordenar colunas');
+      setColumns(previousColumns);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col p-6">
       <div className="flex flex-col gap-8 mb-4">
         <h1 className="text-3xl font-bold tracking-tight">Quadros</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 px-1">
           <Select value={selectedBoard.id} onValueChange={onBoardChange}>
             <SelectTrigger className="w-[280px]">
               <SelectValue />
@@ -142,88 +174,131 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
           <CreateColumnDialog
             boardId={selectedBoard.id}
             onColumnCreated={(newColumn) => {
-              setColumns((prev) => [...prev, { id: newColumn.id, name: newColumn.title }]);
+              setColumns((prev) => [
+                ...prev,
+                { id: newColumn.id, name: newColumn.title, order: newColumn.order },
+              ]);
               router.refresh();
             }}
           >
             <Button variant="outline" size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Nova Coluna
+              <Plus className="md:mr-2 h-4 w-4" />
+              <p className="hidden md:block">Nova Coluna</p>
             </Button>
           </CreateColumnDialog>
+          <Button
+            variant={isReorderMode ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setIsReorderMode(!isReorderMode)}
+            className="transition-all duration-300 hover:scale-105 active:scale-95"
+          >
+            <ArrowUpDown
+              className={cn(
+                'md:mr-2 h-4 w-4 transition-transform duration-500',
+                isReorderMode && 'rotate-180'
+              )}
+            />
+            <p className="hidden md:block">
+              {isReorderMode ? 'Ordenar Cartões' : 'Ordenar Colunas'}
+            </p>
+          </Button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-x-auto pt-0">
+      <div className="flex-1 overflow-x-auto p-1">
         <KanbanProvider
           columns={columns}
           data={cards}
           onDataChange={onDataChange}
           onDragStart={onDragStart}
+          onColumnsChange={handleColumnsReorder}
+          isReorderMode={isReorderMode}
         >
           {(column) => (
-            <KanbanBoard id={column.id} key={column.id} className="min-w-[220px]">
-              <KanbanHeader className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+            <KanbanBoard id={column.id} key={column.id} className="min-w-[220px] flex flex-col">
+              <KanbanHeader className="flex items-center border-none">
+                <div className="flex items-center gap-2 mr-auto">
                   <span>{column.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    ({cards.filter((c) => c.column === column.id).length})
+                  </span>
+                </div>
+
+                <div
+                  className={cn(
+                    'flex items-center gap-1 animate-in slide-in-from-right-5 fade-in duration-300',
+                    !isReorderMode && 'hidden'
+                  )}
+                >
+                  <GripVertical className="h-6 w-6 text-muted-foreground cursor-grab active:cursor-grabbing animate-pulse" />
+                </div>
+                <div
+                  className={cn(
+                    'flex items-center gap-1 animate-in slide-in-from-right-5 fade-in duration-300',
+                    isReorderMode && 'hidden'
+                  )}
+                >
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleDeleteColumn(column.id)}
+                    onClick={() => dialogDelete.open({ state: column.id })}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
+                  <CreateCardDialog
+                    columnId={column.id}
+                    onCardCreated={(newCard: ApiCard) => {
+                      setCards((prev) => [
+                        ...prev,
+                        { ...newCard, name: newCard.title, column: column.id },
+                      ]);
+                      router.refresh();
+                    }}
+                  >
+                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </CreateCardDialog>
                 </div>
-                <CreateCardDialog
-                  columnId={column.id}
-                  onCardCreated={(newCard: ApiCard) => {
-                    setCards((prev) => [
-                      ...prev,
-                      { ...newCard, name: newCard.title, column: column.id },
-                    ]);
-                    router.refresh();
-                  }}
-                >
-                  <Button variant="ghost" size="icon" className="h-6 w-6">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </CreateCardDialog>
               </KanbanHeader>
               <KanbanCards id={column.id}>
                 {(item) => (
-                  <KanbanCard id={item.id} name={item.name} column={item.column} key={item.id}>
-                    <EditCardDialog
-                      card={item as unknown as ApiCard}
-                      onCardUpdated={(updatedCard) => {
-                        setCards((prev) =>
-                          prev.map((c) =>
-                            c.id === updatedCard.id
-                              ? { ...updatedCard, name: updatedCard.title, column: item.column }
-                              : c
-                          )
-                        );
-                        router.refresh();
-                      }}
-                    >
-                      <div className="flex flex-col gap-2">
-                        <span className="font-medium">{item.name}</span>
-                        <>
-                          {item.description && (
-                            <span className="text-xs text-muted-foreground line-clamp-2">
-                              {String(item.description)}
-                            </span>
-                          )}
-                        </>
-                      </div>
-                    </EditCardDialog>
-                  </KanbanCard>
+                  <ProductionKanbanCard
+                    item={item as unknown as ApiCard & { name: string; column: string }}
+                    onCardUpdated={(updatedCard: ApiCard) => {
+                      setCards((prev) =>
+                        prev.map((c) =>
+                          c.id === updatedCard.id
+                            ? { ...updatedCard, name: updatedCard.title, column: item.column }
+                            : c
+                        )
+                      );
+                      router.refresh();
+                    }}
+                  />
                 )}
               </KanbanCards>
             </KanbanBoard>
           )}
         </KanbanProvider>
       </div>
+
+      <DialogAction
+        open={dialogDelete.isOpen}
+        onRefuse={dialogDelete.close}
+        title="Excluir coluna"
+        subtitle="Tem certeza que deseja excluir esta coluna?"
+        confirmButton={
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => [handleDeleteColumn(dialogDelete.state), dialogDelete.close()]}
+          >
+            Excluir
+          </Button>
+        }
+      />
     </div>
   );
 }

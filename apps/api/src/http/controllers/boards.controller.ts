@@ -5,6 +5,7 @@ import {
   createCardBodySchema,
   createColumnBodySchema,
   moveCardBodySchema,
+  moveColumnBodySchema,
   updateCardBodySchema,
 } from '@magic-system/schemas';
 import { FastifyReply, FastifyRequest } from 'fastify';
@@ -58,6 +59,14 @@ export async function deleteColumnController(request: FastifyRequest, reply: Fas
     }
     throw error;
   }
+}
+
+export async function moveColumnController(request: FastifyRequest, reply: FastifyReply) {
+  const { columnId, boardId, newOrder } = moveColumnBodySchema.parse(request.body);
+
+  await boardsService.moveColumn(columnId, boardId, newOrder);
+
+  return reply.status(204).send();
 }
 
 export async function createCardController(request: FastifyRequest, reply: FastifyReply) {

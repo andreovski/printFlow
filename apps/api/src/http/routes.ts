@@ -10,6 +10,7 @@ import {
   deleteCardController,
   createColumnController,
   deleteColumnController,
+  moveColumnController,
 } from './controllers/boards.controller';
 import {
   createBudgetController,
@@ -47,6 +48,13 @@ import {
   updateTagController,
   deleteTagController,
 } from './controllers/tags.controller';
+import {
+  createTemplateController,
+  fetchTemplatesController,
+  getTemplateController,
+  updateTemplateController,
+  deleteTemplateController,
+} from './controllers/templates.controller';
 import {
   createUserController,
   deleteUserController,
@@ -133,16 +141,24 @@ export async function appRoutes(app: FastifyInstance) {
     authRoutes.get('/boards', fetchBoardsController);
     authRoutes.post('/columns', createColumnController);
     authRoutes.delete('/columns/:columnId', deleteColumnController);
+    authRoutes.patch('/columns/move', moveColumnController);
     authRoutes.post('/columns/:columnId/cards', createCardController);
     authRoutes.patch('/cards/move', moveCardController);
     authRoutes.put('/cards/:id', updateCardController);
     authRoutes.delete('/cards/:id', deleteCardController);
 
-    // Tags
+    // Etiquetas
     authRoutes.post('/tags', createTagController);
     authRoutes.get('/tags', fetchTagsController);
     authRoutes.get('/tags/:id', getTagController);
     authRoutes.put('/tags/:id', updateTagController);
     authRoutes.delete('/tags/:id', deleteTagController);
+
+    // Templates
+    authRoutes.post('/templates', createTemplateController);
+    authRoutes.get('/templates', fetchTemplatesController);
+    authRoutes.get('/templates/:id', getTemplateController);
+    authRoutes.put('/templates/:id', updateTemplateController);
+    authRoutes.delete('/templates/:id', deleteTemplateController);
   });
 }

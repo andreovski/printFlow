@@ -45,11 +45,11 @@ enum CardPriority {
   URGENT
 }
 
-// Define onde a tag será visível
+// Define onde a tag/template será visível
 enum TagScope {
   GLOBAL      // Disponível em Orçamentos e Produção
   BUDGET      // Apenas Orçamentos
-  PRODUCTION  // Apenas Produção
+  BOARD       // Apenas Produção (Quadros)
 }
 model User {
   id             String        @id @default(uuid())
@@ -76,6 +76,7 @@ model Organization {
   budgets   Budget[]
   boards    Board[]
   tags      Tag[]
+  templates Template[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -168,6 +169,9 @@ model Budget {
 
   items          BudgetItem[]
 
+  // Relação many-to-many com tags
+  tags           Tag[]
+
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   deletedAt      DateTime?
@@ -238,7 +242,7 @@ model Card {
   title       String
   description String?      @db.Text
   position    Int
-  priority    CardPriority @default(MEDIUM)
+  priority    CardPriority? @default(MEDIUM)
   dueDate     DateTime?
 
   columnId    String
@@ -246,6 +250,8 @@ model Card {
 
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+
+  tags        Tag[]
 
   @@index([columnId])
   @@map("cards")
@@ -266,6 +272,10 @@ model Tag {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
 
+  // Relação many-to-many com Budget
+  budgets        Budget[]
+  cards          Card[]
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   deletedAt      DateTime?
@@ -273,4 +283,32 @@ model Tag {
   // Garante que não existam duas tags com o mesmo nome na mesma empresa
   @@unique([name, organizationId])
   @@map("tags")
+}
+
+enum TemplateScope {
+  GLOBAL
+  BOARD
+  BUDGET
+}
+
+model Template {
+  id        String        @id @default(cuid())
+  name      String
+  content   String        @db.Text
+  scope     TemplateScope
+
+  // Soft delete e controle de disponibilidade
+  active    Boolean       @default(true)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  deletedAt DateTime?
+
+  // Garante que não existam dois templates com o mesmo nome na mesma empresa
+  @@unique([name, organizationId])
+  @@map("templates")
+  @@index([scope])
 }

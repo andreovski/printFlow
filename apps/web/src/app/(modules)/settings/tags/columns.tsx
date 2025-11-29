@@ -11,14 +11,14 @@ export type Tag = {
   id: string;
   name: string;
   color: string;
-  scope: 'GLOBAL' | 'BUDGET' | 'PRODUCTION';
+  scope: 'GLOBAL' | 'BUDGET' | 'BOARD';
   active: boolean;
 };
 
 const scopeLabels: Record<Tag['scope'], string> = {
   GLOBAL: 'Global',
   BUDGET: 'Orçamentos',
-  PRODUCTION: 'Produção',
+  BOARD: 'Produção',
 };
 
 export const columns: ColumnDef<Tag>[] = [

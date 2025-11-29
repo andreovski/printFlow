@@ -18,6 +18,7 @@ interface CreateBudgetDTO {
   discountValue?: number | null;
   advancePayment?: number | null;
   notes?: string | null;
+  tagIds?: string[];
   items: CreateBudgetItemDTO[];
 }
 
@@ -28,6 +29,7 @@ interface UpdateBudgetDTO {
   discountValue?: number | null;
   advancePayment?: number | null;
   notes?: string | null;
+  tagIds?: string[];
   items?: CreateBudgetItemDTO[];
   archived?: boolean;
 }
@@ -42,7 +44,7 @@ export class BudgetsService {
   }
 
   async create(data: CreateBudgetDTO): Promise<Budget> {
-    const { items, ...budgetData } = data;
+    const { items, tagIds, ...budgetData } = data;
 
     // Fetch products to get snapshot data
     const productIds = items.map((i) => i.productId);
@@ -96,6 +98,7 @@ export class BudgetsService {
       status: 'DRAFT',
       subtotal,
       total,
+      tags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
       items: {
         create: budgetItemsData,
       },
@@ -103,7 +106,7 @@ export class BudgetsService {
   }
 
   async update(id: string, data: UpdateBudgetDTO): Promise<Budget> {
-    const { items, ...budgetData } = data;
+    const { items, tagIds, ...budgetData } = data;
 
     // If items are provided, we need to recalculate everything
     if (items) {
@@ -179,12 +182,20 @@ export class BudgetsService {
         id,
         {
           ...budgetData,
+          tagIds,
           subtotal,
           total,
         },
         budgetItemsData
       );
     } else {
+      // Se apenas tagIds foi passado (sem items), atualizar normalmente
+      if (tagIds !== undefined) {
+        return await this.budgetsRepository.update(id, {
+          ...budgetData,
+          tags: { set: tagIds.map((tagId) => ({ id: tagId })) },
+        });
+      }
       return await this.budgetsRepository.update(id, budgetData);
     }
   }

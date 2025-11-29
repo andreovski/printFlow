@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Client } from './clients';
+import { Tag } from './tags';
 
 export const budgetStatusSchema = z.enum(['DRAFT', 'SENT', 'REJECTED', 'ACCEPTED', 'INACTIVE']);
 
@@ -19,6 +20,7 @@ export const createBudgetBodySchema = z.object({
   discountValue: z.coerce.number().nonnegative().optional().nullable(),
   advancePayment: z.coerce.number().nonnegative().optional().nullable(),
   notes: z.string().optional().nullable(),
+  tagIds: z.array(z.string().uuid()).optional().nullable(),
   items: z.array(budgetItemSchema).min(1),
 });
 
@@ -82,6 +84,7 @@ export interface Budget {
   subtotal: number;
   total: number;
   notes: string | null;
+  tags: Tag[];
   items: BudgetItemEntity[];
   createdAt: Date;
   updatedAt: Date;

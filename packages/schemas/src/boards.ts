@@ -8,21 +8,29 @@ export type CardPriority = z.infer<typeof cardPriorityEnum>;
 export const createCardBodySchema = z.object({
   title: z.string().min(1, 'O título é obrigatório'),
   description: z.string().optional(),
-  priority: cardPriorityEnum.default('MEDIUM'),
+  priority: cardPriorityEnum.nullable().optional(),
   dueDate: z.string().datetime().optional(),
+  tagIds: z.array(z.string()).optional(),
 });
 
 export const updateCardBodySchema = z.object({
   title: z.string().min(1, 'O título é obrigatório').optional(),
   description: z.string().optional(),
-  priority: cardPriorityEnum.optional(),
+  priority: cardPriorityEnum.nullable().optional(),
   dueDate: z.string().datetime().optional(),
+  tagIds: z.array(z.string()).optional(),
 });
 
 export const moveCardBodySchema = z.object({
   cardId: z.string().uuid(),
   destinationColumnId: z.string().uuid(),
   newPosition: z.number().int().min(0),
+});
+
+export const moveColumnBodySchema = z.object({
+  columnId: z.string().uuid(),
+  boardId: z.string().uuid(),
+  newOrder: z.number().int().min(0),
 });
 
 // Board Schemas
@@ -49,6 +57,7 @@ export const columnIdParamsSchema = z.object({
 export type CreateCardBody = z.infer<typeof createCardBodySchema>;
 export type UpdateCardBody = z.infer<typeof updateCardBodySchema>;
 export type MoveCardBody = z.infer<typeof moveCardBodySchema>;
+export type MoveColumnBody = z.infer<typeof moveColumnBodySchema>;
 export type CreateBoardBody = z.infer<typeof createBoardBodySchema>;
 export type CreateColumnBody = z.infer<typeof createColumnBodySchema>;
 export type CardIdParams = z.infer<typeof cardIdParamsSchema>;
@@ -60,11 +69,12 @@ export interface Card {
   title: string;
   description?: string;
   position: number;
-  priority: CardPriority;
+  priority: CardPriority | null;
   dueDate?: string;
   columnId: string;
   createdAt: string;
   updatedAt: string;
+  tags?: any[]; // Using any[] temporarily to avoid circular dependency or import issues, ideally should be Tag[]
 }
 
 export interface BoardColumn {

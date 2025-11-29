@@ -32,8 +32,8 @@ export default async function TagsLayout({ children }: { children: React.ReactNo
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Tags</h1>
+        <div className="flex flex-col gap-3">
+          <h1 className="text-3xl font-bold">Etiquetas</h1>
           <p className="text-muted-foreground">
             Gerencie as etiquetas para classificar orçamentos e cards de produção
           </p>
@@ -41,7 +41,7 @@ export default async function TagsLayout({ children }: { children: React.ReactNo
         <Button asChild>
           <Link href="/settings/tags/create">
             <Plus className="mr-2 h-4 w-4" />
-            Criar Tag
+            Criar Etiqueta
           </Link>
         </Button>
       </div>

@@ -15,6 +15,7 @@ import {
   DollarSign,
   Settings,
   Tags,
+  Kanban,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -64,8 +65,11 @@ export function Sidebar({ role, userName, userEmail }: SidebarProps) {
   ];
 
   const financeItems = [{ href: '/finance/budgets', label: 'Orçamentos', icon: FileText }];
-  const productionItems = [{ href: '/production/boards', label: 'Quadros', icon: LayoutDashboard }];
-  const settingsItems = [{ href: '/settings/tags', label: 'Tags', icon: Tags }];
+  const productionItems = [{ href: '/production/boards', label: 'Quadros', icon: Kanban }];
+  const settingsItems = [
+    { href: '/settings/tags', label: 'Etiquetas', icon: Tags },
+    { href: '/settings/templates', label: 'Templates', icon: FileText },
+  ];
 
   const filteredRegisterItems = registerItems.filter((item) => {
     if (item.requiresRole) {
@@ -85,7 +89,7 @@ export function Sidebar({ role, userName, userEmail }: SidebarProps) {
     <aside
       className={cn(
         'relative border-r bg-muted/10 transition-all duration-300 flex flex-col h-screen',
-        collapsed.isOpen ? 'w-16' : 'w-64'
+        collapsed.isOpen ? 'w-16' : 'w-full sm:w-64'
       )}
     >
       {/* Header */}

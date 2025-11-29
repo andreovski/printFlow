@@ -41,7 +41,7 @@ export function BudgetsContent({ budgets }: BudgetsContentProps) {
           onClick={() => kanbanView.toggle()}
         >
           <LayoutGrid className="h-4 w-4 mr-2" />
-          Kanban
+          Quadro
         </Button>
       </div>
 

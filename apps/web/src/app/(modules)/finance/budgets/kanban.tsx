@@ -1,6 +1,6 @@
 'use client';
 
-import { Budget, BudgetStatus, budgetStatusLabel } from '@magic-system/schemas';
+import { Budget, BudgetStatus, budgetStatusLabel, Tag } from '@magic-system/schemas';
 import { budgetStatusColors } from '@magic-system/schemas';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -32,6 +32,7 @@ interface BudgetKanbanData extends Record<string, unknown> {
   code: number;
   clientName: string;
   clientPhone?: string;
+  tags: Tag[];
   total: number;
   createdAt: Date;
   expirationDate: Date | null;
@@ -53,6 +54,7 @@ export const Kanban = ({ budgets }: KanbanProps) => {
     code: budget.code,
     clientName: budget.client.name,
     clientPhone: budget.client.phone,
+    tags: budget.tags || [],
     total: Number(budget.total),
     createdAt: new Date(budget.createdAt),
     expirationDate: budget.expirationDate ? new Date(budget.expirationDate) : null,
@@ -70,6 +72,7 @@ export const Kanban = ({ budgets }: KanbanProps) => {
         code: budget.code,
         clientName: budget.client.name,
         clientPhone: budget.client.phone,
+        tags: budget.tags || [],
         total: Number(budget.total),
         createdAt: new Date(budget.createdAt),
         expirationDate: budget.expirationDate ? new Date(budget.expirationDate) : null,
@@ -159,6 +162,18 @@ export const Kanban = ({ budgets }: KanbanProps) => {
                         <p className="m-0 text-xs text-muted-foreground truncate">
                           {budget.clientName}
                         </p>
+
+                        <div className="flex flex-wrap gap-1">
+                          {budget.tags.map((tag) => (
+                            <span
+                              key={tag.id}
+                              className="px-2 p-0.5 rounded-sm text-[0.5rem] font-medium text-white"
+                              style={{ backgroundColor: tag.color }}
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">

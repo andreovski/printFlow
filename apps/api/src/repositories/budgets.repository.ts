@@ -8,6 +8,7 @@ export class BudgetsRepository {
       data,
       include: {
         items: true,
+        tags: true,
         client: true,
       },
     });
@@ -29,6 +30,7 @@ export class BudgetsRepository {
         },
         include: {
           client: true,
+          tags: true,
         },
         orderBy: {
           createdAt: 'desc',
@@ -64,6 +66,7 @@ export class BudgetsRepository {
         },
         include: {
           client: true,
+          tags: true,
         },
         orderBy: {
           createdAt: 'desc',
@@ -88,6 +91,7 @@ export class BudgetsRepository {
       where: { id },
       include: {
         items: true,
+        tags: true,
         client: true,
       },
     });
@@ -103,6 +107,7 @@ export class BudgetsRepository {
       data,
       include: {
         items: true,
+        tags: true,
         client: true,
       },
     });
@@ -110,22 +115,26 @@ export class BudgetsRepository {
 
   async updateWithItems(
     id: string,
-    data: Prisma.BudgetUncheckedUpdateInput,
+    data: Prisma.BudgetUncheckedUpdateInput & { tagIds?: string[] },
     itemsData: Prisma.BudgetItemUncheckedCreateWithoutBudgetInput[]
   ): Promise<Budget> {
     return await prisma.$transaction(async (tx) => {
       await tx.budgetItem.deleteMany({ where: { budgetId: id } });
 
+      const { tagIds, ...budgetData } = data;
+
       return await tx.budget.update({
         where: { id },
         data: {
-          ...data,
+          ...budgetData,
+          tags: tagIds ? { set: tagIds.map((tagId) => ({ id: tagId })) } : undefined,
           items: {
             create: itemsData,
           },
         },
         include: {
           items: true,
+          tags: true,
           client: true,
         },
       });

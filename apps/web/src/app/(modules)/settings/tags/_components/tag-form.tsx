@@ -28,7 +28,7 @@ interface TagFormProps {
   initialData?: {
     name: string;
     color: string;
-    scope: 'GLOBAL' | 'BUDGET' | 'PRODUCTION';
+    scope: 'GLOBAL' | 'BUDGET' | 'BOARD';
     active: boolean;
   };
 }
@@ -90,9 +90,9 @@ export function TagForm({ id, initialData }: TagFormProps) {
                   <SelectValue placeholder="Selecione o escopo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="GLOBAL">Global (Todo o sistema)</SelectItem>
+                  <SelectItem value="GLOBAL">Global</SelectItem>
                   <SelectItem value="BUDGET">Orçamentos</SelectItem>
-                  <SelectItem value="PRODUCTION">Produção</SelectItem>
+                  <SelectItem value="BOARD">Quadros</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">

@@ -51,12 +51,14 @@ type KanbanContextProps<
   columns: C[];
   data: T[];
   activeCardId: string | null;
+  isReorderMode?: boolean;
 };
 
 const KanbanContext = createContext<KanbanContextProps>({
   columns: [],
   data: [],
   activeCardId: null,
+  isReorderMode: false,
 });
 
 export type KanbanBoardProps = {
@@ -66,18 +68,41 @@ export type KanbanBoardProps = {
 };
 
 export const KanbanBoard = ({ id, children, className }: KanbanBoardProps) => {
-  const { isOver, setNodeRef } = useDroppable({
+  const { isReorderMode } = useContext(KanbanContext);
+
+  const { isOver, setNodeRef: setDroppableRef } = useDroppable({
     id,
   });
 
+  const { attributes, listeners, setNodeRef, transition, transform, isDragging } = useSortable({
+    id,
+    disabled: !isReorderMode, // Only enable sorting in reorder mode
+  });
+
+  const style = {
+    transition,
+    transform: CSS.Transform.toString(transform),
+  };
+
+  // Combine refs
+  const combinedRef = (node: HTMLDivElement | null) => {
+    setNodeRef(node);
+    setDroppableRef(node);
+  };
+
   return (
     <div
+      ref={combinedRef}
+      style={style}
+      {...attributes}
+      {...(isReorderMode ? listeners : {})} // Only apply listeners in reorder mode
       className={cn(
         'flex size-full min-h-40 flex-col divide-y overflow-hidden rounded-md border bg-secondary text-xs shadow-sm ring-2 transition-all',
         isOver ? 'ring-primary' : 'ring-transparent',
+        isDragging && 'opacity-50',
+        isReorderMode && 'cursor-grab active:cursor-grabbing',
         className
       )}
-      ref={setNodeRef}
     >
       {children}
     </div>
@@ -97,10 +122,12 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
   className,
   onClick,
 }: KanbanCardProps<T>) => {
+  const { activeCardId, isReorderMode } = useContext(KanbanContext) as KanbanContextProps;
+
   const { attributes, listeners, setNodeRef, transition, transform, isDragging } = useSortable({
     id,
+    disabled: isReorderMode, // Disable card dragging in reorder mode
   });
-  const { activeCardId } = useContext(KanbanContext) as KanbanContextProps;
 
   const style = {
     transition,
@@ -112,16 +139,21 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
       <div style={style} {...attributes} ref={setNodeRef}>
         <Card className={cn('gap-4 rounded-md shadow-sm', isDragging && 'opacity-30', className)}>
           <div className="flex items-start gap-2 p-2 relative">
-            <div onClick={onClick} className="flex-1 cursor-pointer">
+            <div
+              onClick={isReorderMode ? undefined : onClick}
+              className={cn('flex-1', !isReorderMode && 'cursor-pointer')}
+            >
               {children ?? <p className="m-0 font-medium text-sm">{name}</p>}
             </div>
 
-            <div
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors absolute right-2 top-2"
-            >
-              <GripVertical className="h-4 w-4" />
-            </div>
+            {!isReorderMode && (
+              <div
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors absolute right-2 top-2"
+              >
+                <GripVertical className="h-4 w-4" />
+              </div>
+            )}
           </div>
         </Card>
       </div>
@@ -187,9 +219,11 @@ export type KanbanProviderProps<
   columns: C[];
   data: T[];
   onDataChange?: (data: T[]) => void;
+  onColumnsChange?: (columns: C[]) => void;
   onDragStart?: (event: DragStartEvent) => void;
   onDragEnd?: (event: DragEndEvent) => void;
   onDragOver?: (event: DragOverEvent) => void;
+  isReorderMode?: boolean;
 };
 
 export const KanbanProvider = <
@@ -204,9 +238,12 @@ export const KanbanProvider = <
   columns,
   data,
   onDataChange,
+  onColumnsChange,
+  isReorderMode = false,
   ...props
 }: KanbanProviderProps<T, C>) => {
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [_activeColumnId, setActiveColumnId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(MouseSensor),
@@ -215,10 +252,25 @@ export const KanbanProvider = <
   );
 
   const handleDragStart = (event: DragStartEvent) => {
+    // Disable card dragging in reorder mode
+    if (isReorderMode) {
+      const column = columns.find((col) => col.id === event.active.id);
+      if (column) {
+        setActiveColumnId(event.active.id as string);
+      }
+      onDragStart?.(event);
+      return;
+    }
+
     const card = data.find((item) => item.id === event.active.id);
+    const column = columns.find((col) => col.id === event.active.id);
+
     if (card) {
       setActiveCardId(event.active.id as string);
+    } else if (column) {
+      setActiveColumnId(event.active.id as string);
     }
+
     onDragStart?.(event);
   };
 
@@ -243,6 +295,7 @@ export const KanbanProvider = <
 
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveCardId(null);
+    setActiveColumnId(null);
 
     onDragEnd?.(event);
 
@@ -252,6 +305,20 @@ export const KanbanProvider = <
       return;
     }
 
+    // Check if we're dragging a column
+    const activeColumn = columns.find((col) => col.id === active.id);
+    const overColumn = columns.find((col) => col.id === over.id);
+
+    if (activeColumn && overColumn && active.id !== over.id) {
+      // Column reordering
+      const oldIndex = columns.findIndex((col) => col.id === active.id);
+      const newIndex = columns.findIndex((col) => col.id === over.id);
+      const newColumns = arrayMove(columns, oldIndex, newIndex);
+      onColumnsChange?.(newColumns);
+      return;
+    }
+
+    // Card dragging logic
     let newData = [...data];
 
     const activeItem = newData.find((item) => item.id === active.id);
@@ -261,14 +328,14 @@ export const KanbanProvider = <
       return;
     }
 
-    const activeColumn = activeItem.column;
-    const overColumn =
+    const activeCardColumn = activeItem.column;
+    const overCardColumn =
       overItem?.column || columns.find((col) => col.id === over.id)?.id || columns[0]?.id;
 
     // Se mudou de coluna, atualiza a propriedade column
-    if (activeColumn !== overColumn) {
+    if (activeCardColumn !== overCardColumn) {
       const activeIndex = newData.findIndex((item) => item.id === active.id);
-      newData[activeIndex] = { ...newData[activeIndex], column: overColumn };
+      newData[activeIndex] = { ...newData[activeIndex], column: overCardColumn };
     }
 
     // Reordena os items se necessário
@@ -307,7 +374,7 @@ export const KanbanProvider = <
   };
 
   return (
-    <KanbanContext.Provider value={{ columns, data, activeCardId }}>
+    <KanbanContext.Provider value={{ columns, data, activeCardId, isReorderMode }}>
       <DndContext
         accessibility={{ announcements }}
         collisionDetection={closestCenter}
@@ -317,9 +384,11 @@ export const KanbanProvider = <
         sensors={sensors}
         {...props}
       >
-        <div className={cn('flex h-full gap-4', className)}>
-          {columns.map((column) => children(column))}
-        </div>
+        <SortableContext items={columns.map((col) => col.id)}>
+          <div className={cn('flex flex-col md:flex-row h-full gap-4', className)}>
+            {columns.map((column) => children(column))}
+          </div>
+        </SortableContext>
         {typeof window !== 'undefined' &&
           createPortal(
             <DragOverlay>

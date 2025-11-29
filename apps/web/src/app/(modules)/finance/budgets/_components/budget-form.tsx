@@ -1,15 +1,18 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { budgetStatusSchema } from '@magic-system/schemas';
+import { budgetStatusSchema, Template } from '@magic-system/schemas';
+import { useCurrentEditor } from '@tiptap/react';
 import { Archive, Copy, Package, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { DialogAction } from '@/components/dialog-action';
+import { TagSelect } from '@/components/tag-select';
+import { TemplateSelector } from '@/components/template-selector';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -22,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { EditorProvider } from '@/components/ui/shadcn-io/editor';
 import {
   Table,
   TableBody,
@@ -30,7 +34,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
 import { useDisclosure } from '@/hooks/use-disclosure';
 
 import {
@@ -44,6 +47,21 @@ import { ClientSelect } from './client-select';
 import { ProductSelect } from './product-select';
 import { StatusSelect } from './status-select';
 
+// Component to sync external content changes to the editor
+function EditorContentSync({ content }: { content: string | null }) {
+  const { editor } = useCurrentEditor();
+  const lastSyncedContent = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (editor && content !== null && content !== lastSyncedContent.current) {
+      editor.commands.setContent(content);
+      lastSyncedContent.current = content;
+    }
+  }, [editor, content]);
+
+  return null;
+}
+
 const formSchema = z.object({
   clientId: z.string({ message: 'Cliente é obrigatório' }).min(1, 'Cliente é obrigatório'),
   expirationDate: z.string().optional(),
@@ -52,6 +70,7 @@ const formSchema = z.object({
   advancePayment: z.coerce.number().optional(),
   notes: z.string().optional(),
   status: budgetStatusSchema.default('DRAFT'),
+  tagIds: z.array(z.string()).optional(),
   items: z
     .array(
       z.object({
@@ -82,6 +101,14 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
   const duplicateDialog = useDisclosure();
   const archiveDialog = useDisclosure();
 
+  // State to track template content that needs to be synced to editor
+  const [templateContent, setTemplateContent] = useState<string | null>(null);
+
+  const handleTemplateSelect = (template: Template) => {
+    setTemplateContent(template.content);
+    form.setValue('notes', template.content);
+  };
+
   const isReadOnly = initialData?.status === 'SENT' || initialData?.status === 'INACTIVE';
 
   const form = useForm<FormData>({
@@ -97,6 +124,7 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
           advancePayment: initialData.advancePayment ? Number(initialData.advancePayment) : 0,
           notes: initialData.notes,
           status: initialData.status || 'DRAFT',
+          tagIds: initialData.tags?.map((t: any) => t.id) || [],
           items: initialData.items.map((i: any) => ({
             productId: i.productId,
             name: i.name,
@@ -115,6 +143,7 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
           discountType: 'VALUE' as const,
           discountValue: 0,
           advancePayment: 0,
+          tagIds: [],
         },
   });
 
@@ -191,6 +220,7 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
         discountValue: initialData.discountValue,
         advancePayment: initialData.advancePayment,
         notes: initialData.notes,
+        tagIds: initialData.tags?.map((t: any) => t.id) || [],
         items: initialData.items.map((i: any) => ({
           productId: i.productId,
           name: i.name,
@@ -243,7 +273,7 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
     <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-2">
       <Card className="border-none shadow-none">
         <CardContent className="p-6 space-y-4 ">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-center">
             <div className="space-y-2">
               <Label>Cliente</Label>
               <ClientSelect
@@ -267,7 +297,7 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
                 render={({ field }) => (
                   <DatePicker
                     value={field.value ? new Date(field.value) : undefined}
-                    onChange={(date) => field.onChange(date?.toISOString().split('T')[0] || '')}
+                    onChange={(date) => field.onChange(date ? date?.toISOString() : undefined)}
                     placeholder="Selecione uma data"
                     disabled={isReadOnly}
                   />
@@ -286,6 +316,17 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
                 />
               </div>
             )}
+
+            <div className="flex flex-col space-y-2 min-w-[250px]">
+              <Label className="text-xs font-semibold">Etiquetas</Label>
+              <TagSelect
+                value={form.watch('tagIds') || []}
+                onSelect={(tagIds) => form.setValue('tagIds', tagIds)}
+                scope="BUDGET"
+                disabled={isReadOnly}
+                placeholder="Selecione etiquetas..."
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -410,7 +451,7 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
       </Card>
 
       <Card className="border-none shadow-none">
-        <CardContent className="p-6 flex gap-4">
+        <CardContent className="p-6 flex flex-wrap gap-4">
           <div className="flex flex-col gap-2">
             <Label className="text-xs font-semibold">Desconto Global</Label>
             <div className="flex gap-2">
@@ -455,15 +496,26 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
       <Card className="border-none shadow-none">
         <CardContent className="space-y-4">
           <Label>Observações</Label>
-          <Textarea
-            {...form.register('notes')}
-            placeholder="Observações internas ou para o cliente"
-            disabled={isReadOnly}
+          {!isReadOnly && <TemplateSelector scope="BUDGET" onSelect={handleTemplateSelect} />}
+          <Controller
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <EditorProvider
+                content={field.value || ''}
+                onUpdate={({ editor }) => field.onChange(editor.getHTML())}
+                placeholder="Observações internas ou para o cliente"
+                className="min-h-[150px] border rounded-md p-4"
+                editable={!isReadOnly}
+              >
+                <EditorContentSync content={templateContent} />
+              </EditorProvider>
+            )}
           />
         </CardContent>
       </Card>
 
-      <Card className="p-0 flex flex gap-2 sticky bottom-0 z-10 mt-auto border-t bg-transparent rounded-none border-none">
+      <Card className="p-0 flex gap-2 sticky bottom-0 z-10 mt-auto border-t bg-transparent rounded-none border-none">
         <CardFooter className="flex md:flex-row flex-col w-full bg-background/35 backdrop-blur-sm py-2 px-4 gap-2 justify-between items-center border-t-[1px]">
           <div className="flex gap-1 md:gap-4 lg:gap-8 flex-col lg:flex-row self-start md:self-center">
             <div className="flex gap-2 items-center">

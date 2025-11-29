@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Enum para escopo da tag
-export const TagScopeEnum = z.enum(['GLOBAL', 'BUDGET', 'PRODUCTION']);
+export const TagScopeEnum = z.enum(['GLOBAL', 'BUDGET', 'BOARD']);
 export type TagScope = z.infer<typeof TagScopeEnum>;
 
 // Regex para validar cor HEX

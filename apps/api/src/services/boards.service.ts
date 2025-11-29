@@ -59,6 +59,40 @@ export class BoardsService {
     await boardsRepository.deleteColumn(columnId);
   }
 
+  async moveColumn(columnId: string, boardId: string, newOrder: number): Promise<void> {
+    const columns = await boardsRepository.findColumnsByBoardId(boardId);
+
+    const columnToMove = columns.find((col) => col.id === columnId);
+    if (!columnToMove) {
+      throw new Error('Column not found');
+    }
+
+    const oldOrder = columnToMove.order;
+
+    if (oldOrder === newOrder) {
+      return;
+    }
+
+    // Reorder all columns
+    const updates: { id: string; order: number }[] = [];
+
+    columns.forEach((col) => {
+      if (col.id === columnId) {
+        updates.push({ id: col.id, order: newOrder });
+      } else if (oldOrder < newOrder && col.order > oldOrder && col.order <= newOrder) {
+        // Moving right: shift columns left
+        updates.push({ id: col.id, order: col.order - 1 });
+      } else if (oldOrder > newOrder && col.order >= newOrder && col.order < oldOrder) {
+        // Moving left: shift columns right
+        updates.push({ id: col.id, order: col.order + 1 });
+      } else {
+        updates.push({ id: col.id, order: col.order });
+      }
+    });
+
+    await boardsRepository.updateManyColumnOrders(boardId, updates);
+  }
+
   async createCard(data: CreateCardBody & { columnId: string }): Promise<Card> {
     const card = await boardsRepository.createCard({
       title: data.title,
@@ -67,6 +101,7 @@ export class BoardsService {
       dueDate: data.dueDate,
       columnId: data.columnId,
       position: 0,
+      tagIds: (data as any).tagIds,
     });
     return card as unknown as Card;
   }
@@ -125,7 +160,10 @@ export class BoardsService {
   }
 
   async updateCard(id: string, data: UpdateCardBody): Promise<Card> {
-    const card = await boardsRepository.updateCard(id, data);
+    const card = await boardsRepository.updateCard(id, {
+      ...data,
+      tagIds: (data as any).tagIds,
+    });
     return card as unknown as Card;
   }
 

@@ -8,7 +8,7 @@ import type {
   UpdateCardBody,
 } from '@magic-system/schemas';
 
-import { api } from '@/app/http/api';
+import { api } from '../api';
 
 export type { Board, Card };
 
@@ -46,6 +46,20 @@ export async function moveCard(
       cardId,
       destinationColumnId,
       newPosition,
+    },
+  });
+}
+
+export async function moveColumn(
+  columnId: string,
+  boardId: string,
+  newOrder: number
+): Promise<void> {
+  await api.patch('columns/move', {
+    json: {
+      columnId,
+      boardId,
+      newOrder,
     },
   });
 }

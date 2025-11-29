@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "TagScope" AS ENUM ('GLOBAL', 'BUDGET', 'PRODUCTION');
+CREATE TYPE "TagScope" AS ENUM ('GLOBAL', 'BUDGET', 'BOARD');
 
 -- CreateTable
 CREATE TABLE "tags" (

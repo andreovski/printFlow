@@ -29,6 +29,9 @@ export class BoardsRepository {
         columns: {
           include: {
             cards: {
+              include: {
+                tags: true,
+              },
               orderBy: {
                 position: 'asc',
               },
@@ -52,6 +55,9 @@ export class BoardsRepository {
         columns: {
           include: {
             cards: {
+              include: {
+                tags: true,
+              },
               orderBy: {
                 position: 'asc',
               },
@@ -69,7 +75,11 @@ export class BoardsRepository {
     return await prisma.boardColumn.findUnique({
       where: { id },
       include: {
-        cards: true,
+        cards: {
+          include: {
+            tags: true,
+          },
+        },
       },
     });
   }
@@ -94,7 +104,7 @@ export class BoardsRepository {
     });
   }
 
-  async createCard(data: Prisma.CardUncheckedCreateInput): Promise<Card> {
+  async createCard(data: Prisma.CardUncheckedCreateInput & { tagIds?: string[] }): Promise<Card> {
     const lastCard = await prisma.card.findFirst({
       where: { columnId: data.columnId },
       orderBy: { position: 'desc' },
@@ -102,18 +112,43 @@ export class BoardsRepository {
 
     const position = lastCard ? lastCard.position + 1 : 0;
 
+    const { tagIds, ...rest } = data;
+
     return await prisma.card.create({
       data: {
-        ...data,
+        ...rest,
         position,
+        tags: tagIds
+          ? {
+              connect: tagIds.map((id) => ({ id })),
+            }
+          : undefined,
+      },
+      include: {
+        tags: true,
       },
     });
   }
 
-  async updateCard(id: string, data: Prisma.CardUncheckedUpdateInput): Promise<Card> {
+  async updateCard(
+    id: string,
+    data: Prisma.CardUncheckedUpdateInput & { tagIds?: string[] }
+  ): Promise<Card> {
+    const { tagIds, ...rest } = data;
+
     return await prisma.card.update({
       where: { id },
-      data,
+      data: {
+        ...rest,
+        tags: tagIds
+          ? {
+              set: tagIds.map((id) => ({ id })),
+            }
+          : undefined,
+      },
+      include: {
+        tags: true,
+      },
     });
   }
 
@@ -126,6 +161,9 @@ export class BoardsRepository {
   async findCardById(id: string): Promise<Card | null> {
     return await prisma.card.findUnique({
       where: { id },
+      include: {
+        tags: true,
+      },
     });
   }
 
@@ -184,6 +222,34 @@ export class BoardsRepository {
         columnId,
         position,
       },
+    });
+  }
+
+  async updateColumnOrder(columnId: string, order: number): Promise<void> {
+    await prisma.boardColumn.update({
+      where: { id: columnId },
+      data: { order },
+    });
+  }
+
+  async updateManyColumnOrders(
+    boardId: string,
+    updates: { id: string; order: number }[]
+  ): Promise<void> {
+    await prisma.$transaction(
+      updates.map(({ id, order }) =>
+        prisma.boardColumn.update({
+          where: { id },
+          data: { order },
+        })
+      )
+    );
+  }
+
+  async findColumnsByBoardId(boardId: string): Promise<BoardColumn[]> {
+    return await prisma.boardColumn.findMany({
+      where: { boardId },
+      orderBy: { order: 'asc' },
     });
   }
 }
