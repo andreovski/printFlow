@@ -276,6 +276,10 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
                       );
                       router.refresh();
                     }}
+                    onCardDeleted={(cardId: string) => {
+                      setCards((prev) => prev.filter((c) => c.id !== cardId));
+                      router.refresh();
+                    }}
                   />
                 )}
               </KanbanCards>

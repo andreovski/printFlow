@@ -18,7 +18,7 @@ export type Tag = {
 const scopeLabels: Record<Tag['scope'], string> = {
   GLOBAL: 'Global',
   BUDGET: 'Orçamentos',
-  BOARD: 'Produção',
+  BOARD: 'Quadros',
 };
 
 export const columns: ColumnDef<Tag>[] = [

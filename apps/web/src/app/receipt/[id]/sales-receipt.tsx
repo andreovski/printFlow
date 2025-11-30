@@ -60,7 +60,7 @@ export const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(
     // Calculate balance due
     const advancePayment = Number(budget.advancePayment ?? 0);
     const total = Number(budget.total);
-    const balanceDue = total - advancePayment;
+    const balanceDue = total;
 
     return (
       <div

@@ -7,6 +7,7 @@ import {
   moveCardBodySchema,
   moveColumnBodySchema,
   updateCardBodySchema,
+  approvedBudgetOptionsQuerySchema,
 } from '@magic-system/schemas';
 import { FastifyReply, FastifyRequest } from 'fastify';
 
@@ -53,8 +54,8 @@ export async function deleteColumnController(request: FastifyRequest, reply: Fas
   try {
     await boardsService.deleteColumn(columnId);
     return reply.status(204).send();
-  } catch (error: any) {
-    if (error.message === 'Não é possível deletar colunas com cartões') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Não é possível deletar colunas com cartões') {
       return reply.status(400).send({ message: error.message });
     }
     throw error;
@@ -70,18 +71,34 @@ export async function moveColumnController(request: FastifyRequest, reply: Fasti
 }
 
 export async function createCardController(request: FastifyRequest, reply: FastifyReply) {
-  const { title, description, priority, dueDate } = createCardBodySchema.parse(request.body);
+  const { title, description, priority, dueDate, tagIds, budgetId } = createCardBodySchema.parse(
+    request.body
+  );
   const { columnId } = columnIdParamsSchema.parse(request.params);
 
-  const card = await boardsService.createCard({
-    title,
-    description,
-    priority,
-    dueDate,
-    columnId,
-  });
+  try {
+    const card = await boardsService.createCard({
+      title,
+      description,
+      priority,
+      dueDate,
+      columnId,
+      tagIds,
+      budgetId,
+    });
 
-  return reply.status(201).send(card);
+    return reply.status(201).send(card);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      if (
+        error.message === 'Orçamento não encontrado' ||
+        error.message === 'Apenas orçamentos aprovados podem ser vinculados a um cartão'
+      ) {
+        return reply.status(400).send({ message: error.message });
+      }
+    }
+    throw error;
+  }
 }
 
 export async function moveCardController(request: FastifyRequest, reply: FastifyReply) {
@@ -107,4 +124,18 @@ export async function deleteCardController(request: FastifyRequest, reply: Fasti
   await boardsService.deleteCard(id);
 
   return reply.status(204).send();
+}
+
+export async function fetchApprovedBudgetsController(request: FastifyRequest, reply: FastifyReply) {
+  const organizationId = request.user.organizationId;
+
+  if (!organizationId) {
+    return reply.status(400).send({ message: 'Organization ID is required' });
+  }
+
+  const { search } = approvedBudgetOptionsQuerySchema.parse(request.query);
+
+  const budgets = await boardsService.getApprovedBudgetsForCardLink(organizationId, search);
+
+  return reply.status(200).send({ data: budgets });
 }

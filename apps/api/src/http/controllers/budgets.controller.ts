@@ -16,6 +16,7 @@ export async function createBudgetController(request: FastifyRequest, reply: Fas
 
   const budget = await budgetsService.create({
     ...body,
+    tagIds: body.tagIds || [],
     organizationId,
   });
 
@@ -94,7 +95,10 @@ export async function updateBudgetController(request: FastifyRequest, reply: Fas
     }
   }
 
-  const budget = await budgetsService.update(id, body);
+  const budget = await budgetsService.update(id, {
+    ...body,
+    tagIds: body.tagIds || [],
+  });
   return reply.status(200).send({ budget });
 }
 

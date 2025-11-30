@@ -45,6 +45,7 @@ export const formatDocument = (value: string) => {
 };
 
 export const formatPhone = (value: string) => {
+  if (!value) return null;
   return maskPhone(value);
 };
 

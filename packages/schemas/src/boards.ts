@@ -11,6 +11,7 @@ export const createCardBodySchema = z.object({
   priority: cardPriorityEnum.nullable().optional(),
   dueDate: z.string().datetime().optional(),
   tagIds: z.array(z.string()).optional(),
+  budgetId: z.string().uuid().optional().nullable(),
 });
 
 export const updateCardBodySchema = z.object({
@@ -19,6 +20,7 @@ export const updateCardBodySchema = z.object({
   priority: cardPriorityEnum.nullable().optional(),
   dueDate: z.string().datetime().optional(),
   tagIds: z.array(z.string()).optional(),
+  // budgetId não pode ser alterado após criação - removido do update
 });
 
 export const moveCardBodySchema = z.object({
@@ -64,6 +66,25 @@ export type CardIdParams = z.infer<typeof cardIdParamsSchema>;
 export type ColumnIdParams = z.infer<typeof columnIdParamsSchema>;
 
 // Response Types
+export interface CardBudgetItem {
+  id: string;
+  name: string;
+  quantity: number;
+  salePrice: number;
+  total: number;
+}
+
+export interface CardBudget {
+  id: string;
+  code: number;
+  total: number;
+  client: {
+    name: string;
+    phone: string;
+  };
+  items: CardBudgetItem[];
+}
+
 export interface Card {
   id: string;
   title: string;
@@ -72,6 +93,8 @@ export interface Card {
   priority: CardPriority | null;
   dueDate?: string;
   columnId: string;
+  budgetId?: string | null;
+  budget?: CardBudget | null;
   createdAt: string;
   updatedAt: string;
   tags?: any[]; // Using any[] temporarily to avoid circular dependency or import issues, ideally should be Tag[]

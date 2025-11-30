@@ -1,8 +1,17 @@
 import { Tag } from '@magic-system/schemas';
-import { AlertCircle, ArrowDown, ArrowRight, ArrowUp, Calendar } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowDown,
+  ArrowRight,
+  ArrowUp,
+  Calendar,
+  FileText,
+  Link,
+} from 'lucide-react';
 
 import { Card as ApiCard } from '@/app/http/requests/boards';
 import { KanbanCard } from '@/components/ui/shadcn-io/kanban';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { stripHtml } from '@/lib/utils';
 
 import { EditCardDialog } from '../edit/edit-card-dialog';
@@ -10,6 +19,7 @@ import { EditCardDialog } from '../edit/edit-card-dialog';
 interface ProductionKanbanCardProps {
   item: ApiCard & { name: string; column: string };
   onCardUpdated: (updatedCard: ApiCard) => void;
+  onCardDeleted: (cardId: string) => void;
 }
 
 const priorityConfig: Record<string, { label: string; icon: React.ElementType; color: string }> = {
@@ -45,13 +55,17 @@ function getDueDateColor(dueDate: string): string {
   return 'text-green-600'; // Vence em mais de 2 dias
 }
 
-export function ProductionKanbanCard({ item, onCardUpdated }: ProductionKanbanCardProps) {
+export function ProductionKanbanCard({
+  item,
+  onCardUpdated,
+  onCardDeleted,
+}: ProductionKanbanCardProps) {
   const priorityInfo = item.priority ? priorityConfig[item.priority] : null;
   const plainDescription = item.description ? stripHtml(String(item.description)) : null;
 
   return (
     <KanbanCard id={item.id} name={item.name} column={item.column}>
-      <EditCardDialog card={item} onCardUpdated={onCardUpdated}>
+      <EditCardDialog card={item} onCardUpdated={onCardUpdated} onCardDeleted={onCardDeleted}>
         <div className="flex flex-col gap-1 group/card">
           <span className="font-medium">{item.name}</span>
           {plainDescription && (
@@ -76,6 +90,31 @@ export function ProductionKanbanCard({ item, onCardUpdated }: ProductionKanbanCa
           )}
 
           <div className="flex items-center gap-2 mt-1">
+            {item.budget && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 text-xs text-emerald-600">
+                      <Link className="h-3 w-3" />
+                      <span>#{item.budget.code}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <div className="text-xs">
+                      <p className="font-medium">Orçamento vinculado</p>
+                      <p>{item.budget.client.name}</p>
+                      <p>
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }).format(item.budget.total)}
+                      </p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
             {priorityInfo && (
               <div className={`flex items-center gap-1 text-xs ${priorityInfo.color}`}>
                 <priorityInfo.icon className="h-3 w-3" />

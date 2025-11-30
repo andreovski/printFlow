@@ -56,6 +56,13 @@ export type CreateBudgetBody = z.infer<typeof createBudgetBodySchema>;
 export type UpdateBudgetBody = z.infer<typeof updateBudgetBodySchema>;
 export type GetBudgetParams = z.infer<typeof getBudgetParamsSchema>;
 
+// Schema para listagem de orçamentos aprovados (para vínculo com card)
+export const approvedBudgetOptionsQuerySchema = z.object({
+  search: z.string().optional(),
+});
+
+export type ApprovedBudgetOptionsQuery = z.infer<typeof approvedBudgetOptionsQuerySchema>;
+
 // Entity types
 export interface BudgetItemEntity {
   id: string;
@@ -103,4 +110,21 @@ export interface GetBudgetResponse {
 
 export interface UpdateBudgetResponse {
   budget: Budget;
+}
+
+// Interface para opções de orçamentos aprovados (select no card)
+export interface ApprovedBudgetOption {
+  id: string;
+  code: number;
+  total: number;
+  notes: string | null;
+  client: {
+    name: string;
+    phone: string;
+  };
+  tags: Tag[];
+}
+
+export interface ApprovedBudgetOptionsResponse {
+  data: ApprovedBudgetOption[];
 }

@@ -9,8 +9,10 @@ import type {
 } from '@magic-system/schemas';
 
 import { BoardsRepository } from '@/repositories/boards.repository';
+import { BudgetsRepository } from '@/repositories/budgets.repository';
 
 const boardsRepository = new BoardsRepository();
+const budgetsRepository = new BudgetsRepository();
 
 export class BoardsService {
   async createBoard(organizationId: string, data: CreateBoardBody): Promise<Board> {
@@ -94,12 +96,26 @@ export class BoardsService {
   }
 
   async createCard(data: CreateCardBody & { columnId: string }): Promise<Card> {
+    // Validação do orçamento vinculado
+    if (data.budgetId) {
+      const budget = await budgetsRepository.findById(data.budgetId);
+
+      if (!budget) {
+        throw new Error('Orçamento não encontrado');
+      }
+
+      if (budget.status !== 'ACCEPTED') {
+        throw new Error('Apenas orçamentos aprovados podem ser vinculados a um cartão');
+      }
+    }
+
     const card = await boardsRepository.createCard({
       title: data.title,
       description: data.description,
       priority: data.priority,
       dueDate: data.dueDate,
       columnId: data.columnId,
+      budgetId: data.budgetId || null,
       position: 0,
       tagIds: (data as any).tagIds,
     });
@@ -169,5 +185,13 @@ export class BoardsService {
 
   async deleteCard(id: string): Promise<void> {
     await boardsRepository.deleteCard(id);
+  }
+
+  /**
+   * Retorna orçamentos aprovados para seleção no vínculo com card.
+   * Filtra apenas orçamentos com status ACCEPTED da organização.
+   */
+  async getApprovedBudgetsForCardLink(organizationId: string, search?: string) {
+    return await budgetsRepository.findApprovedForCardLink(organizationId, search);
   }
 }

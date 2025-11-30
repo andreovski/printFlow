@@ -31,6 +31,28 @@ export class BoardsRepository {
             cards: {
               include: {
                 tags: true,
+                budget: {
+                  select: {
+                    id: true,
+                    code: true,
+                    total: true,
+                    client: {
+                      select: {
+                        name: true,
+                        phone: true,
+                      },
+                    },
+                    items: {
+                      select: {
+                        id: true,
+                        name: true,
+                        quantity: true,
+                        salePrice: true,
+                        total: true,
+                      },
+                    },
+                  },
+                },
               },
               orderBy: {
                 position: 'asc',
@@ -57,6 +79,28 @@ export class BoardsRepository {
             cards: {
               include: {
                 tags: true,
+                budget: {
+                  select: {
+                    id: true,
+                    code: true,
+                    total: true,
+                    client: {
+                      select: {
+                        name: true,
+                        phone: true,
+                      },
+                    },
+                    items: {
+                      select: {
+                        id: true,
+                        name: true,
+                        quantity: true,
+                        salePrice: true,
+                        total: true,
+                      },
+                    },
+                  },
+                },
               },
               orderBy: {
                 position: 'asc',
@@ -78,6 +122,28 @@ export class BoardsRepository {
         cards: {
           include: {
             tags: true,
+            budget: {
+              select: {
+                id: true,
+                code: true,
+                total: true,
+                client: {
+                  select: {
+                    name: true,
+                    phone: true,
+                  },
+                },
+                items: {
+                  select: {
+                    id: true,
+                    name: true,
+                    quantity: true,
+                    salePrice: true,
+                    total: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -126,6 +192,28 @@ export class BoardsRepository {
       },
       include: {
         tags: true,
+        budget: {
+          select: {
+            id: true,
+            code: true,
+            total: true,
+            client: {
+              select: {
+                name: true,
+                phone: true,
+              },
+            },
+            items: {
+              select: {
+                id: true,
+                name: true,
+                quantity: true,
+                salePrice: true,
+                total: true,
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -148,6 +236,28 @@ export class BoardsRepository {
       },
       include: {
         tags: true,
+        budget: {
+          select: {
+            id: true,
+            code: true,
+            total: true,
+            client: {
+              select: {
+                name: true,
+                phone: true,
+              },
+            },
+            items: {
+              select: {
+                id: true,
+                name: true,
+                quantity: true,
+                salePrice: true,
+                total: true,
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -163,6 +273,28 @@ export class BoardsRepository {
       where: { id },
       include: {
         tags: true,
+        budget: {
+          select: {
+            id: true,
+            code: true,
+            total: true,
+            client: {
+              select: {
+                name: true,
+                phone: true,
+              },
+            },
+            items: {
+              select: {
+                id: true,
+                name: true,
+                quantity: true,
+                salePrice: true,
+                total: true,
+              },
+            },
+          },
+        },
       },
     });
   }

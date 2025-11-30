@@ -6,6 +6,7 @@ import type {
   CreateCardBody,
   CreateColumnBody,
   UpdateCardBody,
+  ApprovedBudgetOptionsResponse,
 } from '@magic-system/schemas';
 
 import { api } from '../api';
@@ -14,6 +15,19 @@ export type { Board, Card };
 
 export async function fetchBoards(): Promise<Board[]> {
   const response = await api.get('boards');
+  return response.json();
+}
+
+export async function fetchApprovedBudgets(
+  search?: string
+): Promise<ApprovedBudgetOptionsResponse> {
+  const searchParams = new URLSearchParams();
+  if (search) {
+    searchParams.set('search', search);
+  }
+  const query = searchParams.toString();
+  const url = query ? `boards/approved-budgets?${query}` : 'boards/approved-budgets';
+  const response = await api.get(url);
   return response.json();
 }
 

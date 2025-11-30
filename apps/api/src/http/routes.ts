@@ -11,6 +11,7 @@ import {
   createColumnController,
   deleteColumnController,
   moveColumnController,
+  fetchApprovedBudgetsController,
 } from './controllers/boards.controller';
 import {
   createBudgetController,
@@ -139,6 +140,7 @@ export async function appRoutes(app: FastifyInstance) {
     // Boards (Kanban)
     authRoutes.post('/boards', createBoardController);
     authRoutes.get('/boards', fetchBoardsController);
+    authRoutes.get('/boards/approved-budgets', fetchApprovedBudgetsController);
     authRoutes.post('/columns', createColumnController);
     authRoutes.delete('/columns/:columnId', deleteColumnController);
     authRoutes.patch('/columns/move', moveColumnController);

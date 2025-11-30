@@ -125,7 +125,7 @@ export async function updateClientAction(formData: FormData, id: string) {
     await updateClient({ id, ...validation.data });
 
     revalidateTag('clients');
-    return { success: true, message: null, errors: null };
+    return { success: true, message: 'Cliente atualizado com sucesso!', errors: null };
   } catch (err) {
     if (err instanceof HTTPError) {
       let message = 'Failed to update client';

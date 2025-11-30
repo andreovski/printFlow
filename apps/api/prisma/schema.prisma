@@ -189,6 +189,9 @@ model Budget {
   // Relação many-to-many com tags
   tags           Tag[]
 
+  // Relação com cards vinculados
+  cards          Card[]
+
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   deletedAt      DateTime?
@@ -265,12 +268,17 @@ model Card {
   columnId    String
   column      BoardColumn  @relation(fields: [columnId], references: [id], onDelete: Cascade)
 
+  // Vínculo opcional com orçamento aprovado
+  budgetId    String?
+  budget      Budget?      @relation(fields: [budgetId], references: [id])
+
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
   tags        Tag[]
 
   @@index([columnId])
+  @@index([budgetId])
   @@map("cards")
 }
 

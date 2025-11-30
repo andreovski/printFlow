@@ -44,21 +44,21 @@ export function CreateCardDialog({ columnId, children, onCardCreated }: CreateCa
         description="Crie um novo cartão para esta coluna."
         className="max-w-[700px]"
       >
-        <div className="p-4">
-          <CardForm
-            schema={createCardBodySchema}
-            defaultValues={{
-              title: '',
-              description: '',
-              priority: null,
-              dueDate: undefined,
-              tagIds: [],
-            }}
-            onSubmit={onSubmit}
-            onCancel={() => toggle()}
-            submitLabel="Criar"
-          />
-        </div>
+        <CardForm
+          schema={createCardBodySchema}
+          defaultValues={{
+            title: '',
+            description: '',
+            priority: null,
+            dueDate: undefined,
+            tagIds: [],
+            budgetId: null,
+          }}
+          onSubmit={onSubmit}
+          onCancel={() => toggle()}
+          submitLabel="Criar"
+          mode="create"
+        />
       </ResponsiveDrawer>
     </>
   );

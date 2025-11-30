@@ -158,4 +158,63 @@ export class BudgetsRepository {
       },
     });
   }
+
+  /**
+   * Retorna orçamentos aprovados (ACCEPTED) para seleção no vínculo com card.
+   * Inclui apenas dados necessários para o select: id, code, total, cliente e tags.
+   */
+  async findApprovedForCardLink(
+    organizationId: string,
+    search?: string
+  ): Promise<
+    Array<{
+      id: string;
+      code: number;
+      total: any;
+      notes: string | null;
+      client: { name: string; phone: string };
+      tags: Array<{ id: string; name: string; color: string; scope: string }>;
+    }>
+  > {
+    const budgets = await prisma.budget.findMany({
+      where: {
+        organizationId,
+        deletedAt: null,
+        status: 'ACCEPTED',
+        ...(search && {
+          OR: [
+            { client: { name: { contains: search, mode: 'insensitive' } } },
+            { client: { phone: { contains: search, mode: 'insensitive' } } },
+            { code: isNaN(Number(search)) ? undefined : Number(search) },
+          ],
+        }),
+      },
+      select: {
+        id: true,
+        code: true,
+        total: true,
+        notes: true,
+        client: {
+          select: {
+            name: true,
+            phone: true,
+          },
+        },
+        tags: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            scope: true,
+          },
+        },
+      },
+      orderBy: {
+        code: 'desc',
+      },
+      take: 50, // Limita a 50 resultados para performance
+    });
+
+    return budgets;
+  }
 }
