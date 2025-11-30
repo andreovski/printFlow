@@ -1,7 +1,12 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { budgetStatusSchema, Template } from '@magic-system/schemas';
+import {
+  budgetStatusSchema,
+  paymentTypeSchema,
+  paymentTypeLabel,
+  Template,
+} from '@magic-system/schemas';
 import { useCurrentEditor } from '@tiptap/react';
 import { Archive, Copy, Package, Printer, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -68,6 +73,7 @@ const formSchema = z.object({
   discountType: z.enum(['PERCENT', 'VALUE']).optional(),
   discountValue: z.coerce.number().optional(),
   advancePayment: z.coerce.number().optional(),
+  paymentType: paymentTypeSchema.optional(),
   notes: z.string().nullish(),
   status: budgetStatusSchema.default('DRAFT'),
   tagIds: z.array(z.string()).optional(),
@@ -122,6 +128,7 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
           discountType: initialData.discountType,
           discountValue: initialData.discountValue ? Number(initialData.discountValue) : 0,
           advancePayment: initialData.advancePayment ? Number(initialData.advancePayment) : 0,
+          paymentType: initialData.paymentType || undefined,
           notes: initialData.notes,
           status: initialData.status || 'DRAFT',
           tagIds: initialData.tags?.map((t: any) => t.id) || [],
@@ -143,6 +150,7 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
           discountType: 'VALUE' as const,
           discountValue: 0,
           advancePayment: 0,
+          paymentType: undefined,
           tagIds: [],
         },
   });
@@ -491,6 +499,25 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
                 disabled={isReadOnly}
               />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label className="text-xs font-semibold">Forma de Pagamento</Label>
+            <Select
+              value={form.watch('paymentType') || ''}
+              onValueChange={(val) => form.setValue('paymentType', val as any)}
+            >
+              <SelectTrigger className="w-[180px]" disabled={isReadOnly}>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.entries(paymentTypeLabel) as [string, string][]).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>

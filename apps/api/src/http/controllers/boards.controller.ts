@@ -1,5 +1,6 @@
 import {
   cardIdParamsSchema,
+  checklistItemToggleParamsSchema,
   columnIdParamsSchema,
   createBoardBodySchema,
   createCardBodySchema,
@@ -71,9 +72,8 @@ export async function moveColumnController(request: FastifyRequest, reply: Fasti
 }
 
 export async function createCardController(request: FastifyRequest, reply: FastifyReply) {
-  const { title, description, priority, dueDate, tagIds, budgetId } = createCardBodySchema.parse(
-    request.body
-  );
+  const { title, description, priority, dueDate, tagIds, budgetId, checklistItems } =
+    createCardBodySchema.parse(request.body);
   const { columnId } = columnIdParamsSchema.parse(request.params);
 
   try {
@@ -85,6 +85,7 @@ export async function createCardController(request: FastifyRequest, reply: Fasti
       columnId,
       tagIds,
       budgetId,
+      checklistItems,
     });
 
     return reply.status(201).send(card);
@@ -138,4 +139,23 @@ export async function fetchApprovedBudgetsController(request: FastifyRequest, re
   const budgets = await boardsService.getApprovedBudgetsForCardLink(organizationId, search);
 
   return reply.status(200).send({ data: budgets });
+}
+
+export async function toggleChecklistItemController(request: FastifyRequest, reply: FastifyReply) {
+  const { cardId, itemId } = checklistItemToggleParamsSchema.parse(request.params);
+
+  try {
+    const item = await boardsService.toggleChecklistItem(cardId, itemId);
+    return reply.status(200).send(item);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      if (error.message === 'Checklist item not found') {
+        return reply.status(404).send({ message: 'Item não encontrado' });
+      }
+      if (error.message === 'Item does not belong to the specified card') {
+        return reply.status(400).send({ message: 'Item não pertence ao cartão especificado' });
+      }
+    }
+    throw error;
+  }
 }

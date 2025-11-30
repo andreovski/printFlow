@@ -2,6 +2,7 @@ import type {
   Board,
   BoardColumn,
   Card,
+  ChecklistItem,
   CreateBoardBody,
   CreateCardBody,
   CreateColumnBody,
@@ -11,7 +12,7 @@ import type {
 
 import { api } from '../api';
 
-export type { Board, Card };
+export type { Board, Card, ChecklistItem };
 
 export async function fetchBoards(): Promise<Board[]> {
   const response = await api.get('boards');
@@ -85,4 +86,9 @@ export async function updateCard(id: string, data: UpdateCardBody): Promise<Card
 
 export async function deleteCard(id: string): Promise<void> {
   await api.delete(`cards/${id}`);
+}
+
+export async function toggleChecklistItem(cardId: string, itemId: string): Promise<ChecklistItem> {
+  const response = await api.patch(`cards/${cardId}/checklist/${itemId}/toggle`, { json: {} });
+  return response.json();
 }

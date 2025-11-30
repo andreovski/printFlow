@@ -1,6 +1,6 @@
 'use client';
 
-import { Budget } from '@magic-system/schemas';
+import { Budget, paymentTypeLabel } from '@magic-system/schemas';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { forwardRef } from 'react';
@@ -235,6 +235,10 @@ export const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(
             INFORMAÇÕES DE PAGAMENTO
           </h3>
           <div className="grid grid-cols-2 gap-4">
+            <div className="flex justify-between">
+              <span className="font-semibold">Forma de Pagamento:</span>
+              <span>{budget.paymentType ? paymentTypeLabel[budget.paymentType] : '-'}</span>
+            </div>
             <div className="flex justify-between">
               <span className="font-semibold">Entrada (Sinal):</span>
               <span>{formatCurrency(advancePayment)}</span>

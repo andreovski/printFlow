@@ -6,6 +6,15 @@ export const budgetStatusSchema = z.enum(['DRAFT', 'SENT', 'REJECTED', 'ACCEPTED
 
 export const discountTypeSchema = z.enum(['PERCENT', 'VALUE']);
 
+export const paymentTypeSchema = z.enum([
+  'PIX',
+  'CREDIT_CARD',
+  'DEBIT_CARD',
+  'BOLETO',
+  'CASH',
+  'TRANSFER',
+]);
+
 export const budgetItemSchema = z.object({
   productId: z.string().uuid(),
   quantity: z.coerce.number().int().positive(),
@@ -19,6 +28,7 @@ export const createBudgetBodySchema = z.object({
   discountType: discountTypeSchema.optional().nullable(),
   discountValue: z.coerce.number().nonnegative().optional().nullable(),
   advancePayment: z.coerce.number().nonnegative().optional().nullable(),
+  paymentType: paymentTypeSchema.optional().nullable(),
   notes: z.string().optional().nullable(),
   tagIds: z.array(z.string().uuid()).optional().nullable(),
   items: z.array(budgetItemSchema).min(1),
@@ -49,8 +59,18 @@ export const budgetStatusColors: Record<BudgetStatus, string> = {
   INACTIVE: '#f0b100',
 };
 
+export const paymentTypeLabel: Record<PaymentType, string> = {
+  PIX: 'Pix',
+  CREDIT_CARD: 'Cartão de Crédito',
+  DEBIT_CARD: 'Cartão de Débito',
+  BOLETO: 'Boleto',
+  CASH: 'Dinheiro',
+  TRANSFER: 'Transferência',
+};
+
 export type BudgetStatus = z.infer<typeof budgetStatusSchema>;
 export type DiscountType = z.infer<typeof discountTypeSchema>;
+export type PaymentType = z.infer<typeof paymentTypeSchema>;
 export type BudgetItem = z.infer<typeof budgetItemSchema>;
 export type CreateBudgetBody = z.infer<typeof createBudgetBodySchema>;
 export type UpdateBudgetBody = z.infer<typeof updateBudgetBodySchema>;
@@ -88,6 +108,7 @@ export interface Budget {
   discountType: DiscountType | null;
   discountValue: number | null;
   advancePayment: number | null;
+  paymentType: PaymentType | null;
   subtotal: number;
   total: number;
   notes: string | null;
@@ -113,6 +134,12 @@ export interface UpdateBudgetResponse {
 }
 
 // Interface para opções de orçamentos aprovados (select no card)
+export interface ApprovedBudgetOptionItem {
+  id: string;
+  name: string;
+  quantity: number;
+}
+
 export interface ApprovedBudgetOption {
   id: string;
   code: number;
@@ -123,6 +150,7 @@ export interface ApprovedBudgetOption {
     phone: string;
   };
   tags: Tag[];
+  items: ApprovedBudgetOptionItem[];
 }
 
 export interface ApprovedBudgetOptionsResponse {

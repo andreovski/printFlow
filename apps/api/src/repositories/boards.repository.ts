@@ -1,6 +1,38 @@
-import { Board, BoardColumn, Card, Prisma } from '@prisma/client';
+import { Board, BoardColumn, Card, CardChecklistItem, Prisma } from '@prisma/client';
 
 import { prisma } from '@/lib/prisma';
+
+// Common include for card queries with checklistItems
+const cardInclude = {
+  tags: true,
+  checklistItems: {
+    orderBy: {
+      createdAt: 'asc' as const,
+    },
+  },
+  budget: {
+    select: {
+      id: true,
+      code: true,
+      total: true,
+      client: {
+        select: {
+          name: true,
+          phone: true,
+        },
+      },
+      items: {
+        select: {
+          id: true,
+          name: true,
+          quantity: true,
+          salePrice: true,
+          total: true,
+        },
+      },
+    },
+  },
+};
 
 export class BoardsRepository {
   async create(data: Prisma.BoardUncheckedCreateInput): Promise<Board> {
@@ -29,31 +61,7 @@ export class BoardsRepository {
         columns: {
           include: {
             cards: {
-              include: {
-                tags: true,
-                budget: {
-                  select: {
-                    id: true,
-                    code: true,
-                    total: true,
-                    client: {
-                      select: {
-                        name: true,
-                        phone: true,
-                      },
-                    },
-                    items: {
-                      select: {
-                        id: true,
-                        name: true,
-                        quantity: true,
-                        salePrice: true,
-                        total: true,
-                      },
-                    },
-                  },
-                },
-              },
+              include: cardInclude,
               orderBy: {
                 position: 'asc',
               },
@@ -77,31 +85,7 @@ export class BoardsRepository {
         columns: {
           include: {
             cards: {
-              include: {
-                tags: true,
-                budget: {
-                  select: {
-                    id: true,
-                    code: true,
-                    total: true,
-                    client: {
-                      select: {
-                        name: true,
-                        phone: true,
-                      },
-                    },
-                    items: {
-                      select: {
-                        id: true,
-                        name: true,
-                        quantity: true,
-                        salePrice: true,
-                        total: true,
-                      },
-                    },
-                  },
-                },
-              },
+              include: cardInclude,
               orderBy: {
                 position: 'asc',
               },
@@ -120,31 +104,7 @@ export class BoardsRepository {
       where: { id },
       include: {
         cards: {
-          include: {
-            tags: true,
-            budget: {
-              select: {
-                id: true,
-                code: true,
-                total: true,
-                client: {
-                  select: {
-                    name: true,
-                    phone: true,
-                  },
-                },
-                items: {
-                  select: {
-                    id: true,
-                    name: true,
-                    quantity: true,
-                    salePrice: true,
-                    total: true,
-                  },
-                },
-              },
-            },
-          },
+          include: cardInclude,
         },
       },
     });
@@ -170,7 +130,12 @@ export class BoardsRepository {
     });
   }
 
-  async createCard(data: Prisma.CardUncheckedCreateInput & { tagIds?: string[] }): Promise<Card> {
+  async createCard(
+    data: Prisma.CardUncheckedCreateInput & {
+      tagIds?: string[];
+      checklistItems?: { name: string; isCompleted?: boolean }[];
+    }
+  ): Promise<Card> {
     const lastCard = await prisma.card.findFirst({
       where: { columnId: data.columnId },
       orderBy: { position: 'desc' },
@@ -178,7 +143,7 @@ export class BoardsRepository {
 
     const position = lastCard ? lastCard.position + 1 : 0;
 
-    const { tagIds, ...rest } = data;
+    const { tagIds, checklistItems, ...rest } = data;
 
     return await prisma.card.create({
       data: {
@@ -189,41 +154,59 @@ export class BoardsRepository {
               connect: tagIds.map((id) => ({ id })),
             }
           : undefined,
+        checklistItems: checklistItems
+          ? {
+              create: checklistItems.map((item) => ({
+                name: item.name,
+                isCompleted: item.isCompleted ?? false,
+              })),
+            }
+          : undefined,
       },
-      include: {
-        tags: true,
-        budget: {
-          select: {
-            id: true,
-            code: true,
-            total: true,
-            client: {
-              select: {
-                name: true,
-                phone: true,
-              },
-            },
-            items: {
-              select: {
-                id: true,
-                name: true,
-                quantity: true,
-                salePrice: true,
-                total: true,
-              },
-            },
-          },
-        },
-      },
+      include: cardInclude,
     });
   }
 
   async updateCard(
     id: string,
-    data: Prisma.CardUncheckedUpdateInput & { tagIds?: string[] }
+    data: Prisma.CardUncheckedUpdateInput & {
+      tagIds?: string[];
+      checklistItems?: { id?: string; name: string; isCompleted?: boolean }[];
+    }
   ): Promise<Card> {
-    const { tagIds, ...rest } = data;
+    const { tagIds, checklistItems, ...rest } = data;
 
+    // If checklistItems is provided, we need to handle them with a transaction
+    if (checklistItems !== undefined) {
+      return await prisma.$transaction(async (tx) => {
+        // Delete all existing checklist items
+        await tx.cardChecklistItem.deleteMany({
+          where: { cardId: id },
+        });
+
+        // Update the card with new data and create new checklist items
+        return await tx.card.update({
+          where: { id },
+          data: {
+            ...rest,
+            tags: tagIds
+              ? {
+                  set: tagIds.map((id) => ({ id })),
+                }
+              : undefined,
+            checklistItems: {
+              create: checklistItems.map((item) => ({
+                name: item.name,
+                isCompleted: item.isCompleted ?? false,
+              })),
+            },
+          },
+          include: cardInclude,
+        });
+      });
+    }
+
+    // If no checklistItems provided, just update the card normally
     return await prisma.card.update({
       where: { id },
       data: {
@@ -234,31 +217,7 @@ export class BoardsRepository {
             }
           : undefined,
       },
-      include: {
-        tags: true,
-        budget: {
-          select: {
-            id: true,
-            code: true,
-            total: true,
-            client: {
-              select: {
-                name: true,
-                phone: true,
-              },
-            },
-            items: {
-              select: {
-                id: true,
-                name: true,
-                quantity: true,
-                salePrice: true,
-                total: true,
-              },
-            },
-          },
-        },
-      },
+      include: cardInclude,
     });
   }
 
@@ -271,31 +230,7 @@ export class BoardsRepository {
   async findCardById(id: string): Promise<Card | null> {
     return await prisma.card.findUnique({
       where: { id },
-      include: {
-        tags: true,
-        budget: {
-          select: {
-            id: true,
-            code: true,
-            total: true,
-            client: {
-              select: {
-                name: true,
-                phone: true,
-              },
-            },
-            items: {
-              select: {
-                id: true,
-                name: true,
-                quantity: true,
-                salePrice: true,
-                total: true,
-              },
-            },
-          },
-        },
-      },
+      include: cardInclude,
     });
   }
 
@@ -382,6 +317,29 @@ export class BoardsRepository {
     return await prisma.boardColumn.findMany({
       where: { boardId },
       orderBy: { order: 'asc' },
+    });
+  }
+
+  async findChecklistItemById(itemId: string): Promise<CardChecklistItem | null> {
+    return await prisma.cardChecklistItem.findUnique({
+      where: { id: itemId },
+    });
+  }
+
+  async toggleChecklistItem(itemId: string): Promise<CardChecklistItem> {
+    const item = await prisma.cardChecklistItem.findUnique({
+      where: { id: itemId },
+    });
+
+    if (!item) {
+      throw new Error('Checklist item not found');
+    }
+
+    return await prisma.cardChecklistItem.update({
+      where: { id: itemId },
+      data: {
+        isCompleted: !item.isCompleted,
+      },
     });
   }
 }

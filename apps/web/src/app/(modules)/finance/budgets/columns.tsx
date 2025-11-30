@@ -1,6 +1,12 @@
 'use client';
 
-import { Budget, BudgetStatus, budgetStatusLabel } from '@magic-system/schemas';
+import {
+  Budget,
+  BudgetStatus,
+  budgetStatusLabel,
+  PaymentType,
+  paymentTypeLabel,
+} from '@magic-system/schemas';
 import { ColumnDef } from '@tanstack/react-table';
 import { Pencil } from 'lucide-react';
 import Link from 'next/link';
@@ -46,6 +52,14 @@ export const columns: ColumnDef<Budget>[] = [
         currency: 'BRL',
       }).format(amount);
       return <div>{formatted}</div>;
+    },
+  },
+  {
+    accessorKey: 'paymentType',
+    header: 'Pagamento',
+    cell: ({ row }) => {
+      const paymentType = row.getValue('paymentType') as PaymentType | null;
+      return <div>{paymentType ? paymentTypeLabel[paymentType] : '-'}</div>;
     },
   },
   {

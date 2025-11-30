@@ -1,7 +1,12 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ApprovedBudgetOption, CardBudget, Template } from '@magic-system/schemas';
+import {
+  ApprovedBudgetOption,
+  ApprovedBudgetOptionItem,
+  CardBudget,
+  Template,
+} from '@magic-system/schemas';
 import { useCurrentEditor } from '@tiptap/react';
 import { Trash } from 'lucide-react';
 import * as React from 'react';
@@ -33,6 +38,7 @@ import {
 import { EditorProvider } from '@/components/ui/shadcn-io/editor';
 import { formatPhone } from '@/lib/masks';
 
+import { CardChecklist } from './card-checklist';
 import { LinkedBudgetCard } from './linked-budget-card';
 
 // Component to sync external content changes to the editor
@@ -63,9 +69,19 @@ interface CardFormProps<T extends z.ZodType<any, any>> {
    */
   mode?: 'create' | 'edit';
   /**
+   * ID do card (para operações de toggle na API em modo edit)
+   */
+  cardId?: string;
+  /**
    * Dados do orçamento vinculado (para exibição no modo edit).
    */
   linkedBudget?: CardBudget | null;
+}
+
+interface ChecklistItemInput {
+  id?: string;
+  name: string;
+  isCompleted: boolean;
 }
 
 export function CardForm<T extends z.ZodType<any, any>>({
@@ -76,6 +92,7 @@ export function CardForm<T extends z.ZodType<any, any>>({
   onDelete,
   submitLabel = 'Salvar',
   mode,
+  cardId,
   linkedBudget,
 }: CardFormProps<T>) {
   const form = useForm<z.infer<T>>({
@@ -85,6 +102,10 @@ export function CardForm<T extends z.ZodType<any, any>>({
 
   // State to track template content that needs to be synced to editor
   const [templateContent, setTemplateContent] = React.useState<string | null>(null);
+  // State to track selected budget items for import in create mode
+  const [selectedBudgetItems, setSelectedBudgetItems] = React.useState<ApprovedBudgetOptionItem[]>(
+    []
+  );
 
   const handleTemplateSelect = (template: Template, fieldOnChange: (value: string) => void) => {
     setTemplateContent(template.content);
@@ -129,6 +150,13 @@ export function CardForm<T extends z.ZodType<any, any>>({
     const uniqueTagIds = Array.from(new Set(mergedTagIds));
 
     form.setValue('tagIds' as Path<z.infer<T>>, uniqueTagIds as any);
+
+    // 5. Armazena os itens do orçamento para uso posterior no checklist
+    if (budget.items && budget.items.length > 0) {
+      setSelectedBudgetItems(budget.items);
+    } else {
+      setSelectedBudgetItems([]);
+    }
   };
 
   return (
@@ -259,6 +287,33 @@ export function CardForm<T extends z.ZodType<any, any>>({
                 <FormMessage />
               </FormItem>
             )}
+          />
+
+          {/* Checklist Section */}
+          <FormField
+            control={form.control}
+            name={'checklistItems' as Path<z.infer<T>>}
+            render={({ field }) => {
+              // Determina os itens do orçamento para importação
+              // Em modo create, usa o orçamento selecionado via state
+              // Em modo edit, usa o linkedBudget passado como prop
+              const budgetItems = mode === 'edit' ? linkedBudget?.items : selectedBudgetItems;
+
+              return (
+                <FormItem>
+                  <FormControl>
+                    <CardChecklist
+                      cardId={cardId}
+                      items={(field.value as ChecklistItemInput[]) || []}
+                      onChange={field.onChange}
+                      budgetItems={budgetItems}
+                      isEditMode={mode === 'edit'}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </CardContent>
 

@@ -12,6 +12,7 @@ import {
   deleteColumnController,
   moveColumnController,
   fetchApprovedBudgetsController,
+  toggleChecklistItemController,
 } from './controllers/boards.controller';
 import {
   createBudgetController,
@@ -148,6 +149,7 @@ export async function appRoutes(app: FastifyInstance) {
     authRoutes.patch('/cards/move', moveCardController);
     authRoutes.put('/cards/:id', updateCardController);
     authRoutes.delete('/cards/:id', deleteCardController);
+    authRoutes.patch('/cards/:cardId/checklist/:itemId/toggle', toggleChecklistItemController);
 
     // Etiquetas
     authRoutes.post('/tags', createTagController);

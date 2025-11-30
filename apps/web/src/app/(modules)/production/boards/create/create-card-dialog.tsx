@@ -53,6 +53,7 @@ export function CreateCardDialog({ columnId, children, onCardCreated }: CreateCa
             dueDate: undefined,
             tagIds: [],
             budgetId: null,
+            checklistItems: [],
           }}
           onSubmit={onSubmit}
           onCancel={() => toggle()}

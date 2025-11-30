@@ -161,7 +161,7 @@ export class BudgetsRepository {
 
   /**
    * Retorna orçamentos aprovados (ACCEPTED) para seleção no vínculo com card.
-   * Inclui apenas dados necessários para o select: id, code, total, cliente e tags.
+   * Inclui apenas dados necessários para o select: id, code, total, cliente, tags e items.
    */
   async findApprovedForCardLink(
     organizationId: string,
@@ -174,6 +174,7 @@ export class BudgetsRepository {
       notes: string | null;
       client: { name: string; phone: string };
       tags: Array<{ id: string; name: string; color: string; scope: string }>;
+      items: Array<{ id: string; name: string; quantity: number }>;
     }>
   > {
     const budgets = await prisma.budget.findMany({
@@ -206,6 +207,13 @@ export class BudgetsRepository {
             name: true,
             color: true,
             scope: true,
+          },
+        },
+        items: {
+          select: {
+            id: true,
+            name: true,
+            quantity: true,
           },
         },
       },

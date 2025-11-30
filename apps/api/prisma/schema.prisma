@@ -38,6 +38,15 @@ enum DiscountType {
   VALUE
 }
 
+enum PaymentType {
+  PIX
+  CREDIT_CARD
+  DEBIT_CARD
+  BOLETO
+  CASH
+  TRANSFER
+}
+
 enum CardPriority {
   LOW
   MEDIUM
@@ -178,6 +187,7 @@ model Budget {
   discountType   DiscountType?
   discountValue  Decimal?      @db.Decimal(10, 2)
   advancePayment Decimal?      @db.Decimal(10, 2)
+  paymentType    PaymentType?
 
   subtotal       Decimal       @db.Decimal(10, 2)
   total          Decimal       @db.Decimal(10, 2)
@@ -272,6 +282,9 @@ model Card {
   budgetId    String?
   budget      Budget?      @relation(fields: [budgetId], references: [id])
 
+  // Checklist items
+  checklistItems CardChecklistItem[]
+
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -280,6 +293,22 @@ model Card {
   @@index([columnId])
   @@index([budgetId])
   @@map("cards")
+}
+
+model CardChecklistItem {
+  id          String   @id @default(uuid())
+
+  cardId      String
+  card        Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  name        String
+  isCompleted Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([cardId])
+  @@map("card_checklist_items")
 }
 
 model Tag {

@@ -78,12 +78,14 @@ export function EditCardDialog({
             priority: card.priority || null,
             dueDate: card.dueDate,
             tagIds: (card as any).tags?.map((t: any) => t.id) || [],
+            checklistItems: (card as any).checklistItems || [],
           }}
           onSubmit={onSubmit}
           onCancel={() => setOpen(false)}
           onDelete={() => deleteDialog.open()}
           submitLabel="Salvar"
           mode="edit"
+          cardId={card.id}
           linkedBudget={(card as any).budget || null}
         />
       </ResponsiveDrawer>

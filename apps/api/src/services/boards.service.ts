@@ -2,6 +2,7 @@ import type {
   Board,
   BoardColumn,
   Card,
+  ChecklistItem,
   CreateBoardBody,
   CreateCardBody,
   CreateColumnBody,
@@ -118,6 +119,7 @@ export class BoardsService {
       budgetId: data.budgetId || null,
       position: 0,
       tagIds: (data as any).tagIds,
+      checklistItems: data.checklistItems,
     });
     return card as unknown as Card;
   }
@@ -179,6 +181,7 @@ export class BoardsService {
     const card = await boardsRepository.updateCard(id, {
       ...data,
       tagIds: (data as any).tagIds,
+      checklistItems: data.checklistItems,
     });
     return card as unknown as Card;
   }
@@ -193,5 +196,24 @@ export class BoardsService {
    */
   async getApprovedBudgetsForCardLink(organizationId: string, search?: string) {
     return await budgetsRepository.findApprovedForCardLink(organizationId, search);
+  }
+
+  /**
+   * Alterna o estado de conclusão de um item do checklist.
+   */
+  async toggleChecklistItem(cardId: string, itemId: string): Promise<ChecklistItem> {
+    // Verify the item belongs to the card
+    const item = await boardsRepository.findChecklistItemById(itemId);
+
+    if (!item) {
+      throw new Error('Checklist item not found');
+    }
+
+    if (item.cardId !== cardId) {
+      throw new Error('Item does not belong to the specified card');
+    }
+
+    const updatedItem = await boardsRepository.toggleChecklistItem(itemId);
+    return updatedItem as unknown as ChecklistItem;
   }
 }

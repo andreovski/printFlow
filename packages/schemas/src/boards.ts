@@ -4,6 +4,15 @@ import { z } from 'zod';
 export const cardPriorityEnum = z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']);
 export type CardPriority = z.infer<typeof cardPriorityEnum>;
 
+// Checklist Item Schema
+export const checklistItemSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().min(1, 'O nome é obrigatório'),
+  isCompleted: z.boolean().default(false),
+});
+
+export type ChecklistItemInput = z.infer<typeof checklistItemSchema>;
+
 // Card Schemas
 export const createCardBodySchema = z.object({
   title: z.string().min(1, 'O título é obrigatório'),
@@ -12,6 +21,7 @@ export const createCardBodySchema = z.object({
   dueDate: z.string().datetime().optional(),
   tagIds: z.array(z.string()).optional(),
   budgetId: z.string().uuid().optional().nullable(),
+  checklistItems: z.array(checklistItemSchema).optional(),
 });
 
 export const updateCardBodySchema = z.object({
@@ -20,6 +30,7 @@ export const updateCardBodySchema = z.object({
   priority: cardPriorityEnum.nullable().optional(),
   dueDate: z.string().datetime().optional(),
   tagIds: z.array(z.string()).optional(),
+  checklistItems: z.array(checklistItemSchema).optional(),
   // budgetId não pode ser alterado após criação - removido do update
 });
 
@@ -55,6 +66,11 @@ export const columnIdParamsSchema = z.object({
   columnId: z.string().uuid(),
 });
 
+export const checklistItemToggleParamsSchema = z.object({
+  cardId: z.string().uuid(),
+  itemId: z.string().uuid(),
+});
+
 // Types
 export type CreateCardBody = z.infer<typeof createCardBodySchema>;
 export type UpdateCardBody = z.infer<typeof updateCardBodySchema>;
@@ -64,8 +80,17 @@ export type CreateBoardBody = z.infer<typeof createBoardBodySchema>;
 export type CreateColumnBody = z.infer<typeof createColumnBodySchema>;
 export type CardIdParams = z.infer<typeof cardIdParamsSchema>;
 export type ColumnIdParams = z.infer<typeof columnIdParamsSchema>;
+export type ChecklistItemToggleParams = z.infer<typeof checklistItemToggleParamsSchema>;
 
 // Response Types
+export interface ChecklistItem {
+  id: string;
+  name: string;
+  isCompleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CardBudgetItem {
   id: string;
   name: string;
@@ -95,6 +120,7 @@ export interface Card {
   columnId: string;
   budgetId?: string | null;
   budget?: CardBudget | null;
+  checklistItems?: ChecklistItem[];
   createdAt: string;
   updatedAt: string;
   tags?: any[]; // Using any[] temporarily to avoid circular dependency or import issues, ideally should be Tag[]
