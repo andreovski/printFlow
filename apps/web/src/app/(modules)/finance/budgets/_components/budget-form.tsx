@@ -8,13 +8,14 @@ import {
   Template,
 } from '@magic-system/schemas';
 import { useCurrentEditor } from '@tiptap/react';
-import { Archive, Copy, Package, Printer, Trash } from 'lucide-react';
+import { Archive, Copy, Link2, Package, Paperclip, Printer, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { Attachment, AttachmentsManager } from '@/components/attachments-manager';
 import { DialogAction } from '@/components/dialog-action';
 import { TagSelect } from '@/components/tag-select';
 import { TemplateSelector } from '@/components/template-selector';
@@ -49,6 +50,7 @@ import {
   archiveBudgetAction,
 } from '../actions';
 import { ClientSelect } from './client-select';
+import { GenerateLinkButton } from './generate-link-button';
 import { ProductSelect } from './product-select';
 import { StatusSelect } from './status-select';
 
@@ -102,6 +104,7 @@ interface BudgetFormProps {
 export function BudgetForm({ initialData }: BudgetFormProps) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   const deleteDialog = useDisclosure();
   const duplicateDialog = useDisclosure();
@@ -114,6 +117,10 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
     setTemplateContent(template.content);
     form.setValue('notes', template.content);
   };
+
+  const handleAttachmentsChange = useCallback((newAttachments: Attachment[]) => {
+    setAttachments(newAttachments);
+  }, []);
 
   const isReadOnly = initialData?.status === 'SENT' || initialData?.status === 'INACTIVE';
 
@@ -544,6 +551,26 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
         </CardContent>
       </Card>
 
+      {/* Seção de Anexos - apenas para orçamentos existentes */}
+      {initialData && (
+        <Card className="border-none shadow-none">
+          <CardContent className="space-y-4">
+            <Label className="flex items-center gap-2">
+              <Paperclip className="h-4 w-4" />
+              Anexos
+            </Label>
+            <AttachmentsManager
+              entityType="budget"
+              entityId={initialData.id}
+              attachments={attachments}
+              onAttachmentsChange={handleAttachmentsChange}
+              disabled={isReadOnly}
+              maxFiles={5}
+            />
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="p-0 flex gap-2 sticky bottom-0 z-10 mt-auto border-t bg-transparent rounded-none border-none">
         <CardFooter className="flex md:flex-row flex-col w-full bg-background/35 backdrop-blur-sm py-2 px-4 gap-2 justify-between items-center border-t-[1px]">
           <div className="flex gap-1 md:gap-4 lg:gap-8 flex-col lg:flex-row self-start md:self-center">
@@ -577,6 +604,15 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
               >
                 <Printer className="h-4 w-4" />
               </Button>
+            )}
+            {initialData?.status === 'SENT' && (
+              <GenerateLinkButton
+                budgetId={initialData.id}
+                existingToken={initialData.approvalToken}
+                expirationDate={
+                  initialData.expirationDate ? new Date(initialData.expirationDate) : null
+                }
+              />
             )}
             <Button
               variant="outline"

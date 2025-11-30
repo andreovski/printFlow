@@ -8,3 +8,4 @@ export * from './budgets';
 export * from './boards';
 export * from './tags';
 export * from './templates';
+export * from './attachments';

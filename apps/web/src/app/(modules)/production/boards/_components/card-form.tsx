@@ -8,11 +8,12 @@ import {
   Template,
 } from '@magic-system/schemas';
 import { useCurrentEditor } from '@tiptap/react';
-import { Trash } from 'lucide-react';
+import { ExternalLink, FileIcon, ImageIcon, Paperclip, Trash } from 'lucide-react';
 import * as React from 'react';
 import { useForm, type Path } from 'react-hook-form';
 import { z } from 'zod';
 
+import { Attachment, AttachmentsManager } from '@/components/attachments-manager';
 import { BudgetSelect } from '@/components/budget-select';
 import { TagSelect } from '@/components/tag-select';
 import { TemplateSelector } from '@/components/template-selector';
@@ -28,6 +29,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -106,6 +108,23 @@ export function CardForm<T extends z.ZodType<any, any>>({
   const [selectedBudgetItems, setSelectedBudgetItems] = React.useState<ApprovedBudgetOptionItem[]>(
     []
   );
+  // State to track selected budget attachments for display in create mode
+  const [selectedBudgetAttachments, setSelectedBudgetAttachments] = React.useState<
+    Array<{
+      id: string;
+      name: string;
+      url: string;
+      key: string;
+      size: number;
+      mimeType: string | null;
+    }>
+  >([]);
+  // State for attachments
+  const [attachments, setAttachments] = React.useState<Attachment[]>([]);
+
+  const handleAttachmentsChange = React.useCallback((newAttachments: Attachment[]) => {
+    setAttachments(newAttachments);
+  }, []);
 
   const handleTemplateSelect = (template: Template, fieldOnChange: (value: string) => void) => {
     setTemplateContent(template.content);
@@ -121,6 +140,7 @@ export function CardForm<T extends z.ZodType<any, any>>({
   const handleBudgetSelect = (budget: ApprovedBudgetOption | null) => {
     if (!budget) {
       form.setValue('budgetId' as Path<z.infer<T>>, null as any);
+      setSelectedBudgetAttachments([]);
       return;
     }
 
@@ -156,6 +176,13 @@ export function CardForm<T extends z.ZodType<any, any>>({
       setSelectedBudgetItems(budget.items);
     } else {
       setSelectedBudgetItems([]);
+    }
+
+    // 6. Armazena os attachments do orçamento para exibição
+    if (budget.attachments && budget.attachments.length > 0) {
+      setSelectedBudgetAttachments(budget.attachments);
+    } else {
+      setSelectedBudgetAttachments([]);
     }
   };
 
@@ -315,6 +342,57 @@ export function CardForm<T extends z.ZodType<any, any>>({
               );
             }}
           />
+
+          {/* Budget Attachments Reference Section - only in create mode when budget is selected */}
+          {mode === 'create' && selectedBudgetAttachments.length > 0 && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Paperclip className="h-4 w-4" />
+                Anexos do Orçamento
+              </Label>
+              <div className="border rounded-md p-3 bg-muted/30 space-y-2">
+                <p className="text-xs text-muted-foreground mb-2">
+                  Referência dos anexos do orçamento vinculado:
+                </p>
+                <div className="space-y-1.5">
+                  {selectedBudgetAttachments.map((attachment) => (
+                    <a
+                      key={attachment.id}
+                      href={attachment.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 p-2 rounded-md bg-background hover:bg-accent transition-colors group"
+                    >
+                      {attachment.mimeType?.startsWith('image/') ? (
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <FileIcon className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className="flex-1 text-sm truncate">{attachment.name}</span>
+                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Attachments Section - only in edit mode */}
+          {mode === 'edit' && cardId && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Paperclip className="h-4 w-4" />
+                Anexos
+              </Label>
+              <AttachmentsManager
+                entityType="card"
+                entityId={cardId}
+                attachments={attachments}
+                onAttachmentsChange={handleAttachmentsChange}
+                maxFiles={5}
+              />
+            </div>
+          )}
         </CardContent>
 
         <CardFooter className="flex gap-2 sticky bottom-0 right-0 justify-end p-2 bg-background/35 backdrop-blur-sm border-t">

@@ -70,7 +70,7 @@ export async function createClientAction(formData: FormData) {
         const errorData = await err.response.json();
         message = errorData.message || message;
       } catch (_e) {
-        console.error('Error parsing error response:', e);
+        console.error('Error parsing error response:', _e);
       }
       return {
         success: false,

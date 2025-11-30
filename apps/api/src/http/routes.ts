@@ -1,5 +1,13 @@
 import { FastifyInstance } from 'fastify';
 
+import {
+  createBudgetAttachmentsController,
+  fetchBudgetAttachmentsController,
+  deleteBudgetAttachmentController,
+  createCardAttachmentsController,
+  fetchCardAttachmentsController,
+  deleteCardAttachmentController,
+} from './controllers/attachments.controller';
 import { authenticateController } from './controllers/authenticate.controller';
 import {
   createBoardController,
@@ -44,6 +52,12 @@ import {
   deleteProductController,
 } from './controllers/products.controller';
 import {
+  getPublicBudgetController,
+  approvePublicBudgetController,
+  rejectPublicBudgetController,
+  generateApprovalLinkController,
+} from './controllers/public-budgets.controller';
+import {
   createTagController,
   fetchTagsController,
   getTagController,
@@ -71,6 +85,11 @@ import { verifyUserRole } from './middlewares/verify-permissions';
 export async function appRoutes(app: FastifyInstance) {
   app.post('/users', registerUserController);
   app.post('/sessions', authenticateController);
+
+  // Public routes (no authentication required)
+  app.get('/public/budgets/:token', getPublicBudgetController);
+  app.post('/public/budgets/:token/approve', approvePublicBudgetController);
+  app.post('/public/budgets/:token/reject', rejectPublicBudgetController);
 
   // Authenticated routes
   app.register(async (authRoutes) => {
@@ -137,6 +156,7 @@ export async function appRoutes(app: FastifyInstance) {
     authRoutes.patch('/budgets/:id/status', updateBudgetStatusController);
     authRoutes.delete('/budgets/:id', deleteBudgetController);
     authRoutes.patch('/budgets/:id/archive', archiveBudgetController);
+    authRoutes.post('/budgets/:id/generate-link', generateApprovalLinkController);
 
     // Boards (Kanban)
     authRoutes.post('/boards', createBoardController);
@@ -164,5 +184,18 @@ export async function appRoutes(app: FastifyInstance) {
     authRoutes.get('/templates/:id', getTemplateController);
     authRoutes.put('/templates/:id', updateTemplateController);
     authRoutes.delete('/templates/:id', deleteTemplateController);
+
+    // Attachments - Budget
+    authRoutes.post('/budgets/:budgetId/attachments', createBudgetAttachmentsController);
+    authRoutes.get('/budgets/:budgetId/attachments', fetchBudgetAttachmentsController);
+    authRoutes.delete(
+      '/budgets/:budgetId/attachments/:attachmentId',
+      deleteBudgetAttachmentController
+    );
+
+    // Attachments - Card
+    authRoutes.post('/cards/:cardId/attachments', createCardAttachmentsController);
+    authRoutes.get('/cards/:cardId/attachments', fetchCardAttachmentsController);
+    authRoutes.delete('/cards/:cardId/attachments/:attachmentId', deleteCardAttachmentController);
   });
 }

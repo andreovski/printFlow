@@ -97,7 +97,7 @@ export const KanbanBoard = ({ id, children, className }: KanbanBoardProps) => {
       {...attributes}
       {...(isReorderMode ? listeners : {})} // Only apply listeners in reorder mode
       className={cn(
-        'flex size-full min-h-40 flex-col divide-y overflow-hidden rounded-md border bg-secondary text-xs shadow-sm ring-2 transition-all',
+        'flex size-full min-h-40 min-w-[215px] flex-col divide-y overflow-hidden rounded-md border bg-secondary text-xs shadow-sm ring-2 transition-all',
         isOver ? 'ring-primary' : 'ring-transparent',
         isDragging && 'opacity-50',
         isReorderMode && 'cursor-grab active:cursor-grabbing',
@@ -193,7 +193,7 @@ export const KanbanCards = <T extends KanbanItemProps = KanbanItemProps>({
   const items = filteredData.map((item) => item.id);
 
   return (
-    <ScrollArea className="overflow-hidden">
+    <ScrollArea className="overflow-hidden ">
       <SortableContext items={items}>
         <div className={cn('flex flex-grow flex-col gap-2 p-2', className)} {...props}>
           {filteredData.map(children)}

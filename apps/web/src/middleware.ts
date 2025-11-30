@@ -4,7 +4,13 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
 
-  if (!token && !request.nextUrl.pathname.startsWith('/auth')) {
+  // Public routes that don't require authentication
+  const isPublicRoute =
+    request.nextUrl.pathname.startsWith('/auth') ||
+    request.nextUrl.pathname.startsWith('/approval') ||
+    request.nextUrl.pathname.startsWith('/api/uploadthing');
+
+  if (!token && !isPublicRoute) {
     return NextResponse.redirect(new URL('/auth/sign-in', request.url));
   }
 

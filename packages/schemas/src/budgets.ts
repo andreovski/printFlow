@@ -118,6 +118,11 @@ export interface Budget {
   updatedAt: Date;
   deletedAt: Date | null;
   archived: boolean;
+  // Public approval link fields
+  approvalToken: string | null;
+  approvedByClient: boolean;
+  approvedAt: Date | null;
+  rejectionReason: string | null;
 }
 
 // Response types
@@ -140,6 +145,15 @@ export interface ApprovedBudgetOptionItem {
   quantity: number;
 }
 
+export interface ApprovedBudgetOptionAttachment {
+  id: string;
+  name: string;
+  url: string;
+  key: string;
+  size: number;
+  mimeType: string | null;
+}
+
 export interface ApprovedBudgetOption {
   id: string;
   code: number;
@@ -151,8 +165,63 @@ export interface ApprovedBudgetOption {
   };
   tags: Tag[];
   items: ApprovedBudgetOptionItem[];
+  attachments: ApprovedBudgetOptionAttachment[];
 }
 
 export interface ApprovedBudgetOptionsResponse {
   data: ApprovedBudgetOption[];
+}
+
+// Public approval link schemas
+export const publicBudgetTokenParamsSchema = z.object({
+  token: z.string().min(32),
+});
+
+export const rejectBudgetBodySchema = z.object({
+  reason: z.string().optional(),
+});
+
+export type PublicBudgetTokenParams = z.infer<typeof publicBudgetTokenParamsSchema>;
+export type RejectBudgetBody = z.infer<typeof rejectBudgetBodySchema>;
+
+// Public budget response (limited data for non-authenticated access)
+export interface PublicBudgetResponse {
+  budget: {
+    id: string;
+    code: number;
+    status: BudgetStatus;
+    expirationDate: Date | null;
+    total: number;
+    subtotal: number;
+    discountType: DiscountType | null;
+    discountValue: number | null;
+    advancePayment: number | null;
+    paymentType: PaymentType | null;
+    notes: string | null;
+    items: Array<{
+      id: string;
+      name: string;
+      quantity: number;
+      salePrice: number;
+      discountType: DiscountType | null;
+      discountValue: number | null;
+      total: number;
+    }>;
+    client: {
+      name: string;
+    };
+    organization: {
+      name: string;
+      fantasyName: string | null;
+      mainPhone: string | null;
+      mainEmail: string | null;
+    };
+  };
+  isExpired: boolean;
+}
+
+export interface GenerateApprovalLinkResponse {
+  approvalToken: string;
+  approvalUrl: string;
+  expiresAt: Date | null;
 }

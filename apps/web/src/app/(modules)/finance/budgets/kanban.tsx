@@ -2,7 +2,7 @@
 
 import { Budget, BudgetStatus, budgetStatusLabel, Tag } from '@magic-system/schemas';
 import { budgetStatusColors } from '@magic-system/schemas';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -17,6 +17,7 @@ import {
   KanbanHeader,
   KanbanProvider,
 } from '@/components/ui/shadcn-io/kanban';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatPhone } from '@/lib/masks';
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
@@ -36,6 +37,7 @@ interface BudgetKanbanData extends Record<string, unknown> {
   total: number;
   createdAt: Date;
   expirationDate: Date | null;
+  approvedByClient: boolean;
 }
 
 interface KanbanProps {
@@ -58,6 +60,7 @@ export const Kanban = ({ budgets }: KanbanProps) => {
     total: Number(budget.total),
     createdAt: new Date(budget.createdAt),
     expirationDate: budget.expirationDate ? new Date(budget.expirationDate) : null,
+    approvedByClient: budget.approvedByClient ?? false,
   }));
 
   const [kanbanData, setKanbanData] = useState<BudgetKanbanData[]>(initialData);
@@ -76,6 +79,7 @@ export const Kanban = ({ budgets }: KanbanProps) => {
         total: Number(budget.total),
         createdAt: new Date(budget.createdAt),
         expirationDate: budget.expirationDate ? new Date(budget.expirationDate) : null,
+        approvedByClient: budget.approvedByClient ?? false,
       }))
     );
   }, [budgets]);
@@ -158,6 +162,32 @@ export const Kanban = ({ budgets }: KanbanProps) => {
                         <div className="flex gap-2 items-center">
                           <p className="m-0 font-bold text-sm">#{budget.code}</p>
                           <p className="text-xs">{formatPhone(budget.clientPhone ?? '')}</p>
+                          {/* Client approval/rejection indicator */}
+                          {budget.approvedByClient &&
+                            (budget.column === 'ACCEPTED' || budget.column === 'REJECTED') && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span
+                                      className={`inline-flex items-center justify-center h-4 w-4 rounded-full ${
+                                        budget.column === 'ACCEPTED'
+                                          ? 'bg-green-100 text-green-600'
+                                          : 'bg-red-100 text-red-600'
+                                      }`}
+                                    >
+                                      <ExternalLink className="h-3 w-3" />
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>
+                                      {budget.column === 'ACCEPTED'
+                                        ? 'Aprovado pelo cliente (via link)'
+                                        : 'Recusado pelo cliente (via link)'}
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
                         </div>
                         <p className="m-0 text-xs text-muted-foreground truncate">
                           {budget.clientName}

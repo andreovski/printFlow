@@ -101,6 +101,89 @@ export class BudgetsRepository {
     return budget;
   }
 
+  /**
+   * Find budget by public approval token with organization info
+   */
+  async findByApprovalToken(token: string) {
+    const budget = await prisma.budget.findUnique({
+      where: { approvalToken: token },
+      include: {
+        items: true,
+        client: {
+          select: {
+            name: true,
+          },
+        },
+        organization: {
+          select: {
+            name: true,
+            fantasyName: true,
+            mainPhone: true,
+            mainEmail: true,
+          },
+        },
+      },
+    });
+
+    if (budget?.deletedAt) return null;
+
+    return budget;
+  }
+
+  /**
+   * Set approval token for a budget
+   */
+  async setApprovalToken(id: string, token: string): Promise<Budget> {
+    return await prisma.budget.update({
+      where: { id },
+      data: { approvalToken: token },
+      include: {
+        items: true,
+        tags: true,
+        client: true,
+      },
+    });
+  }
+
+  /**
+   * Approve budget via public link (client approval)
+   */
+  async approveByClient(id: string): Promise<Budget> {
+    return await prisma.budget.update({
+      where: { id },
+      data: {
+        status: 'ACCEPTED',
+        approvedByClient: true,
+        approvedAt: new Date(),
+      },
+      include: {
+        items: true,
+        tags: true,
+        client: true,
+      },
+    });
+  }
+
+  /**
+   * Reject budget via public link (client rejection)
+   */
+  async rejectByClient(id: string, reason?: string): Promise<Budget> {
+    return await prisma.budget.update({
+      where: { id },
+      data: {
+        status: 'REJECTED',
+        approvedByClient: true, // True because it came from the client via link
+        approvedAt: new Date(),
+        rejectionReason: reason || null,
+      },
+      include: {
+        items: true,
+        tags: true,
+        client: true,
+      },
+    });
+  }
+
   async update(id: string, data: Prisma.BudgetUncheckedUpdateInput): Promise<Budget> {
     return await prisma.budget.update({
       where: { id },
@@ -175,6 +258,14 @@ export class BudgetsRepository {
       client: { name: string; phone: string };
       tags: Array<{ id: string; name: string; color: string; scope: string }>;
       items: Array<{ id: string; name: string; quantity: number }>;
+      attachments: Array<{
+        id: string;
+        name: string;
+        url: string;
+        key: string;
+        size: number;
+        mimeType: string | null;
+      }>;
     }>
   > {
     const budgets = await prisma.budget.findMany({
@@ -214,6 +305,16 @@ export class BudgetsRepository {
             id: true,
             name: true,
             quantity: true,
+          },
+        },
+        attachments: {
+          select: {
+            id: true,
+            name: true,
+            url: true,
+            key: true,
+            size: true,
+            mimeType: true,
           },
         },
       },

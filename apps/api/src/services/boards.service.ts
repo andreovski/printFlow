@@ -9,11 +9,13 @@ import type {
   UpdateCardBody,
 } from '@magic-system/schemas';
 
+import { AttachmentsRepository } from '@/repositories/attachments.repository';
 import { BoardsRepository } from '@/repositories/boards.repository';
 import { BudgetsRepository } from '@/repositories/budgets.repository';
 
 const boardsRepository = new BoardsRepository();
 const budgetsRepository = new BudgetsRepository();
+const attachmentsRepository = new AttachmentsRepository();
 
 export class BoardsService {
   async createBoard(organizationId: string, data: CreateBoardBody): Promise<Board> {
@@ -96,7 +98,19 @@ export class BoardsService {
     await boardsRepository.updateManyColumnOrders(boardId, updates);
   }
 
-  async createCard(data: CreateCardBody & { columnId: string }): Promise<Card> {
+  async createCard(
+    data: CreateCardBody & { columnId: string },
+    organizationId: string
+  ): Promise<Card> {
+    let budgetAttachments: Array<{
+      id: string;
+      name: string;
+      url: string;
+      key: string;
+      size: number;
+      mimeType: string | null;
+    }> = [];
+
     // Validação do orçamento vinculado
     if (data.budgetId) {
       const budget = await budgetsRepository.findById(data.budgetId);
@@ -108,6 +122,9 @@ export class BoardsService {
       if (budget.status !== 'ACCEPTED') {
         throw new Error('Apenas orçamentos aprovados podem ser vinculados a um cartão');
       }
+
+      // Buscar attachments do orçamento para copiar
+      budgetAttachments = await attachmentsRepository.findByBudgetId(data.budgetId);
     }
 
     const card = await boardsRepository.createCard({
@@ -121,6 +138,23 @@ export class BoardsService {
       tagIds: (data as any).tagIds,
       checklistItems: data.checklistItems,
     });
+
+    // Copiar attachments do orçamento para o card (se houver)
+    if (budgetAttachments.length > 0) {
+      const attachmentsToCreate = budgetAttachments.map((att) => ({
+        name: att.name,
+        url: att.url,
+        key: `card-ref-${card.id}-${att.key}`, // Nova key única para o card
+        size: att.size,
+        mimeType: att.mimeType,
+        cardId: card.id,
+        organizationId,
+        sourceBudgetAttachmentId: att.id, // Referência ao original
+      }));
+
+      await attachmentsRepository.createMany(attachmentsToCreate);
+    }
+
     return card as unknown as Card;
   }
 

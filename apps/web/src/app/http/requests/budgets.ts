@@ -6,6 +6,8 @@ import {
   UpdateBudgetResponse,
   Budget,
   PaginatedResponse,
+  GenerateApprovalLinkResponse,
+  PublicBudgetResponse,
 } from '@magic-system/schemas';
 
 import { api } from '../api';
@@ -62,4 +64,8 @@ export async function deleteBudget(id: string): Promise<void> {
 
 export async function archiveBudget(id: string): Promise<void> {
   return api.patch(`budgets/${id}/archive`, { json: {} }).json<void>();
+}
+
+export async function generateApprovalLink(id: string): Promise<GenerateApprovalLinkResponse> {
+  return api.post(`budgets/${id}/generate-link`, { json: {} }).json<GenerateApprovalLinkResponse>();
 }

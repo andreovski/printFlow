@@ -202,6 +202,15 @@ model Budget {
   // Relação com cards vinculados
   cards          Card[]
 
+  // Anexos do orçamento
+  attachments    Attachment[]
+
+  // Public approval link fields
+  approvalToken    String?   @unique  // Unique token for public link
+  approvedByClient Boolean   @default(false)  // Flag: client vs manual approval
+  approvedAt       DateTime?           // When approved/rejected via link
+  rejectionReason  String?   @db.Text  // Optional reason if rejected
+
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   deletedAt      DateTime?
@@ -285,6 +294,9 @@ model Card {
   // Checklist items
   checklistItems CardChecklistItem[]
 
+  // Anexos do card
+  attachments Attachment[]
+
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -343,6 +355,36 @@ enum TemplateScope {
   GLOBAL
   BOARD
   BUDGET
+}
+
+model Attachment {
+  id          String   @id @default(uuid())
+  name        String                    // Nome original do arquivo
+  url         String                    // URL pública do arquivo
+  key         String   @unique          // Key do storage (para deletar)
+  size        Int                       // Tamanho em bytes
+  mimeType    String?                   // Tipo MIME (image/png, application/pdf, etc.)
+
+  // Relacionamento polimórfico - um anexo pertence a Budget OU Card
+  budgetId    String?
+  budget      Budget?  @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  cardId      String?
+  card        Card?    @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  // Referência ao attachment original do budget (quando é cópia)
+  // Se preenchido, indica que este attachment é uma referência e não deve deletar o arquivo físico
+  sourceBudgetAttachmentId String?
+
+  // Multi-tenant
+  organizationId String
+
+  createdAt   DateTime @default(now())
+
+  @@index([budgetId])
+  @@index([cardId])
+  @@index([organizationId])
+  @@map("attachments")
 }
 
 model Template {

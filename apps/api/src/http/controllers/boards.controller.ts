@@ -75,18 +75,22 @@ export async function createCardController(request: FastifyRequest, reply: Fasti
   const { title, description, priority, dueDate, tagIds, budgetId, checklistItems } =
     createCardBodySchema.parse(request.body);
   const { columnId } = columnIdParamsSchema.parse(request.params);
+  const { organizationId } = request.user as { organizationId: string };
 
   try {
-    const card = await boardsService.createCard({
-      title,
-      description,
-      priority,
-      dueDate,
-      columnId,
-      tagIds,
-      budgetId,
-      checklistItems,
-    });
+    const card = await boardsService.createCard(
+      {
+        title,
+        description,
+        priority,
+        dueDate,
+        columnId,
+        tagIds,
+        budgetId,
+        checklistItems,
+      },
+      organizationId
+    );
 
     return reply.status(201).send(card);
   } catch (error: unknown) {

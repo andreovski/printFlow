@@ -1,4 +1,5 @@
 import { Budget, BudgetStatus, DiscountType } from '@prisma/client';
+import { randomUUID } from 'crypto';
 
 import { BudgetsRepository } from '@/repositories/budgets.repository';
 import { ProductsRepository } from '@/repositories/products.repository';
@@ -222,5 +223,39 @@ export class BudgetsService {
 
   async archive(id: string) {
     return this.budgetsRepository.archive(id);
+  }
+
+  // Public approval link methods
+  async generateApprovalToken(id: string): Promise<{ token: string; expiresAt: Date | null }> {
+    const budget = await this.budgetsRepository.findById(id);
+    if (!budget) {
+      throw new Error('Budget not found');
+    }
+
+    if (budget.status !== 'SENT') {
+      throw new Error('Cannot generate approval link for budget that is not SENT');
+    }
+
+    // Generate unique token
+    const token = randomUUID() + randomUUID().replace(/-/g, '');
+
+    await this.budgetsRepository.setApprovalToken(id, token);
+
+    return {
+      token,
+      expiresAt: budget.expirationDate,
+    };
+  }
+
+  async findByApprovalToken(token: string) {
+    return this.budgetsRepository.findByApprovalToken(token);
+  }
+
+  async approveByClient(id: string): Promise<Budget> {
+    return this.budgetsRepository.approveByClient(id);
+  }
+
+  async rejectByClient(id: string, reason?: string): Promise<Budget> {
+    return this.budgetsRepository.rejectByClient(id, reason);
   }
 }
