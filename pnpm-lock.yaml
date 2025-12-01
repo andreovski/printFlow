@@ -213,6 +213,9 @@ importers:
       '@uploadthing/react':
         specifier: ^7.3.3
         version: 7.3.3(next@15.5.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(uploadthing@7.7.4(next@15.5.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(tailwindcss@3.4.18(tsx@4.20.6)))
+      autoprefixer:
+        specifier: ^10.4.19
+        version: 10.4.22(postcss@8.5.6)
       chrono-node:
         specifier: ^2.9.0
         version: 2.9.0
@@ -246,6 +249,9 @@ importers:
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      postcss:
+        specifier: ^8.4.38
+        version: 8.5.6
       react:
         specifier: ^19.0.0-rc-66855b96-20241106
         version: 19.2.0
@@ -267,6 +273,9 @@ importers:
       tailwind-merge:
         specifier: ^2.2.2
         version: 2.6.0
+      tailwindcss:
+        specifier: ^3.4.3
+        version: 3.4.18(tsx@4.20.6)
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.4.18(tsx@4.20.6))
@@ -301,9 +310,6 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^8.48.0
         version: 8.48.0(eslint@8.57.1)(typescript@5.9.3)
-      autoprefixer:
-        specifier: ^10.4.19
-        version: 10.4.22(postcss@8.5.6)
       eslint:
         specifier: ^8.57.0
         version: 8.57.1
@@ -313,12 +319,6 @@ importers:
       eslint-plugin-import-helpers:
         specifier: ^2.0.1
         version: 2.0.1(eslint@8.57.1)
-      postcss:
-        specifier: ^8.4.38
-        version: 8.5.6
-      tailwindcss:
-        specifier: ^3.4.3
-        version: 3.4.18(tsx@4.20.6)
       typescript:
         specifier: ^5.4.5
         version: 5.9.3
