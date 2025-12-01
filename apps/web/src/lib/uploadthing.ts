@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { createUploadthing, type FileRouter } from 'uploadthing/next';
+import { UTFiles } from 'uploadthing/server';
 
 const f = createUploadthing();
 
@@ -42,19 +43,31 @@ export const uploadRouter = {
       maxFileCount: 5,
     },
   })
-    .middleware(async () => {
+    .middleware(async ({ files }) => {
       const auth = await getAuth();
+
+      // Renomear arquivos com prefixo da organização para organização no dashboard
+      const fileOverrides = files.map((file) => ({
+        ...file,
+        name: `${auth.organizationId}_${file.name}`,
+        customId: auth.organizationId,
+      }));
+
       return {
         userId: auth.userId,
         organizationId: auth.organizationId,
+        [UTFiles]: fileOverrides,
       };
     })
-    .onUploadComplete(async ({ file }) => {
+    .onUploadComplete(async ({ file, metadata }) => {
       console.log('Budget attachment upload complete:', file.name);
+
+      // Extrair nome original removendo o prefixo da organização
+      const originalName = file.name.replace(`${metadata.organizationId}_`, '');
 
       return {
         url: file.ufsUrl,
-        name: file.name,
+        name: originalName,
         size: file.size,
         key: file.key,
         type: file.type,
@@ -77,19 +90,31 @@ export const uploadRouter = {
     },
     blob: { maxFileSize: '32MB', maxFileCount: 5 },
   })
-    .middleware(async () => {
+    .middleware(async ({ files }) => {
       const auth = await getAuth();
+
+      // Renomear arquivos com prefixo da organização para organização no dashboard
+      const fileOverrides = files.map((file) => ({
+        ...file,
+        name: `${auth.organizationId}_${file.name}`,
+        customId: auth.organizationId,
+      }));
+
       return {
         userId: auth.userId,
         organizationId: auth.organizationId,
+        [UTFiles]: fileOverrides,
       };
     })
-    .onUploadComplete(async ({ file }) => {
+    .onUploadComplete(async ({ file, metadata }) => {
       console.log('Card attachment upload complete:', file.name);
+
+      // Extrair nome original removendo o prefixo da organização
+      const originalName = file.name.replace(`${metadata.organizationId}_`, '');
 
       return {
         url: file.ufsUrl,
-        name: file.name,
+        name: originalName,
         size: file.size,
         key: file.key,
         type: file.type,
