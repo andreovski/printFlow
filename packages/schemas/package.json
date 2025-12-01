@@ -4,15 +4,13 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "npx tsc",
-    "dev": "npx tsc -w",
+    "build": "tsc",
+    "dev": "tsc -w",
     "lint": "eslint ."
   },
   "dependencies": {
     "@magic-system/auth": "workspace:*",
+    "typescript": "^5.4.5",
     "zod": "^3.23.8"
-  },
-  "devDependencies": {
-    "typescript": "^5.4.5"
   }
 }
