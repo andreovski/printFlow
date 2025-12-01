@@ -5,7 +5,7 @@ nixPkgs = ["nodejs_22", "pnpm"]
 cmds = ["pnpm install --frozen-lockfile"]
 
 [phases.build]
-cmds = ["cd apps/api && pnpm run build"]
+cmds = ["pnpm --filter=api run build"]
 
 [start]
-cmd = "cd apps/api && pnpm run start"
+cmd = "pnpm --filter=api run start"
