@@ -94,8 +94,8 @@ export function GenerateLinkButton({
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-md gap-2">
+          <DialogHeader className="m-0 p-0 border-none">
             <DialogTitle>Link de Aprovação</DialogTitle>
             <DialogDescription>
               Compartilhe este link com o cliente para que ele possa aprovar ou recusar o orçamento

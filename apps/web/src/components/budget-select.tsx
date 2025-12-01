@@ -193,13 +193,20 @@ export function BudgetSelect({
                   </div>
                 )}
                 {!disabled && (
-                  <button
-                    type="button"
-                    className="ml-auto hover:opacity-70 shrink-0"
+                  <div
+                    className="ml-auto hover:opacity-70 shrink-0 cursor-pointer"
                     onClick={handleClear}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleClear(e as any);
+                      }
+                    }}
                   >
                     <X className="h-4 w-4" />
-                  </button>
+                  </div>
                 )}
               </div>
             ) : (

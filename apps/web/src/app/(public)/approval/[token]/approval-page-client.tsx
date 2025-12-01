@@ -7,6 +7,7 @@ import {
   Check,
   CheckCircle2,
   FileText,
+  Info,
   Loader2,
   Mail,
   Phone,
@@ -378,6 +379,22 @@ export function ApprovalPageClient({ token }: ApprovalPageClientProps) {
           </Card>
         )}
 
+        {/* Informational Warning */}
+        <Card className="">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3 text-blue-700">
+              <Info className="h-5 w-5 shrink-0" />
+              <div>
+                <p className="font-medium">Aviso</p>
+                <p className="text-sm">
+                  Esta é a etapa de aceite do orçamento. O pagamento só será solicitado diretamente
+                  pela empresa.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Action Buttons */}
         {!isExpired && (
           <div className="flex flex-col sm:flex-row gap-3">
@@ -391,8 +408,8 @@ export function ApprovalPageClient({ token }: ApprovalPageClientProps) {
             </Button>
             <Button
               size="lg"
-              variant="outline"
-              className="flex-1 border-red-300 text-red-600 hover:bg-red-50 p-2"
+              variant="destructive"
+              className="flex-1"
               onClick={() => setShowRejectDialog(true)}
             >
               <X className="h-5 w-5 mr-2" />

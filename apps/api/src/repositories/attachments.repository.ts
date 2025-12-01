@@ -76,6 +76,34 @@ export class AttachmentsRepository {
     return { data, total };
   }
 
+  async validateBudgetExists(budgetId: string, organizationId: string): Promise<boolean> {
+    const budget = await prisma.budget.findUnique({
+      where: { id: budgetId },
+      select: { organizationId: true },
+    });
+
+    return budget?.organizationId === organizationId;
+  }
+
+  async validateCardExists(cardId: string, organizationId: string): Promise<boolean> {
+    const card = await prisma.card.findUnique({
+      where: { id: cardId },
+      select: {
+        column: {
+          select: {
+            board: {
+              select: {
+                organizationId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return card?.column?.board?.organizationId === organizationId;
+  }
+
   async delete(id: string): Promise<Attachment> {
     return await prisma.attachment.delete({
       where: { id },

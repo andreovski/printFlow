@@ -8,7 +8,7 @@ import {
   Template,
 } from '@magic-system/schemas';
 import { useCurrentEditor } from '@tiptap/react';
-import { Archive, Copy, Link2, Package, Paperclip, Printer, Trash } from 'lucide-react';
+import { Archive, Copy, Package, Paperclip, Printer, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
@@ -122,7 +122,41 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
     setAttachments(newAttachments);
   }, []);
 
+  const attachmentsManagerRef = useRef<{ uploadFiles: (files: File[]) => void }>(null);
+
   const isReadOnly = initialData?.status === 'SENT' || initialData?.status === 'INACTIVE';
+
+  // Handle paste event for images
+  useEffect(() => {
+    const handlePaste = (event: ClipboardEvent) => {
+      if (isReadOnly || !initialData) return; // Only allow for existing budgets and not readonly
+
+      const items = event.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.indexOf('image') !== -1) {
+          event.preventDefault();
+          const file = item.getAsFile();
+          if (file && attachmentsManagerRef.current) {
+            // Generate a name for the pasted image
+            const timestamp = Date.now();
+            const mimeType = item.type || 'image/png'; // Fallback to png if type is not available
+            const extension = mimeType.split('/')[1] || 'png';
+            const newFile = new File([file], `pasted-image-${timestamp}.${extension}`, {
+              type: mimeType,
+            });
+            attachmentsManagerRef.current.uploadFiles([newFile]);
+          }
+          break; // Only handle the first image
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [isReadOnly, initialData]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema) as any,
@@ -283,8 +317,6 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
       console.error(error);
     }
   };
-
-  console.log(form.formState.errors);
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-2">
@@ -560,6 +592,7 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
               Anexos
             </Label>
             <AttachmentsManager
+              ref={attachmentsManagerRef}
               entityType="budget"
               entityId={initialData.id}
               attachments={attachments}
@@ -614,24 +647,28 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
                 }
               />
             )}
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => duplicateDialog.open()}
-              disabled={isPending}
-              title="Copiar orçamento"
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => archiveDialog.open()}
-              disabled={isPending}
-              title="Arquivar orçamento"
-            >
-              <Archive className="h-4 w-4" />
-            </Button>
+            {initialData && (
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => duplicateDialog.open()}
+                disabled={isPending}
+                title="Copiar orçamento"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            )}
+            {initialData && (
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => archiveDialog.open()}
+                disabled={isPending}
+                title="Arquivar orçamento"
+              >
+                <Archive className="h-4 w-4" />
+              </Button>
+            )}
 
             {initialData &&
               (initialData.status === 'DRAFT' || initialData.status === 'INACTIVE') && (

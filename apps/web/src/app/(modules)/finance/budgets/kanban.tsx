@@ -171,8 +171,8 @@ export const Kanban = ({ budgets }: KanbanProps) => {
                                     <span
                                       className={`inline-flex items-center justify-center h-4 w-4 rounded-full ${
                                         budget.column === 'ACCEPTED'
-                                          ? 'bg-green-100 text-green-600'
-                                          : 'bg-red-100 text-red-600'
+                                          ? 'bg-green-100 dark:bg-green-900 text-green-600'
+                                          : 'bg-red-100 dark:bg-red-900 text-red-600'
                                       }`}
                                     >
                                       <ExternalLink className="h-3 w-3" />

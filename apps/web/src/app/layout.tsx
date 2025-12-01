@@ -14,8 +14,8 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-  title: 'Magic System',
-  description: 'Print Shop SaaS',
+  title: 'PrintFlow',
+  description: 'PrintFlow',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

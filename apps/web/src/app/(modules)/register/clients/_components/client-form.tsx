@@ -22,6 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { BRAZILIAN_STATES } from '@/lib/constants';
 import { maskCNPJ, maskCPF, maskOnlyNumbers, maskPhone, maskCEP } from '@/lib/masks';
+import { fetchCNPJData } from '@/lib/opencnpj';
 import { fetchAddressByCEP } from '@/lib/viacep';
 
 import { createClientAction, updateClientAction } from '../actions';
@@ -72,8 +73,23 @@ export function ClientForm({ id, initialData }: ClientFormProps) {
     neighborhood: initialData?.neighborhood || '',
     city: initialData?.city || '',
     state: initialData?.state || '',
+    addressNumber: initialData?.addressNumber || '',
+    cep: initialData?.cep || '',
   });
   const [isLoadingCEP, setIsLoadingCEP] = useState(false);
+
+  // Company fields state for CNPJ lookup
+  const [companyFields, setCompanyFields] = useState({
+    name: initialData?.name || '',
+    fantasyName: initialData?.fantasyName || '',
+  });
+  const [isLoadingCNPJ, setIsLoadingCNPJ] = useState(false);
+
+  // Contact fields state for CNPJ lookup
+  const [contactFields, setContactFields] = useState({
+    email: initialData?.email || '',
+    phone: initialData?.phone || '',
+  });
 
   const getError = (field: string) => state?.errors?.[field]?.[0];
 
@@ -85,27 +101,58 @@ export function ClientForm({ id, initialData }: ClientFormProps) {
     event.target.value = maskFunction(value);
   };
 
-  const handleCEPChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCEPChange = async (cleanCEP: string) => {
+    setIsLoadingCEP(true);
+    const addressData = await fetchAddressByCEP(cleanCEP);
+    setIsLoadingCEP(false);
+
+    if (addressData) {
+      setAddressFields((prev) => ({
+        ...prev,
+        street: addressData.street,
+        neighborhood: addressData.neighborhood,
+        city: addressData.city,
+        state: addressData.state,
+      }));
+      toast.success('Endereço encontrado!');
+    }
+  };
+
+  const handleCNPJChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
-    const maskedValue = maskCEP(value);
+    const maskedValue = maskCNPJ(value);
     event.target.value = maskedValue;
 
-    const cleanCEP = value.replace(/\D/g, '');
+    const cleanCNPJ = value.replace(/\D/g, '');
 
-    if (cleanCEP.length === 8) {
-      setIsLoadingCEP(true);
-      const addressData = await fetchAddressByCEP(cleanCEP);
-      setIsLoadingCEP(false);
+    if (cleanCNPJ.length === 14) {
+      setIsLoadingCNPJ(true);
+      const cnpjData = await fetchCNPJData(cleanCNPJ);
 
-      if (addressData) {
-        setAddressFields({
-          street: addressData.street,
-          neighborhood: addressData.neighborhood,
-          city: addressData.city,
-          state: addressData.state,
+      if (cnpjData) {
+        setCompanyFields({
+          name: cnpjData.razaoSocial,
+          fantasyName: cnpjData.nomeFantasia,
         });
-        toast.success('Endereço encontrado!');
+        // Optionally fill address if not already set
+        if (!addressFields.street) {
+          setAddressFields({
+            street: cnpjData.logradouro,
+            neighborhood: cnpjData.bairro,
+            city: cnpjData.municipio,
+            state: cnpjData.uf,
+            addressNumber: cnpjData.numero,
+            cep: maskCEP(cnpjData.cep),
+          });
+        }
+        // Fill contact fields
+        setContactFields({
+          email: cnpjData.email || '',
+          phone: cnpjData.telefone ? maskPhone(cnpjData.telefone) : '',
+        });
+        toast.success('Dados da empresa encontrados!');
       }
+      setIsLoadingCNPJ(false);
     }
   };
 
@@ -150,12 +197,36 @@ export function ClientForm({ id, initialData }: ClientFormProps) {
 
                 {personType === 'JURIDICA' && (
                   <>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="document">CNPJ</Label>
+                      <div className="relative">
+                        <Input
+                          id="document"
+                          name="document"
+                          defaultValue={initialData?.document ? maskCNPJ(initialData.document) : ''}
+                          placeholder="00.000.000/0000-00"
+                          disabled={isEditing || isLoadingCNPJ}
+                          maxLength={18}
+                          onChange={handleCNPJChange}
+                          className={getError('document') ? 'border-red-500' : ''}
+                        />
+                        {isLoadingCNPJ && (
+                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                      </div>
+                      {getError('document') && (
+                        <span className="text-red-500 text-xs">{getError('document')}</span>
+                      )}
+                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="name">Razão Social</Label>
                       <Input
                         id="name"
                         name="name"
-                        defaultValue={initialData?.name}
+                        value={companyFields.name}
+                        onChange={(e) =>
+                          setCompanyFields({ ...companyFields, name: e.target.value })
+                        }
                         placeholder="Razão Social"
                         className={getError('name') ? 'border-red-500' : ''}
                       />
@@ -168,28 +239,15 @@ export function ClientForm({ id, initialData }: ClientFormProps) {
                       <Input
                         id="fantasyName"
                         name="fantasyName"
-                        defaultValue={initialData?.fantasyName}
+                        value={companyFields.fantasyName}
+                        onChange={(e) =>
+                          setCompanyFields({ ...companyFields, fantasyName: e.target.value })
+                        }
                         placeholder="Nome Fantasia"
                         className={getError('fantasyName') ? 'border-red-500' : ''}
                       />
                       {getError('fantasyName') && (
                         <span className="text-red-500 text-xs">{getError('fantasyName')}</span>
-                      )}
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="document">CNPJ</Label>
-                      <Input
-                        id="document"
-                        name="document"
-                        defaultValue={initialData?.document ? maskCNPJ(initialData.document) : ''}
-                        placeholder="00.000.000/0000-00"
-                        disabled={isEditing}
-                        maxLength={18}
-                        onChange={(e) => handleMask(e, maskCNPJ)}
-                        className={getError('document') ? 'border-red-500' : ''}
-                      />
-                      {getError('document') && (
-                        <span className="text-red-500 text-xs">{getError('document')}</span>
                       )}
                     </div>
                     <div className="space-y-2 md:col-span-2">
@@ -305,7 +363,8 @@ export function ClientForm({ id, initialData }: ClientFormProps) {
                     id="email"
                     name="email"
                     type="email"
-                    defaultValue={initialData?.email}
+                    value={contactFields.email}
+                    onChange={(e) => setContactFields({ ...contactFields, email: e.target.value })}
                     placeholder="cliente@exemplo.com"
                     className={getError('email') ? 'border-red-500' : ''}
                   />
@@ -319,10 +378,14 @@ export function ClientForm({ id, initialData }: ClientFormProps) {
                   <Input
                     id="phone"
                     name="phone"
-                    defaultValue={initialData?.phone ? maskPhone(initialData.phone) : ''}
+                    value={contactFields.phone}
                     placeholder="(00) 00000-0000"
                     maxLength={15}
-                    onChange={(e) => handleMask(e, maskPhone)}
+                    onChange={(e) => {
+                      const masked = maskPhone(e.target.value);
+                      e.target.value = masked;
+                      setContactFields({ ...contactFields, phone: masked });
+                    }}
                     className={getError('phone') ? 'border-red-500' : ''}
                   />
                   {getError('phone') && (
@@ -334,7 +397,7 @@ export function ClientForm({ id, initialData }: ClientFormProps) {
                   <Checkbox
                     id="isWhatsapp"
                     name="isWhatsapp"
-                    defaultChecked={initialData?.isWhatsapp}
+                    defaultChecked={initialData?.isWhatsapp || true}
                   />
                   <Label htmlFor="isWhatsapp">Este telefone é WhatsApp?</Label>
                 </div>
@@ -351,10 +414,17 @@ export function ClientForm({ id, initialData }: ClientFormProps) {
                     <Input
                       id="cep"
                       name="cep"
-                      defaultValue={initialData?.cep ? maskCEP(initialData.cep) : ''}
+                      value={addressFields.cep}
                       placeholder="00000-000"
                       maxLength={9}
-                      onChange={handleCEPChange}
+                      onChange={(e) => {
+                        const masked = maskCEP(e.target.value);
+                        setAddressFields({ ...addressFields, cep: masked });
+                        const cleanCEP = e.target.value.replace(/\D/g, '');
+                        if (cleanCEP.length === 8) {
+                          handleCEPChange(cleanCEP);
+                        }
+                      }}
                       className={getError('cep') ? 'border-red-500' : ''}
                       disabled={isLoadingCEP}
                     />
@@ -400,7 +470,10 @@ export function ClientForm({ id, initialData }: ClientFormProps) {
                   <Input
                     id="addressNumber"
                     name="addressNumber"
-                    defaultValue={initialData?.addressNumber}
+                    value={addressFields.addressNumber}
+                    onChange={(e) =>
+                      setAddressFields({ ...addressFields, addressNumber: e.target.value })
+                    }
                     placeholder="Número"
                     className={getError('addressNumber') ? 'border-red-500' : ''}
                   />

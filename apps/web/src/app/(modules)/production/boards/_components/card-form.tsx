@@ -122,9 +122,43 @@ export function CardForm<T extends z.ZodType<any, any>>({
   // State for attachments
   const [attachments, setAttachments] = React.useState<Attachment[]>([]);
 
+  const attachmentsManagerRef = React.useRef<{ uploadFiles: (files: File[]) => void }>(null);
+
   const handleAttachmentsChange = React.useCallback((newAttachments: Attachment[]) => {
     setAttachments(newAttachments);
   }, []);
+
+  // Handle paste event for images
+  React.useEffect(() => {
+    const handlePaste = (event: ClipboardEvent) => {
+      if (mode !== 'edit' || !cardId) return; // Only allow in edit mode with cardId
+
+      const items = event.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.indexOf('image') !== -1) {
+          event.preventDefault();
+          const file = item.getAsFile();
+          if (file && attachmentsManagerRef.current) {
+            // Generate a name for the pasted image
+            const timestamp = Date.now();
+            const mimeType = item.type || 'image/png'; // Fallback to png if type is not available
+            const extension = mimeType.split('/')[1] || 'png';
+            const newFile = new File([file], `pasted-image-${timestamp}.${extension}`, {
+              type: mimeType,
+            });
+            attachmentsManagerRef.current.uploadFiles([newFile]);
+          }
+          break; // Only handle the first image
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [mode, cardId]);
 
   const handleTemplateSelect = (template: Template, fieldOnChange: (value: string) => void) => {
     setTemplateContent(template.content);
@@ -385,6 +419,7 @@ export function CardForm<T extends z.ZodType<any, any>>({
                 Anexos
               </Label>
               <AttachmentsManager
+                ref={attachmentsManagerRef}
                 entityType="card"
                 entityId={cardId}
                 attachments={attachments}

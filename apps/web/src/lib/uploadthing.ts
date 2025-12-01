@@ -21,7 +21,7 @@ async function getAuth() {
       userId: payload.sub,
       organizationId: payload.organizationId,
     };
-  } catch {
+  } catch (_error) {
     throw new Error('Token inválido');
   }
 }

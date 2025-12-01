@@ -57,15 +57,23 @@ function getFileIcon(mimeType?: string | null) {
   return <FileIcon className="h-4 w-4" />;
 }
 
-export function AttachmentsManager({
-  entityType,
-  entityId,
-  attachments,
-  onAttachmentsChange,
-  disabled = false,
-  maxFiles = 10,
-  className,
-}: AttachmentsManagerProps) {
+export const AttachmentsManager = React.forwardRef<
+  {
+    uploadFiles: (files: File[]) => void;
+  },
+  AttachmentsManagerProps
+>(function AttachmentsManager(
+  {
+    entityType,
+    entityId,
+    attachments,
+    onAttachmentsChange,
+    disabled = false,
+    maxFiles = 10,
+    className,
+  },
+  ref
+) {
   const [isUploading, setIsUploading] = React.useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [attachmentToDelete, setAttachmentToDelete] = React.useState<Attachment | null>(null);
@@ -79,13 +87,15 @@ export function AttachmentsManager({
       if (!res || res.length === 0) return;
 
       // Preparar dados para salvar no backend
-      const newAttachments = res.map((file) => ({
-        name: file.name,
-        url: file.ufsUrl,
-        key: file.key,
-        size: file.size,
-        mimeType: file.type,
-      }));
+      const newAttachments = res.map((file) => {
+        return {
+          name: file.name,
+          url: file.ufsUrl,
+          key: file.key,
+          size: file.size,
+          mimeType: file.type || null,
+        };
+      });
 
       try {
         // Salvar referências no backend
@@ -205,6 +215,21 @@ export function AttachmentsManager({
       inputRef.current?.click();
     }
   };
+
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      uploadFiles: async (files: File[]) => {
+        const remainingSlots = maxFiles - attachments.length;
+        if (files.length > remainingSlots) {
+          toast.error(`Você pode adicionar no máximo ${remainingSlots} arquivo(s)`);
+          return;
+        }
+        await startUpload(files);
+      },
+    }),
+    [startUpload, maxFiles, attachments.length]
+  );
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -346,4 +371,4 @@ export function AttachmentsManager({
       </Dialog>
     </div>
   );
-}
+});

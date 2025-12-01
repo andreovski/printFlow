@@ -52,6 +52,22 @@ export class AttachmentsService {
       throw new Error('Attachments must belong to either a Budget or a Card');
     }
 
+    // Validar se o budget existe e pertence à organização
+    if (budgetId) {
+      const isValid = await this.attachmentsRepository.validateBudgetExists(budgetId, organizationId);
+      if (!isValid) {
+        throw new Error('Budget not found or does not belong to this organization');
+      }
+    }
+
+    // Validar se o card existe e pertence à organização
+    if (cardId) {
+      const isValid = await this.attachmentsRepository.validateCardExists(cardId, organizationId);
+      if (!isValid) {
+        throw new Error('Card not found or does not belong to this organization');
+      }
+    }
+
     const attachmentsData: CreateAttachmentDTO[] = attachments.map((att) => ({
       ...att,
       organizationId,

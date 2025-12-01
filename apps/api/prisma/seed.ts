@@ -7,10 +7,10 @@ async function main() {
   const passwordHash = await hash('123456', 6);
 
   const org = await prisma.organization.upsert({
-    where: { id: 'default-org-id' },
+    where: { id: '0193a1b2-3c4d-5e6f-7g8h-9i0j1k2l3m4n5o' },
     update: {},
     create: {
-      id: 'default-org-id',
+      id: '0193a1b2-3c4d-5e6f-7g8h-9i0j1k2l3m4n5o',
       name: 'Acme Print Shop',
       ownerId: 'temp-owner-id',
     },

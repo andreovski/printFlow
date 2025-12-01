@@ -11,23 +11,26 @@ import { AttachmentsService } from '@/services/attachments.service';
 
 const attachmentsService = new AttachmentsService();
 
-// ========== BUDGET ATTACHMENTS ==========
-
 export async function createBudgetAttachmentsController(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
-  const { budgetId } = budgetAttachmentParamsSchema.parse(request.params);
-  const { attachments } = createManyAttachmentsBodySchema.parse(request.body);
-  const { organizationId } = request.user as { organizationId: string };
+  try {
+    const { budgetId } = budgetAttachmentParamsSchema.parse(request.params);
+    const { attachments } = createManyAttachmentsBodySchema.parse(request.body);
+    const { organizationId } = request.user as { organizationId: string };
 
-  const result = await attachmentsService.createMany({
-    attachments,
-    organizationId,
-    budgetId,
-  });
+    const result = await attachmentsService.createMany({
+      attachments,
+      organizationId,
+      budgetId,
+    });
 
-  return reply.status(201).send(result);
+    return reply.status(201).send(result);
+  } catch (error) {
+    console.error('Error in createBudgetAttachmentsController:', error);
+    return reply.status(400).send({ message: 'Bad request' });
+  }
 }
 
 export async function fetchBudgetAttachmentsController(
