@@ -7,7 +7,8 @@ import { ResponsiveDrawer } from '@/components/responsive-drawer';
 import { TemplateForm } from '../../_components/template-form';
 
 async function getTemplate(id: string) {
-  const token = cookies().get('token')?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/templates/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -23,8 +24,9 @@ async function getTemplate(id: string) {
   return data.template;
 }
 
-export default async function UpdateTemplatePage({ params }: { params: { id: string } }) {
-  const template = await getTemplate(params.id);
+export default async function UpdateTemplatePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const template = await getTemplate(id);
 
   if (!template) {
     redirect('/settings/templates');
@@ -37,7 +39,7 @@ export default async function UpdateTemplatePage({ params }: { params: { id: str
       className="max-w-[600px] md:w-[50vw]"
       headerIcon={<PencilRuler className="w-5 h-5" />}
     >
-      <TemplateForm id={params.id} initialData={template} />
+      <TemplateForm id={id} initialData={template} />
     </ResponsiveDrawer>
   );
 }

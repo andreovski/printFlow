@@ -4,8 +4,9 @@ import { getBudget } from '@/app/http/requests/budgets';
 
 import { ReceiptPageClient } from './receipt-page-client';
 
-export default async function ReceiptPage({ params }: { params: { id: string } }) {
-  const data = await getBudget(params.id);
+export default async function ReceiptPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const data = await getBudget(id);
   const budget = data?.budget;
 
   if (!budget) {
@@ -14,7 +15,7 @@ export default async function ReceiptPage({ params }: { params: { id: string } }
 
   // Only allow printing receipts for accepted budgets
   if (budget.status !== 'ACCEPTED') {
-    redirect(`/finance/budgets/${params.id}`);
+    redirect(`/finance/budgets/${id}`);
   }
 
   return <ReceiptPageClient budget={budget} />;

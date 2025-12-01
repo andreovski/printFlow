@@ -9,7 +9,8 @@ import { ClientForm } from '../../_components/client-form';
 // import { Whatsapp } from '@/assets/svg/whatsapp';
 
 async function getClient(id: string) {
-  const token = cookies().get('token')?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/clients/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -25,8 +26,9 @@ async function getClient(id: string) {
   return data.client;
 }
 
-export default async function UpdateClientPage({ params }: { params: { id: string } }) {
-  const client = await getClient(params.id);
+export default async function UpdateClientPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const client = await getClient(id);
 
   const document = client.document;
   const formattedDocument = document ? formatDocument(document) : '';
@@ -45,7 +47,7 @@ export default async function UpdateClientPage({ params }: { params: { id: strin
       className="max-w-[900px] md:w-[60vw]"
       headerIcon={<User />}
     >
-      <ClientForm id={params.id} initialData={client} />
+      <ClientForm id={id} initialData={client} />
     </ResponsiveDrawer>
   );
 }

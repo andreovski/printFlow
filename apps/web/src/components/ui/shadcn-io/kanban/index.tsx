@@ -21,7 +21,14 @@ import {
 import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
-import { createContext, type HTMLAttributes, type ReactNode, useContext, useState } from 'react';
+import {
+  createContext,
+  Fragment,
+  type HTMLAttributes,
+  type ReactNode,
+  useContext,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import tunnel from 'tunnel-rat';
 
@@ -207,7 +214,9 @@ export const KanbanCards = <T extends KanbanItemProps = KanbanItemProps>({
     <ScrollArea className="overflow-hidden ">
       <SortableContext items={items}>
         <div className={cn('flex flex-grow flex-col gap-2 p-2', className)} {...props}>
-          {filteredData.map(children)}
+          {filteredData.map((item) => (
+            <Fragment key={item.id}>{children(item)}</Fragment>
+          ))}
         </div>
       </SortableContext>
       <ScrollBar orientation="vertical" />

@@ -8,7 +8,8 @@ import { DataTable } from '@/components/ui/data-table';
 import { columns, User } from './columns';
 
 async function getUsers(): Promise<User[]> {
-  const token = cookies().get('token')?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
     headers: {
       Authorization: `Bearer ${token}`,

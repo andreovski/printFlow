@@ -2,11 +2,14 @@ import { cookies } from 'next/headers';
 
 const prefix = '@PrintFlow';
 
-export const getCookieValue = <T = string>(suffix: string, initialValue?: T): T | null => {
+export const getCookieValue = async <T = string>(
+  suffix: string,
+  initialValue?: T
+): Promise<T | null> => {
   const key = `${prefix}/${suffix}`;
 
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const cookie = cookieStore.get(key);
 
     if (!cookie?.value) {
@@ -20,7 +23,7 @@ export const getCookieValue = <T = string>(suffix: string, initialValue?: T): T 
   }
 };
 
-export const setCookieValue = <T = string>(
+export const setCookieValue = async <T = string>(
   suffix: string,
   value: T | null,
   options: {
@@ -31,11 +34,11 @@ export const setCookieValue = <T = string>(
     httpOnly?: boolean;
     sameSite?: 'strict' | 'lax' | 'none';
   } = {}
-): void => {
+): Promise<void> => {
   const key = `${prefix}/${suffix}`;
 
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
 
     if (value === null) {
       cookieStore.delete(key);
@@ -52,6 +55,6 @@ export const setCookieValue = <T = string>(
   }
 };
 
-export const deleteCookieValue = (suffix: string): void => {
-  setCookieValue(suffix, null);
+export const deleteCookieValue = async (suffix: string): Promise<void> => {
+  await setCookieValue(suffix, null);
 };

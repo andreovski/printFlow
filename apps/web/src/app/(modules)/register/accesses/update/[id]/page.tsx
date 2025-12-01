@@ -5,7 +5,8 @@ import { ResponsiveDrawer } from '@/components/responsive-drawer';
 import { UpdateUserForm } from './_components/update-user-form';
 
 async function getUser(id: string) {
-  const token = cookies().get('token')?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -21,12 +22,13 @@ async function getUser(id: string) {
   return data.user;
 }
 
-export default async function UpdateUserPage({ params }: { params: { id: string } }) {
-  const user = await getUser(params.id);
+export default async function UpdateUserPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const user = await getUser(id);
 
   return (
     <ResponsiveDrawer title="Atualizar Acesso" description="Atualize os dados do acesso abaixo.">
-      <UpdateUserForm id={params.id} initialData={user} />
+      <UpdateUserForm id={id} initialData={user} />
     </ResponsiveDrawer>
   );
 }

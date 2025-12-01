@@ -6,7 +6,8 @@ import { ResponsiveDrawer } from '@/components/responsive-drawer';
 import { TagForm } from '../../_components/tag-form';
 
 async function getTag(id: string) {
-  const token = cookies().get('token')?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tags/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -22,8 +23,9 @@ async function getTag(id: string) {
   return data.tag;
 }
 
-export default async function UpdateTagPage({ params }: { params: { id: string } }) {
-  const tag = await getTag(params.id);
+export default async function UpdateTagPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const tag = await getTag(id);
 
   if (!tag) {
     throw new Error('Tag not found');
@@ -36,7 +38,7 @@ export default async function UpdateTagPage({ params }: { params: { id: string }
       className="max-w-[600px] md:w-[50vw]"
       headerIcon={<PencilRuler className="w-5 h-5" />}
     >
-      <TagForm id={params.id} initialData={tag} />
+      <TagForm id={id} initialData={tag} />
     </ResponsiveDrawer>
   );
 }

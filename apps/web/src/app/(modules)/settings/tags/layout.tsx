@@ -8,7 +8,8 @@ import { DataTable } from '@/components/ui/data-table';
 import { columns, Tag } from './columns';
 
 async function getTags(): Promise<Tag[]> {
-  const token = cookies().get('token')?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tags`, {
     headers: {
       Authorization: `Bearer ${token}`,

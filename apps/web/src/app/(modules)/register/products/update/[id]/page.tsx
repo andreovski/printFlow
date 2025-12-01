@@ -6,7 +6,8 @@ import { ResponsiveDrawer } from '@/components/responsive-drawer';
 import { ProductForm } from '../../_components/product-form';
 
 async function getProduct(id: string) {
-  const token = cookies().get('token')?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -22,8 +23,9 @@ async function getProduct(id: string) {
   return data.product;
 }
 
-export default async function UpdateProductPage({ params }: { params: { id: string } }) {
-  const product = await getProduct(params.id);
+export default async function UpdateProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const product = await getProduct(id);
 
   if (!product) {
     throw new Error('Product not found');
@@ -36,7 +38,7 @@ export default async function UpdateProductPage({ params }: { params: { id: stri
       className="max-w-[900px] md:w-[60vw]"
       headerIcon={<PencilRuler className="w-5 h-5" />}
     >
-      <ProductForm id={params.id} initialData={product} />
+      <ProductForm id={id} initialData={product} />
     </ResponsiveDrawer>
   );
 }

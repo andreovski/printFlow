@@ -157,17 +157,24 @@ export function TagSelect({
                     className="rounded-sm"
                   >
                     {tag.name}
-                    <button
-                      type="button"
-                      className="ml-1 hover:opacity-70"
+                    <span
+                      role="button"
+                      tabIndex={disabled ? -1 : 0}
+                      className="ml-1 hover:opacity-70 cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleRemove(tag.id);
+                        if (!disabled) handleRemove(tag.id);
                       }}
-                      disabled={disabled}
+                      onKeyDown={(e) => {
+                        if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
+                          e.stopPropagation();
+                          handleRemove(tag.id);
+                        }
+                      }}
+                      aria-disabled={disabled}
                     >
                       <X className="h-3 w-3" />
-                    </button>
+                    </span>
                   </Badge>
                 ))}
               </div>

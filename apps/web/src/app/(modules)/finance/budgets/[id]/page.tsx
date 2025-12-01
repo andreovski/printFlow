@@ -5,8 +5,9 @@ import { ResponsiveDrawer } from '@/components/responsive-drawer';
 
 import { BudgetForm } from '../_components/budget-form';
 
-export default async function EditBudgetPage({ params }: { params: { id: string } }) {
-  const data = await getBudget(params.id);
+export default async function EditBudgetPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const data = await getBudget(id);
   const budget = data?.budget;
 
   if (!budget) return <div>Orçamento não encontrado</div>;

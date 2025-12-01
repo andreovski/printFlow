@@ -8,7 +8,8 @@ import { DataTable } from '@/components/ui/data-table';
 import { columns, Template } from './columns';
 
 async function getTemplates(): Promise<Template[]> {
-  const token = cookies().get('token')?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/templates`, {
     headers: {
       Authorization: `Bearer ${token}`,
