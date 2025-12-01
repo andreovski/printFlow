@@ -6,6 +6,8 @@ import {
   updateUserBodySchema,
   deleteUserParamsSchema,
   paginationQuerySchema,
+  updateProfileBodySchema,
+  changePasswordBodySchema,
 } from '@magic-system/schemas';
 import { Role } from '@prisma/client';
 import { FastifyReply, FastifyRequest } from 'fastify';
@@ -100,4 +102,42 @@ export async function deleteUserController(request: FastifyRequest, reply: Fasti
   await usersService.deleteUser(id);
 
   return reply.status(204).send();
+}
+
+export async function updateProfileController(request: FastifyRequest, reply: FastifyReply) {
+  const { sub: userId } = request.user as { sub: string };
+  const data = updateProfileBodySchema.parse(request.body);
+
+  try {
+    const { user } = await usersService.updateProfile(userId, data);
+    return reply.status(200).send({ user });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'User not found.') {
+      return reply.status(404).send({ message: err.message });
+    }
+    throw err;
+  }
+}
+
+export async function changePasswordController(request: FastifyRequest, reply: FastifyReply) {
+  const { sub: userId } = request.user as { sub: string };
+  const data = changePasswordBodySchema.parse(request.body);
+
+  try {
+    await usersService.changePassword(userId, {
+      currentPassword: data.currentPassword,
+      newPassword: data.newPassword,
+    });
+    return reply.status(200).send({ message: 'Password changed successfully.' });
+  } catch (err) {
+    if (err instanceof Error) {
+      if (err.message === 'User not found.') {
+        return reply.status(404).send({ message: err.message });
+      }
+      if (err.message === 'Current password is incorrect.') {
+        return reply.status(400).send({ message: 'Senha atual incorreta.' });
+      }
+    }
+    throw err;
+  }
 }

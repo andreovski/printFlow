@@ -8,6 +8,8 @@ import {
   GetUserResponse,
   GetUsersResponse,
   UpdateUserResponse,
+  UpdateProfileBody,
+  ChangePasswordBody,
 } from '@magic-system/schemas';
 
 import { api } from '../api';
@@ -37,4 +39,14 @@ export async function updateUser({
 
 export async function deleteUser(id: string): Promise<void> {
   return api.delete(`users/${id}`).json<void>();
+}
+
+export async function updateProfile(data: UpdateProfileBody): Promise<UpdateUserResponse> {
+  return api.put('profile', { json: data }).json<UpdateUserResponse>();
+}
+
+export async function changePassword(
+  data: Omit<ChangePasswordBody, 'confirmPassword'>
+): Promise<{ message: string }> {
+  return api.put('profile/password', { json: data }).json<{ message: string }>();
 }

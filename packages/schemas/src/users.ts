@@ -39,6 +39,25 @@ export type UpdateUserParams = z.infer<typeof updateUserParamsSchema>;
 export type UpdateUserBody = z.infer<typeof updateUserBodySchema>;
 export type DeleteUserParams = z.infer<typeof deleteUserParamsSchema>;
 
+// Profile update schemas
+export const updateProfileBodySchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório'),
+});
+
+export const changePasswordBodySchema = z
+  .object({
+    currentPassword: z.string().min(6, 'Senha atual deve ter no mínimo 6 caracteres'),
+    newPassword: z.string().min(6, 'Nova senha deve ter no mínimo 6 caracteres'),
+    confirmPassword: z.string().min(6, 'Confirmação deve ter no mínimo 6 caracteres'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'As senhas não coincidem',
+    path: ['confirmPassword'],
+  });
+
+export type UpdateProfileBody = z.infer<typeof updateProfileBodySchema>;
+export type ChangePasswordBody = z.infer<typeof changePasswordBodySchema>;
+
 // Entity type
 export interface User {
   id: string;

@@ -10,6 +10,7 @@ export const createClientBodySchema = z.object({
   document: z
     .string({ required_error: 'Documento é obrigatório' })
     .min(1, 'Documento é obrigatório'),
+  stateRegistration: z.string().optional(),
   phone: z.string({ required_error: 'Telefone é obrigatório' }).min(1, 'Telefone é obrigatório'),
   isWhatsapp: z.boolean().optional().default(false),
   rg: z.string().optional(),
@@ -42,6 +43,7 @@ export const updateClientBodySchema = z.object({
   email: z.string().email('E-mail inválido').optional().or(z.literal('')),
   personType: z.enum(['FISICA', 'JURIDICA', 'ESTRANGEIRO']).optional(),
   document: z.string().min(1, 'Documento é obrigatório').optional(),
+  stateRegistration: z.string().optional(),
   phone: z.string().min(1, 'Telefone é obrigatório').optional(),
   isWhatsapp: z.boolean().optional(),
   rg: z.string().optional(),
@@ -71,6 +73,7 @@ export interface Client {
   email: string | null;
   personType: 'FISICA' | 'JURIDICA' | 'ESTRANGEIRO';
   document: string;
+  stateRegistration: string | null;
   phone: string;
   isWhatsapp: boolean;
   rg: string | null;

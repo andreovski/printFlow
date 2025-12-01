@@ -35,6 +35,7 @@ interface ClientFormProps {
     email?: string;
     personType: string;
     document: string;
+    stateRegistration?: string | null;
     phone: string;
     isWhatsapp: boolean;
     rg?: string;
@@ -189,6 +190,25 @@ export function ClientForm({ id, initialData }: ClientFormProps) {
                       />
                       {getError('document') && (
                         <span className="text-red-500 text-xs">{getError('document')}</span>
+                      )}
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="stateRegistration">Inscrição Estadual (Opcional)</Label>
+                      <Input
+                        id="stateRegistration"
+                        name="stateRegistration"
+                        type="number"
+                        inputMode="numeric"
+                        step="1"
+                        min="0"
+                        defaultValue={initialData?.stateRegistration ?? ''}
+                        placeholder="Somente números"
+                        className={getError('stateRegistration') ? 'border-red-500' : ''}
+                      />
+                      {getError('stateRegistration') && (
+                        <span className="text-red-500 text-xs">
+                          {getError('stateRegistration')}
+                        </span>
                       )}
                     </div>
                   </>

@@ -18,7 +18,7 @@ export const createCardBodySchema = z.object({
   title: z.string().min(1, 'O título é obrigatório'),
   description: z.string().optional(),
   priority: cardPriorityEnum.nullable().optional(),
-  dueDate: z.string().datetime().optional(),
+  dueDate: z.string().datetime().optional().nullable(),
   tagIds: z.array(z.string()).optional(),
   budgetId: z.string().uuid().optional().nullable(),
   checklistItems: z.array(checklistItemSchema).optional(),
@@ -28,7 +28,7 @@ export const updateCardBodySchema = z.object({
   title: z.string().min(1, 'O título é obrigatório').optional(),
   description: z.string().optional(),
   priority: cardPriorityEnum.nullable().optional(),
-  dueDate: z.string().datetime().optional(),
+  dueDate: z.string().datetime().optional().nullable(),
   tagIds: z.array(z.string()).optional(),
   checklistItems: z.array(checklistItemSchema).optional(),
   // budgetId não pode ser alterado após criação - removido do update
@@ -110,6 +110,13 @@ export interface CardBudget {
   items: CardBudgetItem[];
 }
 
+export interface CardAttachment {
+  id: string;
+  name: string;
+  url: string;
+  mimeType: string | null;
+}
+
 export interface Card {
   id: string;
   title: string;
@@ -121,6 +128,7 @@ export interface Card {
   budgetId?: string | null;
   budget?: CardBudget | null;
   checklistItems?: ChecklistItem[];
+  attachments?: CardAttachment[];
   createdAt: string;
   updatedAt: string;
   tags?: any[]; // Using any[] temporarily to avoid circular dependency or import issues, ideally should be Tag[]

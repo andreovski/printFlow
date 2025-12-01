@@ -31,14 +31,14 @@ import { useCookieStorage } from '@/hooks/use-cookie-storage';
 import { useDisclosure } from '@/hooks/use-disclosure';
 import { cn } from '@/lib/utils';
 
-interface SidebarProps {
-  role?: string;
-  userName?: string;
-  userEmail?: string;
-}
+import { ProfileDrawer } from './profile-drawer';
 
-export function Sidebar({ role, userName, userEmail }: SidebarProps) {
-  const { organization } = useAppContext();
+export function Sidebar() {
+  const { organization, user } = useAppContext();
+
+  const role = user?.role;
+  const userName = user?.name || '';
+  const userEmail = user?.email || '';
   const { value: collapsedValue, setValue: setCollapsedValue } =
     useCookieStorage('collapsed-sidebar');
 
@@ -474,11 +474,13 @@ export function Sidebar({ role, userName, userEmail }: SidebarProps) {
             </div>
           )}
           {!collapsed.isOpen && (
-            <Button variant="ghost" asChild>
-              <Link href="/settings">
-                <UserCog className="h-4 w-4 shrink-0" />
-              </Link>
-            </Button>
+            <ProfileDrawer
+              trigger={
+                <Button variant="ghost" size="icon">
+                  <UserCog className="h-4 w-4 shrink-0" />
+                </Button>
+              }
+            />
           )}
         </div>
       </div>

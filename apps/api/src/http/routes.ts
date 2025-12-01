@@ -78,6 +78,8 @@ import {
   getUserController,
   registerUserController,
   updateUserController,
+  updateProfileController,
+  changePasswordController,
 } from './controllers/users.controller';
 import { verifyJwt } from './middlewares/verify-jwt';
 import { verifyUserRole } from './middlewares/verify-permissions';
@@ -146,6 +148,10 @@ export async function appRoutes(app: FastifyInstance) {
       { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
       updateOrganizationController
     );
+
+    // Profile (current user)
+    authRoutes.put('/profile', updateProfileController);
+    authRoutes.put('/profile/password', changePasswordController);
 
     // Budgets
     authRoutes.post('/budgets', createBudgetController);

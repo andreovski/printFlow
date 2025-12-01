@@ -215,7 +215,11 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
           isReorderMode={isReorderMode}
         >
           {(column) => (
-            <KanbanBoard id={column.id} key={column.id} className="min-w-[220px] flex flex-col">
+            <KanbanBoard
+              id={column.id}
+              key={column.id}
+              className="min-w-[220px] min-h-fit flex flex-col"
+            >
               <KanbanHeader className="flex items-center border-none">
                 <div className="flex items-center gap-2 mr-auto">
                   <span>{column.name}</span>

@@ -1,0 +1,363 @@
+'use client';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { updateProfileBodySchema, changePasswordBodySchema } from '@magic-system/schemas';
+import { Loader2, Moon, Sun, Monitor, User, Lock, Check } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
+
+import { useAppContext } from '@/app/hooks/useAppContext';
+import { updateProfile, changePassword } from '@/app/http/requests/users';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { useDisclosure } from '@/hooks/use-disclosure';
+import { cn } from '@/lib/utils';
+
+import {
+  PRIMARY_COLORS,
+  PRIMARY_COLOR_STORAGE_KEY,
+  applyPrimaryColor,
+} from './primary-color-provider';
+import { ResponsiveDrawer } from './responsive-drawer';
+
+type UpdateProfileFormData = z.infer<typeof updateProfileBodySchema>;
+type ChangePasswordFormData = z.infer<typeof changePasswordBodySchema>;
+
+interface ProfileDrawerProps {
+  trigger: React.ReactNode;
+}
+
+function getPasswordStrength(password: string): {
+  score: number;
+  label: string;
+  color: string;
+} {
+  let score = 0;
+
+  if (password.length >= 6) score++;
+  if (password.length >= 8) score++;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+  if (/\d/.test(password)) score++;
+  if (/[^a-zA-Z0-9]/.test(password)) score++;
+
+  if (score <= 1) return { score, label: 'Fraca', color: 'bg-red-500' };
+  if (score <= 2) return { score, label: 'Razoável', color: 'bg-orange-500' };
+  if (score <= 3) return { score, label: 'Boa', color: 'bg-yellow-500' };
+  if (score <= 4) return { score, label: 'Forte', color: 'bg-green-500' };
+  return { score, label: 'Muito Forte', color: 'bg-emerald-500' };
+}
+
+export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
+  const { user } = useAppContext();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const [primaryColor, setPrimaryColor] = useState<string>('cyan');
+  const drawer = useDisclosure();
+
+  // Avoid hydration mismatch e carregar cor salva
+  useEffect(() => {
+    setMounted(true);
+    const savedColor = localStorage.getItem(PRIMARY_COLOR_STORAGE_KEY);
+    if (savedColor) {
+      setPrimaryColor(savedColor);
+    }
+  }, []);
+
+  // Aplicar cor quando tema ou cor mudar
+  useEffect(() => {
+    if (mounted) {
+      applyPrimaryColor(primaryColor, resolvedTheme);
+    }
+  }, [mounted, primaryColor, resolvedTheme]);
+
+  const handleColorChange = (colorValue: string) => {
+    setPrimaryColor(colorValue);
+    localStorage.setItem(PRIMARY_COLOR_STORAGE_KEY, colorValue);
+  };
+
+  // Profile form
+  const profileForm = useForm<UpdateProfileFormData>({
+    resolver: zodResolver(updateProfileBodySchema),
+    defaultValues: {
+      name: user?.name || '',
+    },
+  });
+
+  // Password form
+  const passwordForm = useForm<ChangePasswordFormData>({
+    resolver: zodResolver(changePasswordBodySchema),
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+  });
+
+  const newPassword = passwordForm.watch('newPassword');
+  const passwordStrength = getPasswordStrength(newPassword || '');
+
+  const handleUpdateProfile = async (data: UpdateProfileFormData) => {
+    try {
+      await updateProfile(data);
+      toast.success('Perfil atualizado com sucesso!');
+      // Reload page to update user data in context
+      window.location.reload();
+    } catch (_error) {
+      toast.error('Erro ao atualizar perfil. Tente novamente.');
+    }
+  };
+
+  const handleChangePassword = async (data: ChangePasswordFormData) => {
+    try {
+      await changePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
+      toast.success('Senha alterada com sucesso!');
+      passwordForm.reset();
+    } catch (error: any) {
+      const message = error?.response?.data?.message || 'Erro ao alterar senha. Tente novamente.';
+      toast.error(message);
+    }
+  };
+
+  return (
+    <>
+      <div onClick={() => drawer.open()}>{trigger}</div>
+
+      <ResponsiveDrawer
+        open={drawer.isOpen}
+        onOpenChange={(open) => {
+          if (!open) drawer.close();
+        }}
+        title="Configurações de Perfil"
+        description="Gerencie suas informações pessoais e preferências"
+        headerIcon={<User className="h-5 w-5" />}
+        className="sm:max-w-lg"
+      >
+        <div className="space-y-6 p-6">
+          {/* Profile Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium">Informações Pessoais</h3>
+            </div>
+
+            <form onSubmit={profileForm.handleSubmit(handleUpdateProfile)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome</Label>
+                <Input id="name" placeholder="Seu nome" {...profileForm.register('name')} />
+                {profileForm.formState.errors.name && (
+                  <p className="text-sm text-destructive">
+                    {profileForm.formState.errors.name.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={user?.email || ''}
+                  disabled
+                  className="bg-muted"
+                />
+                <p className="text-xs text-muted-foreground">O email não pode ser alterado</p>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={profileForm.formState.isSubmitting}
+                className="w-full"
+              >
+                {profileForm.formState.isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Salvar Alterações
+              </Button>
+            </form>
+          </div>
+
+          <Separator />
+
+          {/* Password Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium">Alterar Senha</h3>
+            </div>
+
+            <form onSubmit={passwordForm.handleSubmit(handleChangePassword)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="currentPassword">Senha Atual</Label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  {...passwordForm.register('currentPassword')}
+                />
+                {passwordForm.formState.errors.currentPassword && (
+                  <p className="text-sm text-destructive">
+                    {passwordForm.formState.errors.currentPassword.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">Nova Senha</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  {...passwordForm.register('newPassword')}
+                />
+                {newPassword && (
+                  <div className="space-y-1">
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((level) => (
+                        <div
+                          key={level}
+                          className={cn(
+                            'h-1.5 flex-1 rounded-full transition-colors',
+                            level <= passwordStrength.score ? passwordStrength.color : 'bg-muted'
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Força da senha: {passwordStrength.label}
+                    </p>
+                  </div>
+                )}
+                {passwordForm.formState.errors.newPassword && (
+                  <p className="text-sm text-destructive">
+                    {passwordForm.formState.errors.newPassword.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  {...passwordForm.register('confirmPassword')}
+                />
+                {passwordForm.formState.errors.confirmPassword && (
+                  <p className="text-sm text-destructive">
+                    {passwordForm.formState.errors.confirmPassword.message}
+                  </p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                variant="secondary"
+                disabled={passwordForm.formState.isSubmitting}
+                className="w-full"
+              >
+                {passwordForm.formState.isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Alterar Senha
+              </Button>
+            </form>
+          </div>
+
+          <Separator />
+
+          {/* Theme Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Sun className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium">Aparência</h3>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tema</Label>
+              {mounted && (
+                <Select value={theme} onValueChange={setTheme}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um tema" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light">
+                      <div className="flex items-center gap-2">
+                        <Sun className="h-4 w-4" />
+                        <span>Claro</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="dark">
+                      <div className="flex items-center gap-2">
+                        <Moon className="h-4 w-4" />
+                        <span>Escuro</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="system">
+                      <div className="flex items-center gap-2">
+                        <Monitor className="h-4 w-4" />
+                        <span>Sistema</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Escolha como você prefere visualizar o sistema
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Cor Primária</Label>
+              {mounted && (
+                <div className="grid grid-cols-5 gap-2">
+                  {PRIMARY_COLORS.map((color) => {
+                    const isSelected = primaryColor === color.value;
+                    const previewClass =
+                      resolvedTheme === 'dark' ? color.preview.dark : color.preview.light;
+
+                    return (
+                      <button
+                        key={color.value}
+                        type="button"
+                        onClick={() => handleColorChange(color.value)}
+                        className={cn(
+                          'group relative flex h-10 w-full items-center justify-center rounded-md transition-all',
+                          previewClass,
+                          isSelected
+                            ? 'ring-2 ring-offset-2 ring-offset-background'
+                            : 'hover:scale-105 hover:shadow-md'
+                        )}
+                        title={color.name}
+                      >
+                        {isSelected && <Check className="h-4 w-4 text-white drop-shadow-md" />}
+                        <span className="sr-only">{color.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Personalize a cor principal do sistema
+              </p>
+            </div>
+          </div>
+        </div>
+      </ResponsiveDrawer>
+    </>
+  );
+}

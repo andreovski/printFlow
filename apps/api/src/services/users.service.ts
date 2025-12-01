@@ -1,5 +1,5 @@
 import { User, Role } from '@prisma/client';
-import { hash } from 'bcryptjs';
+import { compare, hash } from 'bcryptjs';
 
 import { UsersRepository } from '@/repositories/users.repository';
 
@@ -106,5 +106,37 @@ export class UsersService {
 
   async deleteUser(id: string) {
     await this.usersRepository.delete(id);
+  }
+
+  async updateProfile(id: string, data: { name: string }) {
+    const user = await this.usersRepository.findById(id);
+
+    if (!user) {
+      throw new Error('User not found.');
+    }
+
+    const updatedUser = await this.usersRepository.update(id, { name: data.name });
+    return { user: updatedUser };
+  }
+
+  async changePassword(id: string, data: { currentPassword: string; newPassword: string }) {
+    const user = await this.usersRepository.findById(id);
+
+    if (!user) {
+      throw new Error('User not found.');
+    }
+
+    const doesPasswordMatch = await compare(data.currentPassword, user.passwordHash);
+
+    if (!doesPasswordMatch) {
+      throw new Error('Current password is incorrect.');
+    }
+
+    const newPasswordHash = await hash(data.newPassword, 6);
+    const updatedUser = await this.usersRepository.update(id, {
+      passwordHash: newPasswordHash,
+    });
+
+    return { user: updatedUser };
   }
 }

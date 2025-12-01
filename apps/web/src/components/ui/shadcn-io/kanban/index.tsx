@@ -97,7 +97,7 @@ export const KanbanBoard = ({ id, children, className }: KanbanBoardProps) => {
       {...attributes}
       {...(isReorderMode ? listeners : {})} // Only apply listeners in reorder mode
       className={cn(
-        'flex size-full min-h-40 min-w-[215px] flex-col divide-y overflow-hidden rounded-md border bg-secondary text-xs shadow-sm ring-2 transition-all',
+        'flex size-full min-h-40 min-w-[230px] flex-col divide-y overflow-hidden rounded-md border bg-secondary text-xs shadow-sm ring-2 transition-all',
         isOver ? 'ring-primary' : 'ring-transparent',
         isDragging && 'opacity-50',
         isReorderMode && 'cursor-grab active:cursor-grabbing',
@@ -136,12 +136,18 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
 
   return (
     <>
-      <div style={style} {...attributes} ref={setNodeRef}>
-        <Card className={cn('gap-4 rounded-md shadow-sm', isDragging && 'opacity-30', className)}>
-          <div className="flex items-start gap-2 p-2 relative">
+      <div style={style} {...attributes} ref={setNodeRef} className="w-full min-w-0">
+        <Card
+          className={cn(
+            'gap-4 rounded-md shadow-sm w-full min-w-0',
+            isDragging && 'opacity-30',
+            className
+          )}
+        >
+          <div className="flex items-start gap-2 p-2 relative min-w-0">
             <div
               onClick={isReorderMode ? undefined : onClick}
-              className={cn('flex-1', !isReorderMode && 'cursor-pointer')}
+              className={cn('flex-1 min-w-0', !isReorderMode && 'cursor-pointer')}
             >
               {children ?? <p className="m-0 font-medium text-sm">{name}</p>}
             </div>
@@ -149,7 +155,7 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
             {!isReorderMode && (
               <div
                 {...listeners}
-                className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors absolute right-2 top-2"
+                className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors absolute right-2 top-2 shrink-0 bg-background/50 rounded-full p-0.5"
               >
                 <GripVertical className="h-4 w-4" />
               </div>
@@ -159,12 +165,17 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
       </div>
       {activeCardId === id && (
         <t.In>
-          <Card className={cn('gap-4 rounded-md shadow-sm ring-2 ring-primary', className)}>
-            <div className="flex items-start gap-2 p-2 relative">
-              <div className="flex-1">
+          <Card
+            className={cn(
+              'gap-4 rounded-md shadow-sm ring-2 ring-primary w-full min-w-0',
+              className
+            )}
+          >
+            <div className="flex items-start gap-2 p-2 relative min-w-0">
+              <div className="flex-1 min-w-0">
                 {children ?? <p className="m-0 font-medium text-sm">{name}</p>}
               </div>
-              <div className="cursor-grabbing text-muted-foreground absolute right-2 top-2">
+              <div className="cursor-grabbing text-muted-foreground absolute right-2 top-2 shrink-0">
                 <GripVertical className="h-4 w-4" />
               </div>
             </div>
@@ -385,7 +396,7 @@ export const KanbanProvider = <
         {...props}
       >
         <SortableContext items={columns.map((col) => col.id)}>
-          <div className={cn('flex flex-col md:flex-row h-full gap-4', className)}>
+          <div className={cn('flex flex-col md:flex-row h-full gap-3', className)}>
             {columns.map((column) => children(column))}
           </div>
         </SortableContext>

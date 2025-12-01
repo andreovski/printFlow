@@ -30,6 +30,7 @@ interface ProductFormProps {
     title: string;
     description?: string;
     code?: string;
+    ncm?: number | null;
     unitType: 'm2' | 'unidade';
     costPrice: number;
     salePrice: number;
@@ -113,6 +114,18 @@ export function ProductForm({ id, initialData }: ProductFormProps) {
                   name="code"
                   defaultValue={initialData?.code}
                   placeholder="Código do produto"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ncm">NCM do Produto</Label>
+                <Input
+                  id="ncm"
+                  name="ncm"
+                  type="number"
+                  step="0.01"
+                  defaultValue={initialData?.ncm ?? undefined}
+                  placeholder="Ex: 4823.90.00"
                 />
               </div>
 

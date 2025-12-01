@@ -121,6 +121,7 @@ model Client {
   email          String?
   personType     PersonType   @default(FISICA)
   document       String
+  stateRegistration String?
   phone          String
   isWhatsapp     Boolean      @default(false)
   rg             String?
@@ -153,6 +154,7 @@ model Product {
   title          String
   description    String?
   code           String?
+  ncm            Decimal?     @db.Decimal(10, 2)
   unitType       String
   costPrice      Decimal
   salePrice      Decimal

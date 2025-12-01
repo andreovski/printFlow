@@ -10,6 +10,17 @@ const cardInclude = {
       createdAt: 'asc' as const,
     },
   },
+  attachments: {
+    select: {
+      id: true,
+      name: true,
+      url: true,
+      mimeType: true,
+    },
+    orderBy: {
+      createdAt: 'asc' as const,
+    },
+  },
   budget: {
     select: {
       id: true,
