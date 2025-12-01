@@ -1,6 +1,11 @@
 'use client';
 
 import {
+  defineAbilityFor,
+  NavigationSubject,
+  type NavigationSubjectType,
+} from '@magic-system/auth';
+import {
   LayoutDashboard,
   Package,
   Users,
@@ -17,9 +22,11 @@ import {
   Tags,
   Kanban,
   Building2,
+  type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useMemo } from 'react';
 
 import { signOutAction } from '@/app/auth/actions';
 import { useAppContext } from '@/app/hooks/useAppContext';
@@ -33,10 +40,16 @@ import { cn } from '@/lib/utils';
 
 import { ProfileDrawer } from './profile-drawer';
 
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  module: NavigationSubjectType;
+}
+
 export function Sidebar() {
   const { organization, user } = useAppContext();
 
-  const role = user?.role;
   const userName = user?.name || '';
   const userEmail = user?.email || '';
   const { value: collapsedValue, setValue: setCollapsedValue } =
@@ -59,26 +72,50 @@ export function Sidebar() {
 
   const pathname = usePathname();
 
-  const registerItems = [
-    { href: '/register/clients', label: 'Clientes', icon: Users },
-    { href: '/register/products', label: 'Produtos', icon: Package },
-    { href: '/register/accesses', label: 'Acessos', icon: UserCog, requiresRole: true },
+  // Create ability based on current user
+  const ability = useMemo(() => {
+    if (!user) return null;
+    return defineAbilityFor({
+      id: user.id,
+      role: user.role,
+      organizationId: organization?.id,
+    });
+  }, [user, organization?.id]);
+
+  // Navigation items with their corresponding CASL subjects
+  const registerItems: NavItem[] = [
+    { href: '/register/clients', label: 'Clientes', icon: Users, module: NavigationSubject.RegisterClients },
+    { href: '/register/products', label: 'Produtos', icon: Package, module: NavigationSubject.RegisterProducts },
+    { href: '/register/accesses', label: 'Acessos', icon: UserCog, module: NavigationSubject.RegisterAccesses },
   ];
 
-  const financeItems = [{ href: '/finance/budgets', label: 'Orçamentos', icon: FileText }];
-  const productionItems = [{ href: '/production/boards', label: 'Quadros', icon: Kanban }];
-  const settingsItems = [
-    { href: '/settings/company', label: 'Empresa', icon: Building2 },
-    { href: '/settings/tags', label: 'Etiquetas', icon: Tags },
-    { href: '/settings/templates', label: 'Templates', icon: FileText },
+  const financeItems: NavItem[] = [
+    { href: '/finance/budgets', label: 'Orçamentos', icon: FileText, module: NavigationSubject.FinanceBudgets },
   ];
 
-  const filteredRegisterItems = registerItems.filter((item) => {
-    if (item.requiresRole) {
-      return role === 'ADMIN' || role === 'MASTER';
-    }
-    return true;
-  });
+  const productionItems: NavItem[] = [
+    { href: '/production/boards', label: 'Quadros', icon: Kanban, module: NavigationSubject.ProductionBoards },
+  ];
+
+  const settingsItems: NavItem[] = [
+    { href: '/settings/company', label: 'Empresa', icon: Building2, module: NavigationSubject.SettingsCompany },
+    { href: '/settings/tags', label: 'Etiquetas', icon: Tags, module: NavigationSubject.SettingsTags },
+    { href: '/settings/templates', label: 'Templates', icon: FileText, module: NavigationSubject.SettingsTemplates },
+  ];
+
+  // Filter items based on CASL permissions
+  const filterByPermission = (items: NavItem[]) => {
+    if (!ability) return [];
+    return items.filter((item) => ability.can('access', item.module));
+  };
+
+  const filteredRegisterItems = filterByPermission(registerItems);
+  const filteredFinanceItems = filterByPermission(financeItems);
+  const filteredProductionItems = filterByPermission(productionItems);
+  const filteredSettingsItems = filterByPermission(settingsItems);
+
+  // Check if user can access dashboard
+  const canAccessDashboard = ability?.can('access', NavigationSubject.Dashboard) ?? false;
 
   const getInitials = (name: string) => {
     if (!name) return '?';
@@ -122,30 +159,33 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
         {/* Dashboard */}
-        <Link
-          href="/"
-          className={cn(
-            'flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-muted',
-            pathname === '/' ? 'bg-muted text-foreground' : 'text-muted-foreground',
-            collapsed.isOpen && 'justify-center px-2'
-          )}
-        >
-          <LayoutDashboard className="h-5 w-5 shrink-0" />
-          {!collapsed.isOpen && <span>Dashboard</span>}
-        </Link>
+        {canAccessDashboard && (
+          <Link
+            href="/"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-muted',
+              pathname === '/' ? 'bg-muted text-foreground' : 'text-muted-foreground',
+              collapsed.isOpen && 'justify-center px-2'
+            )}
+          >
+            <LayoutDashboard className="h-5 w-5 shrink-0" />
+            {!collapsed.isOpen && <span>Dashboard</span>}
+          </Link>
+        )}
         {/* Cadastro (Register) Submenu */}
-        <div className="space-y-1">
-          {collapsed.isOpen ? (
-            <HoverCard openDelay={0} closeDelay={100}>
-              <HoverCardTrigger asChild>
-                <button
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-muted text-muted-foreground justify-center px-2'
-                  )}
-                >
-                  <FolderOpen className="h-5 w-5 shrink-0" />
-                </button>
-              </HoverCardTrigger>
+        {filteredRegisterItems.length > 0 && (
+          <div className="space-y-1">
+            {collapsed.isOpen ? (
+              <HoverCard openDelay={0} closeDelay={100}>
+                <HoverCardTrigger asChild>
+                  <button
+                    className={cn(
+                      'w-full flex items-center gap-3 py-2 rounded-md transition-colors hover:bg-muted text-muted-foreground justify-center px-2'
+                    )}
+                  >
+                    <FolderOpen className="h-5 w-5 shrink-0" />
+                  </button>
+                </HoverCardTrigger>
               <HoverCardContent side="right" align="start" className="w-48 p-2">
                 <div className="px-2 py-1.5 text-sm font-semibold">Cadastro</div>
                 <Separator className="my-1" />
@@ -214,14 +254,16 @@ export function Sidebar() {
             </>
           )}
         </div>
+        )}
         {/* Financeiro Submenu */}
+        {filteredFinanceItems.length > 0 && (
         <div className="space-y-1">
           {collapsed.isOpen ? (
             <HoverCard openDelay={0} closeDelay={100}>
               <HoverCardTrigger asChild>
                 <button
                   className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-muted text-muted-foreground justify-center px-2'
+                    'w-full flex items-center gap-3 py-2 rounded-md transition-colors hover:bg-muted text-muted-foreground justify-center px-2'
                   )}
                 >
                   <DollarSign className="h-5 w-5 shrink-0" />
@@ -231,7 +273,7 @@ export function Sidebar() {
                 <div className="px-2 py-1.5 text-sm font-semibold">Financeiro</div>
                 <Separator className="my-1" />
                 <div className="space-y-1">
-                  {financeItems.map((item) => {
+                  {filteredFinanceItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname.startsWith(item.href);
 
@@ -272,7 +314,7 @@ export function Sidebar() {
               {/* Submenu items */}
               {financeOpen.isOpen && (
                 <div className="ml-4 space-y-1">
-                  {financeItems.map((item) => {
+                  {filteredFinanceItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname.startsWith(item.href);
 
@@ -295,14 +337,16 @@ export function Sidebar() {
             </>
           )}
         </div>
+        )}
         {/* Produção Submenu */}
+        {filteredProductionItems.length > 0 && (
         <div className="space-y-1">
           {collapsed.isOpen ? (
             <HoverCard openDelay={0} closeDelay={100}>
               <HoverCardTrigger asChild>
                 <button
                   className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-muted text-muted-foreground justify-center px-2'
+                    'w-full flex items-center gap-3 py-2 rounded-md transition-colors hover:bg-muted text-muted-foreground justify-center px-2'
                   )}
                 >
                   <Package className="h-5 w-5 shrink-0" />
@@ -312,7 +356,7 @@ export function Sidebar() {
                 <div className="px-2 py-1.5 text-sm font-semibold">Produção</div>
                 <Separator className="my-1" />
                 <div className="space-y-1">
-                  {productionItems.map((item) => {
+                  {filteredProductionItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname.startsWith(item.href);
 
@@ -353,7 +397,7 @@ export function Sidebar() {
               {/* Submenu items */}
               {productionOpen.isOpen && (
                 <div className="ml-4 space-y-1">
-                  {productionItems.map((item) => {
+                  {filteredProductionItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname.startsWith(item.href);
 
@@ -376,7 +420,9 @@ export function Sidebar() {
             </>
           )}
         </div>
+        )}
         {/* Configurações Submenu */}
+        {filteredSettingsItems.length > 0 && (
         <div className="space-y-1">
           {collapsed.isOpen ? (
             <HoverCard openDelay={0} closeDelay={100}>
@@ -393,7 +439,7 @@ export function Sidebar() {
                 <div className="px-2 py-1.5 text-sm font-semibold">Configurações</div>
                 <Separator className="my-1" />
                 <div className="space-y-1">
-                  {settingsItems.map((item) => {
+                  {filteredSettingsItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname.startsWith(item.href);
 
@@ -434,7 +480,7 @@ export function Sidebar() {
               {/* Submenu items */}
               {settingsOpen.isOpen && (
                 <div className="ml-4 space-y-1">
-                  {settingsItems.map((item) => {
+                  {filteredSettingsItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname.startsWith(item.href);
 
@@ -457,6 +503,7 @@ export function Sidebar() {
             </>
           )}
         </div>
+        )}
       </nav>
 
       {/* User Profile */}

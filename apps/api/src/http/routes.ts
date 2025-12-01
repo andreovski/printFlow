@@ -76,6 +76,7 @@ import {
   deleteUserController,
   fetchUsersController,
   getUserController,
+  getProfileController,
   registerUserController,
   updateUserController,
   updateProfileController,
@@ -150,6 +151,7 @@ export async function appRoutes(app: FastifyInstance) {
     );
 
     // Profile (current user)
+    authRoutes.get('/profile', getProfileController);
     authRoutes.put('/profile', updateProfileController);
     authRoutes.put('/profile/password', changePasswordController);
 

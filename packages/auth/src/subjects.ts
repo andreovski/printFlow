@@ -37,6 +37,33 @@ export type Client = z.infer<typeof clientSchema>;
 export type Product = z.infer<typeof productSchema>;
 export type Billing = z.infer<typeof billingSchema>;
 
+/**
+ * Navigation Subjects - Used for sidebar/menu access control
+ * These are string literals that represent navigable modules in the app
+ */
+export const NavigationSubject = {
+  // Main modules
+  Dashboard: 'Dashboard',
+
+  // Register submodules
+  RegisterClients: 'RegisterClients',
+  RegisterProducts: 'RegisterProducts',
+  RegisterAccesses: 'RegisterAccesses',
+
+  // Finance submodules
+  FinanceBudgets: 'FinanceBudgets',
+
+  // Production submodules
+  ProductionBoards: 'ProductionBoards',
+
+  // Settings submodules
+  SettingsCompany: 'SettingsCompany',
+  SettingsTags: 'SettingsTags',
+  SettingsTemplates: 'SettingsTemplates',
+} as const;
+
+export type NavigationSubjectType = typeof NavigationSubject[keyof typeof NavigationSubject];
+
 export type AppSubject =
   | 'all'
   | 'User'
@@ -44,6 +71,7 @@ export type AppSubject =
   | 'Client'
   | 'Product'
   | 'Billing'
+  | NavigationSubjectType
   | User
   | Organization
   | Client

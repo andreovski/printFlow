@@ -13,27 +13,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
   let userEmail = '';
   let organization = null;
 
+  // Fetch user data from profile endpoint
   if (token) {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      role = payload.role;
-      userId = payload.sub;
-    } catch (_e) {
-      // Ignore invalid token
-    }
-  }
-
-  // Fetch user data
-  if (userId && token) {
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
       });
       if (res.ok) {
         const data = await res.json();
+        userId = data.user.id || '';
         userName = data.user.name || '';
         userEmail = data.user.email || '';
+        role = data.user.role || '';
       }
     } catch (_e) {
       // Ignore fetch errors

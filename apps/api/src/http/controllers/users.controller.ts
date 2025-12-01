@@ -104,6 +104,17 @@ export async function deleteUserController(request: FastifyRequest, reply: Fasti
   return reply.status(204).send();
 }
 
+export async function getProfileController(request: FastifyRequest, reply: FastifyReply) {
+  const { sub: userId } = request.user as { sub: string };
+
+  try {
+    const { user } = await usersService.getUser(userId);
+    return reply.status(200).send({ user });
+  } catch (_err) {
+    return reply.status(404).send({ message: 'User not found' });
+  }
+}
+
 export async function updateProfileController(request: FastifyRequest, reply: FastifyReply) {
   const { sub: userId } = request.user as { sub: string };
   const data = updateProfileBodySchema.parse(request.body);

@@ -95,6 +95,13 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
     },
   });
 
+  // Reset form when user data changes
+  useEffect(() => {
+    if (user?.name) {
+      profileForm.reset({ name: user.name });
+    }
+  }, [user?.name, profileForm]);
+
   // Password form
   const passwordForm = useForm<ChangePasswordFormData>({
     resolver: zodResolver(changePasswordBodySchema),
