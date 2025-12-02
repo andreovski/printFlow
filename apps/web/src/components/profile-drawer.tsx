@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { updateProfileBodySchema, changePasswordBodySchema } from '@magic-system/schemas';
-import { Loader2, Moon, Sun, Monitor, User, Lock, Check } from 'lucide-react';
+import { Loader2, Moon, Sun, Monitor, User, Lock, Check, Type } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -25,12 +25,20 @@ import { Separator } from '@/components/ui/separator';
 import { useDisclosure } from '@/hooks/use-disclosure';
 import { cn } from '@/lib/utils';
 
+import { FONTS, FONT_STORAGE_KEY, applyFont } from './font-provider';
 import {
   PRIMARY_COLORS,
   PRIMARY_COLOR_STORAGE_KEY,
   applyPrimaryColor,
 } from './primary-color-provider';
 import { ResponsiveDrawer } from './responsive-drawer';
+import {
+  COMPLETE_THEMES,
+  THEME_STORAGE_KEY,
+  THEME_ENABLED_KEY,
+  applyCompleteTheme,
+  removeCompleteTheme,
+} from './theme-color-provider';
 
 type UpdateProfileFormData = z.infer<typeof updateProfileBodySchema>;
 type ChangePasswordFormData = z.infer<typeof changePasswordBodySchema>;
@@ -64,27 +72,68 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [primaryColor, setPrimaryColor] = useState<string>('cyan');
+  const [completeTheme, setCompleteTheme] = useState<string>('ambar');
+  const [themeEnabled, setThemeEnabled] = useState(false);
+  const [font, setFont] = useState<string>('josefins');
   const drawer = useDisclosure();
 
-  // Avoid hydration mismatch e carregar cor salva
+  // Avoid hydration mismatch e carregar preferências salvas
   useEffect(() => {
     setMounted(true);
     const savedColor = localStorage.getItem(PRIMARY_COLOR_STORAGE_KEY);
     if (savedColor) {
       setPrimaryColor(savedColor);
     }
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    if (savedTheme) {
+      setCompleteTheme(savedTheme);
+    }
+    const enabled = localStorage.getItem(THEME_ENABLED_KEY) === 'true';
+    setThemeEnabled(enabled);
+    const savedFont = localStorage.getItem(FONT_STORAGE_KEY);
+    if (savedFont) {
+      setFont(savedFont);
+    }
   }, []);
 
-  // Aplicar cor quando tema ou cor mudar
+  // Aplicar cor ou tema completo
   useEffect(() => {
     if (mounted) {
-      applyPrimaryColor(primaryColor, resolvedTheme);
+      if (themeEnabled) {
+        applyCompleteTheme(completeTheme, resolvedTheme);
+      } else {
+        removeCompleteTheme();
+        applyPrimaryColor(primaryColor, resolvedTheme);
+      }
     }
-  }, [mounted, primaryColor, resolvedTheme]);
+  }, [mounted, primaryColor, completeTheme, themeEnabled, resolvedTheme]);
 
   const handleColorChange = (colorValue: string) => {
     setPrimaryColor(colorValue);
     localStorage.setItem(PRIMARY_COLOR_STORAGE_KEY, colorValue);
+  };
+
+  const handleThemeChange = (themeValue: string) => {
+    setCompleteTheme(themeValue);
+    localStorage.setItem(THEME_STORAGE_KEY, themeValue);
+    applyCompleteTheme(themeValue, resolvedTheme);
+  };
+
+  const handleThemeToggle = (enabled: boolean) => {
+    setThemeEnabled(enabled);
+    localStorage.setItem(THEME_ENABLED_KEY, enabled.toString());
+    if (enabled) {
+      applyCompleteTheme(completeTheme, resolvedTheme);
+    } else {
+      removeCompleteTheme();
+      applyPrimaryColor(primaryColor, resolvedTheme);
+    }
+  };
+
+  const handleFontChange = (fontValue: string) => {
+    setFont(fontValue);
+    localStorage.setItem(FONT_STORAGE_KEY, fontValue);
+    applyFont(fontValue);
   };
 
   // Profile form
@@ -329,37 +378,156 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
             </div>
 
             <div className="space-y-2">
-              <Label>Cor Primária</Label>
-              {mounted && (
-                <div className="grid grid-cols-5 gap-2">
-                  {PRIMARY_COLORS.map((color) => {
-                    const isSelected = primaryColor === color.value;
-                    const previewClass =
-                      resolvedTheme === 'dark' ? color.preview.dark : color.preview.light;
+              <div className="flex items-center justify-between">
+                <Label>Tema Completo</Label>
+                <button
+                  type="button"
+                  onClick={() => handleThemeToggle(!themeEnabled)}
+                  className={cn(
+                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                    themeEnabled ? 'bg-primary' : 'bg-input'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'inline-block h-4 w-4 transform rounded-full bg-background transition-transform',
+                      themeEnabled ? 'translate-x-6' : 'translate-x-1'
+                    )}
+                  />
+                </button>
+              </div>
+              {mounted && themeEnabled && (
+                <div className="grid grid-cols-2 gap-3">
+                  {COMPLETE_THEMES.map((themeItem) => {
+                    const isSelected = completeTheme === themeItem.value;
+                    const preview =
+                      resolvedTheme === 'dark' ? themeItem.preview.dark : themeItem.preview.light;
 
                     return (
                       <button
-                        key={color.value}
+                        key={themeItem.value}
                         type="button"
-                        onClick={() => handleColorChange(color.value)}
+                        onClick={() => handleThemeChange(themeItem.value)}
                         className={cn(
-                          'group relative flex h-10 w-full items-center justify-center rounded-md transition-all',
-                          previewClass,
+                          'group relative flex flex-col gap-2 rounded-lg border-2 p-3 transition-all hover:shadow-md',
                           isSelected
-                            ? 'ring-2 ring-offset-2 ring-offset-background'
-                            : 'hover:scale-105 hover:shadow-md'
+                            ? 'border-primary shadow-sm'
+                            : 'border-border hover:border-primary/50'
                         )}
-                        title={color.name}
                       >
-                        {isSelected && <Check className="h-4 w-4 text-white drop-shadow-md" />}
-                        <span className="sr-only">{color.name}</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{themeItem.name}</span>
+                          {isSelected && <Check className="h-4 w-4 text-primary" />}
+                        </div>
+                        <div className="flex gap-1.5">
+                          <div
+                            className="h-6 flex-1 rounded border"
+                            style={{ backgroundColor: preview.background }}
+                          />
+                          <div
+                            className="h-6 flex-1 rounded border"
+                            style={{ backgroundColor: preview.primary }}
+                          />
+                          <div
+                            className="h-6 flex-1 rounded border"
+                            style={{ backgroundColor: preview.border }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground text-left">
+                          {themeItem.description}
+                        </p>
                       </button>
                     );
                   })}
                 </div>
               )}
               <p className="text-xs text-muted-foreground">
-                Personalize a cor principal do sistema
+                {themeEnabled
+                  ? 'Tema completo altera todas as cores do sistema'
+                  : 'Ative para usar temas completos ao invés de cores primárias'}
+              </p>
+            </div>
+
+            {!themeEnabled && (
+              <div className="space-y-2">
+                <Label>Cor Primária</Label>
+                {mounted && (
+                  <div className="grid grid-cols-5 gap-2">
+                    {PRIMARY_COLORS.map((color) => {
+                      const isSelected = primaryColor === color.value;
+                      const previewClass =
+                        resolvedTheme === 'dark' ? color.preview.dark : color.preview.light;
+
+                      return (
+                        <button
+                          key={color.value}
+                          type="button"
+                          onClick={() => handleColorChange(color.value)}
+                          className={cn(
+                            'group relative flex h-10 w-full items-center justify-center rounded-md transition-all',
+                            previewClass,
+                            isSelected
+                              ? 'ring-2 ring-offset-2 ring-offset-background'
+                              : 'hover:scale-105 hover:shadow-md'
+                          )}
+                          title={color.name}
+                        >
+                          {isSelected && <Check className="h-4 w-4 text-white drop-shadow-md" />}
+                          <span className="sr-only">{color.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Personalize a cor principal do sistema
+                </p>
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Typography Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Type className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium">Tipografia</h3>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Fonte</Label>
+              {mounted && (
+                <div className="grid grid-cols-3 gap-2">
+                  {FONTS.map((fontItem) => {
+                    const isSelected = font === fontItem.value;
+
+                    return (
+                      <button
+                        key={fontItem.value}
+                        type="button"
+                        onClick={() => handleFontChange(fontItem.value)}
+                        className={cn(
+                          'group relative flex flex-col items-center justify-center gap-1 rounded-md border p-2 transition-all hover:shadow-md',
+                          isSelected
+                            ? 'border-primary bg-primary/5 text-primary'
+                            : 'border-border hover:border-primary/50'
+                        )}
+                      >
+                        <span className={cn('text-lg', fontItem.class)}>Aa</span>
+                        <span className="text-xs font-medium">{fontItem.name}</span>
+                        {isSelected && (
+                          <div className="absolute right-1 top-1">
+                            <Check className="h-3 w-3" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Escolha a fonte que melhor se adapta ao seu estilo
               </p>
             </div>
           </div>

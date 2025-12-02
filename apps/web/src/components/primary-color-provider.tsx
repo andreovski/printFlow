@@ -105,6 +105,11 @@ export function PrimaryColorProvider({ children }: PrimaryColorProviderProps) {
   useEffect(() => {
     if (!mounted) return;
 
+    // Se o tema completo estiver ativado, não aplicamos a cor primária
+    // pois ela é definida pelas classes do tema
+    const themeEnabled = localStorage.getItem('magic-system-theme-enabled') === 'true';
+    if (themeEnabled) return;
+
     const savedColor = localStorage.getItem(PRIMARY_COLOR_STORAGE_KEY) || 'cyan';
     applyPrimaryColor(savedColor, resolvedTheme);
   }, [mounted, resolvedTheme]);

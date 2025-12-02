@@ -1,0 +1,60 @@
+/* Theme */
+.lilac {
+  --background: 350 50% 98%;
+  --foreground: 354 21% 29%;
+
+  --card: 350 50% 98%;
+  --card-foreground: 354 21% 29%;
+
+  --popover: 350 50% 98%;
+  --popover-foreground: 354 21% 29%;
+
+  --primary: 347 36% 60%;
+  --primary-foreground: 356 31% 20%;
+
+  --secondary: 349 43% 89%;
+  --secondary-foreground: 354 21% 29%;
+
+  --muted: 349 43% 89%;
+  --muted-foreground: 354 21% 30%;
+
+  --accent: 349 43% 89%;
+  --accent-foreground: 354 21% 29%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 349 41% 82%;
+  --input: 349 41% 82%;
+  --ring: 347 36% 71%;
+}
+
+.dark.lilac-dark {
+  --background: 247 11% 10%;
+  --foreground: 347 36% 71%;
+
+  --card: 247 11% 10%;
+  --card-foreground: 347 36% 71%;
+
+  --popover: 247 11% 10%;
+  --popover-foreground: 347 36% 71%;
+
+  --primary: 347 36% 71%;
+  --primary-foreground: 356 31% 12%;
+
+  --secondary: 353 18% 20%;
+  --secondary-foreground: 347 36% 71%;
+
+  --muted: 353 18% 20%;
+  --muted-foreground: 347 36% 60%;
+
+  --accent: 356 31% 12%;
+  --accent-foreground: 347 36% 71%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 353 18% 20%;
+  --input: 353 18% 20%;
+  --ring: 347 36% 71%;
+}

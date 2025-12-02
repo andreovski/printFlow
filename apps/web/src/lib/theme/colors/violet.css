@@ -1,0 +1,59 @@
+/* Theme */
+.violet {
+  --background: 0 0% 93%;
+  --foreground: 270 16% 18%;
+  --card: 0 0% 93%;
+  --card-foreground: 270 16% 18%;
+
+  --popover: 0 0% 93%;
+  --popover-foreground: 270 16% 18%;
+
+  --primary: 273 14% 26%;
+  --primary-foreground: 262 20% 83%;
+
+  --secondary: 264 19% 80%;
+  --secondary-foreground: 273 14% 26%;
+
+  --muted: 264 19% 80%;
+  --muted-foreground: 270 16% 40%;
+
+  --accent: 264 19% 80%;
+  --accent-foreground: 273 14% 26%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 264 19% 80%;
+  --input: 264 19% 80%;
+  --ring: 273 14% 26%;
+}
+
+.dark.violet-dark {
+  --background: 264 19% 11%;
+  --foreground: 274 19% 93%;
+
+  --card: 264 19% 11%;
+  --card-foreground: 274 19% 93%;
+
+  --popover: 264 19% 11%;
+  --popover-foreground: 274 19% 93%;
+
+  --primary: 275 15% 55%;
+  --primary-foreground: 274 19% 93%;
+
+  --secondary: 270 16% 18%;
+  --secondary-foreground: 274 19% 93%;
+
+  --muted: 270 16% 18%;
+  --muted-foreground: 274 19% 70%;
+
+  --accent: 275 15% 18%;
+  --accent-foreground: 274 19% 93%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 270 16% 20%;
+  --input: 270 16% 18%;
+  --ring: 275 15% 23%;
+}

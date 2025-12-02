@@ -1,0 +1,60 @@
+/* Theme */
+.cappuccino {
+  --background: 24 30% 92%;
+  --foreground: 18 100% 15%;
+
+  --card: 24 30% 92%;
+  --card-foreground: 18 100% 15%;
+
+  --popover: 24 30% 92%;
+  --popover-foreground: 18 100% 15%;
+
+  --primary: 25 35% 48%;
+  --primary-foreground: 24 30% 92%;
+
+  --secondary: 26 40% 78%;
+  --secondary-foreground: 18 100% 15%;
+
+  --muted: 26 40% 78%;
+  --muted-foreground: 18 100% 30%;
+
+  --accent: 26 40% 78%;
+  --accent-foreground: 18 100% 15%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 26 39% 80%;
+  --input: 26 39% 80%;
+  --ring: 25 44% 39%;
+}
+
+.dark.cappuccino-dark {
+  --background: 24 20% 5%;
+  --foreground: 24 30% 92%;
+
+  --card: 24 20% 5%;
+  --card-foreground: 24 30% 92%;
+
+  --popover: 24 20% 5%;
+  --popover-foreground: 24 30% 92%;
+
+  --primary: 23 51% 40%;
+  --primary-foreground: 24 30% 92%;
+
+  --secondary: 18 50% 18%;
+  --secondary-foreground: 24 30% 92%;
+
+  --muted: 18 50% 18%;
+  --muted-foreground: 24 30% 70%;
+
+  --accent: 18 50% 18%;
+  --accent-foreground: 24 30% 92%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 18 50% 15%;
+  --input: 18 50% 15%;
+  --ring: 23 51% 33%;
+}

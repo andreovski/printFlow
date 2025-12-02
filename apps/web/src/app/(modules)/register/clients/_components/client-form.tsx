@@ -156,14 +156,14 @@ export function ClientForm({ id, initialData }: ClientFormProps) {
     }
   };
 
-  useEffect(() => {
-    if (state?.success) {
-      toast.success(state.message);
-      router.back();
-    } else if (state?.message) {
-      toast.error(state.message);
-    }
-  }, [state, router]);
+useEffect(() => {
+  if (state?.success) {
+    toast.success(state.message);
+    router.back();
+  } else if (state?.message) {
+    toast.error(state.message);
+  }
+}, [state, router]);
 
   return (
     <>

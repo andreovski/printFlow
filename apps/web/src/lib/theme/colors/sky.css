@@ -1,0 +1,60 @@
+/* Theme */
+.sky {
+  --background: 48 100% 100%;
+  --foreground: 43 6% 22%;
+
+  --card: 48 100% 100%;
+  --card-foreground: 43 6% 22%;
+
+  --popover: 48 100% 100%;
+  --popover-foreground: 43 6% 22%;
+
+  --primary: 200 98% 39%;
+  --primary-foreground: 48 100% 100%;
+
+  --secondary: 203 85% 93%;
+  --secondary-foreground: 200 98% 39%;
+
+  --muted: 203 85% 93%;
+  --muted-foreground: 200 30% 40%;
+
+  --accent: 203 85% 93%;
+  --accent-foreground: 200 98% 39%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 203 85% 86%;
+  --input: 203 85% 86%;
+  --ring: 200 98% 39%;
+}
+
+.dark.sky-dark {
+  --background: 198 52% 4%;
+  --foreground: 48 100% 98%;
+
+  --card: 198 52% 4%;
+  --card-foreground: 48 100% 98%;
+
+  --popover: 198 52% 4%;
+  --popover-foreground: 48 100% 98%;
+
+  --primary: 201 75% 35%;
+  --primary-foreground: 204 100% 97%;
+
+  --secondary: 198 52% 15%;
+  --secondary-foreground: 200 33% 92%;
+
+  --muted: 200 69% 18%;
+  --muted-foreground: 200 33% 70%;
+
+  --accent: 199 67% 13%;
+  --accent-foreground: 200 33% 92%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 200 69% 12%;
+  --input: 200 69% 12%;
+  --ring: 201 75% 35%;
+}

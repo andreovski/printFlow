@@ -1,0 +1,60 @@
+/* Theme */
+.ice {
+  --background: 197 29% 95%;
+  --foreground: 200 69% 18%;
+
+  --card: 197 29% 95%;
+  --card-foreground: 200 69% 18%;
+
+  --popover: 197 29% 95%;
+  --popover-foreground: 200 69% 18%;
+
+  --primary: 200 72% 40%;
+  --primary-foreground: 201 100% 95%;
+
+  --secondary: 200 33% 84%;
+  --secondary-foreground: 200 69% 18%;
+
+  --muted: 200 33% 84%;
+  --muted-foreground: 200 60% 30%;
+
+  --accent: 200 33% 84%;
+  --accent-foreground: 200 69% 18%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 201 35% 80%;
+  --input: 201 35% 80%;
+  --ring: 200 72% 45%;
+}
+
+.dark.ice-dark {
+  --background: 202 90% 7%;
+  --foreground: 200 33% 92%;
+
+  --card: 202 90% 7;
+  --card-foreground: 200 33% 92%;
+
+  --popover: 202 90% 7%;
+  --popover-foreground: 200 33% 92%;
+
+  --primary: 198 70% 40%;
+  --primary-foreground: 200 33% 92%;
+
+  --secondary: 200 69% 18%;
+  --secondary-foreground: 200 33% 92%;
+
+  --muted: 200 69% 18%;
+  --muted-foreground: 200 33% 70%;
+
+  --accent: 199 67% 13%;
+  --accent-foreground: 200 33% 92%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 200 69% 18%;
+  --input: 200 69% 18%;
+  --ring: 198 70% 26%;
+}

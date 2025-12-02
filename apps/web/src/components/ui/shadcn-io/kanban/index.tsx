@@ -104,7 +104,7 @@ export const KanbanBoard = ({ id, children, className }: KanbanBoardProps) => {
       {...attributes}
       {...(isReorderMode ? listeners : {})} // Only apply listeners in reorder mode
       className={cn(
-        'flex size-full min-h-40 min-w-[230px] flex-col divide-y overflow-hidden rounded-md border bg-secondary text-xs shadow-sm ring-2 transition-all',
+        'flex size-full min-h-40 min-w-[230px] flex-col divide-y overflow-hidden rounded-md border bg-secondary/60 text-xs shadow-sm ring-2 transition-all',
         isOver ? 'ring-primary' : 'ring-transparent',
         isDragging && 'opacity-50',
         isReorderMode && 'cursor-grab active:cursor-grabbing',
