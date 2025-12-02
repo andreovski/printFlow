@@ -85,3 +85,21 @@ export const updateCompanySettingsBodySchema = z.object({
 });
 
 export type UpdateCompanySettingsBody = z.infer<typeof updateCompanySettingsBodySchema>;
+
+// Schema for creating organization during registration
+export const createOrganizationBodySchema = z.object({
+  name: z.string().min(1, 'Nome da organização é obrigatório'),
+  cnpj: z.string().optional(),
+  enterpriseName: z.string().optional(),
+  mainEmail: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
+  mainPhone: z.string().min(1, 'Telefone é obrigatório'),
+  cep: z.string().min(1, 'CEP é obrigatório'),
+  address: z.string().min(1, 'Endereço é obrigatório'),
+  number: z.string().min(1, 'Número é obrigatório'),
+  complement: z.string().optional(),
+  city: z.string().min(1, 'Cidade é obrigatória'),
+  state: z.string().min(1, 'Estado é obrigatório'),
+  country: z.string().default('Brasil'),
+});
+
+export type CreateOrganizationBody = z.infer<typeof createOrganizationBodySchema>;

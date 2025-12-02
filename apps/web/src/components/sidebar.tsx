@@ -174,14 +174,14 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'relative border-r bg-muted/10 transition-all duration-300 flex flex-col h-screen',
+        'relative border-r bg-muted/10 transition-all duration-300 flex flex-col h-[100dvh]',
         collapsed.isOpen ? 'w-16' : 'w-full sm:w-64'
       )}
     >
       {/* Header */}
       <div className="p-4 flex items-center justify-between h-16 border-b">
         {!collapsed.isOpen && (
-          <div className="flex flex-col">
+          <div className="flex flex-col overflow-hidden">
             <span className="text-lg font-semibold truncate">{organization?.name}</span>
             <span className="font-bold text-xs truncate">
               Print

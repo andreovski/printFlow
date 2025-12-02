@@ -56,7 +56,6 @@ export function CreateUserForm() {
               <SelectContent>
                 <SelectItem value="EMPLOYEE">Funcionário</SelectItem>
                 <SelectItem value="ADMIN">Administrador</SelectItem>
-                <SelectItem value="MASTER">Master</SelectItem>
               </SelectContent>
             </Select>
             <input type="hidden" name="role" value={role} />

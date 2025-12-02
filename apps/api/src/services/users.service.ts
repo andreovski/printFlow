@@ -4,9 +4,10 @@ import { compare, hash } from 'bcryptjs';
 import { UsersRepository } from '@/repositories/users.repository';
 
 interface RegisterUserRequest {
-  name: string; // Not in DB yet, but assuming for future
+  name: string;
   email: string;
   password: string;
+  earlyAccessCode: string;
 }
 
 interface RegisterUserResponse {
@@ -16,7 +17,17 @@ interface RegisterUserResponse {
 export class UsersService {
   constructor(private usersRepository: UsersRepository) {}
 
-  async register({ email, password }: RegisterUserRequest): Promise<RegisterUserResponse> {
+  async register({
+    name,
+    email,
+    password,
+    earlyAccessCode,
+  }: RegisterUserRequest): Promise<RegisterUserResponse> {
+    // Validar código de acesso antecipado
+    if (earlyAccessCode !== process.env.EARLY_ACCESS_CODE) {
+      throw new Error('Invalid early access code.');
+    }
+
     const passwordHash = await hash(password, 6);
 
     const userWithSameEmail = await this.usersRepository.findByEmail(email);
@@ -26,6 +37,7 @@ export class UsersService {
     }
 
     const user = await this.usersRepository.create({
+      name,
       email,
       passwordHash,
       // Default role is EMPLOYEE in schema
@@ -36,8 +48,8 @@ export class UsersService {
     };
   }
 
-  async fetchUsers(page: number = 1, pageSize: number = 10) {
-    const { data, total } = await this.usersRepository.findMany(page, pageSize);
+  async fetchUsers(page: number = 1, pageSize: number = 10, organizationId?: string) {
+    const { data, total } = await this.usersRepository.findMany(page, pageSize, organizationId);
     const totalPages = Math.ceil(total / pageSize);
 
     return {
@@ -67,7 +79,13 @@ export class UsersService {
     password,
     role,
     organizationId,
-  }: RegisterUserRequest & { role?: Role; organizationId: string }) {
+  }: {
+    name: string;
+    email: string;
+    password: string;
+    role?: Role;
+    organizationId: string;
+  }) {
     const passwordHash = await hash(password, 6);
     const userWithSameEmail = await this.usersRepository.findByEmail(email);
 

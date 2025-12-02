@@ -19,19 +19,25 @@ const usersRepository = new UsersRepository();
 const usersService = new UsersService(usersRepository);
 
 export async function registerUserController(request: FastifyRequest, reply: FastifyReply) {
-  const { name, email, password } = registerUserBodySchema.parse(request.body);
+  const { name, email, password, earlyAccessCode } = registerUserBodySchema.parse(request.body);
 
   try {
     const { user } = await usersService.register({
-      name: name ?? '',
+      name,
       email,
       password,
+      earlyAccessCode,
     });
 
     return reply.status(201).send({ user });
   } catch (err) {
-    if (err instanceof Error && err.message === 'User already exists.') {
-      return reply.status(409).send({ message: err.message });
+    if (err instanceof Error) {
+      if (err.message === 'User already exists.') {
+        return reply.status(409).send({ message: 'Email já cadastrado.' });
+      }
+      if (err.message === 'Invalid early access code.') {
+        return reply.status(403).send({ message: 'Código de acesso inválido.' });
+      }
     }
     throw err;
   }
@@ -39,7 +45,9 @@ export async function registerUserController(request: FastifyRequest, reply: Fas
 
 export async function fetchUsersController(request: FastifyRequest, reply: FastifyReply) {
   const { page, pageSize } = paginationQuerySchema.parse(request.query);
-  const response = await usersService.fetchUsers(page, pageSize);
+  const { organizationId } = request.user as { organizationId: string };
+
+  const response = await usersService.fetchUsers(page, pageSize, organizationId);
   return reply.status(200).send(response);
 }
 

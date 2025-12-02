@@ -72,4 +72,28 @@ export class OrganizationRepository {
 
     return organization;
   }
+
+  async create(data: {
+    name: string;
+    ownerId: string;
+    cnpj?: string;
+    enterpriseName?: string;
+    fantasyName?: string;
+    mainEmail?: string;
+    mainPhone?: string;
+    cep?: string;
+    address?: string;
+    addressNumber?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+  }) {
+    const organization = await prisma.organization.create({
+      data,
+    });
+
+    return organization;
+  }
 }

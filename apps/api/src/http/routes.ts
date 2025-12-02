@@ -43,6 +43,7 @@ import { getMetricsController } from './controllers/metrics.controller';
 import {
   getOrganizationController,
   updateOrganizationController,
+  createOrganizationController,
 } from './controllers/organizations.controller';
 import {
   createProductController,
@@ -144,6 +145,7 @@ export async function appRoutes(app: FastifyInstance) {
 
     // Organization
     authRoutes.get('/organization', getOrganizationController);
+    authRoutes.post('/organizations/create', createOrganizationController);
     authRoutes.put(
       '/organization',
       { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },

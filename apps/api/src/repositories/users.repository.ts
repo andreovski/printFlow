@@ -21,16 +21,22 @@ export class UsersRepository {
 
   async findMany(
     page: number = 1,
-    pageSize: number = 10
+    pageSize: number = 10,
+    organizationId?: string
   ): Promise<{ data: User[]; total: number }> {
     const skip = (page - 1) * pageSize;
+
+    const where: Prisma.UserWhereInput = organizationId ? { organizationId } : {};
 
     const [data, total] = await Promise.all([
       prisma.user.findMany({
         skip,
         take: pageSize,
+        where,
       }),
-      prisma.user.count(),
+      prisma.user.count({
+        where,
+      }),
     ]);
 
     return { data, total };

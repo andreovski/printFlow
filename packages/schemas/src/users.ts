@@ -2,9 +2,10 @@ import { z } from 'zod';
 import { Role } from '@magic-system/auth';
 
 export const registerUserBodySchema = z.object({
-  name: z.string(),
-  email: z.string().email(),
-  password: z.string().min(6),
+  name: z.string().min(1, 'Nome é obrigatório'),
+  email: z.string().email('Email inválido'),
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  earlyAccessCode: z.string().min(1, 'Código de acesso é obrigatório'),
 });
 
 export const getUserParamsSchema = z.object({

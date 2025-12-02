@@ -1,8 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useFormState } from 'react-dom';
 
-import { signInAction } from '../actions';
+import { signInAction } from '../../actions';
 
 export default function SignInPage() {
   // @ts-ignore - useFormState types are tricky in RC
@@ -51,6 +52,12 @@ export default function SignInPage() {
           Entrar
         </button>
       </form>
+
+      <div className="mt-4 text-center text-sm">
+        <Link href="/auth/sign-up" className="text-primary hover:underline">
+          Não tem uma conta? Cadastre-se
+        </Link>
+      </div>
     </div>
   );
 }
