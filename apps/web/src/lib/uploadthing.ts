@@ -46,11 +46,9 @@ export const uploadRouter = {
     .middleware(async ({ files }) => {
       const auth = await getAuth();
 
-      // Renomear arquivos com prefixo da organização para organização no dashboard
       const fileOverrides = files.map((file) => ({
         ...file,
-        name: `${auth.organizationId}_${file.name}`,
-        customId: auth.organizationId,
+        name: file.name,
       }));
 
       return {
@@ -59,15 +57,12 @@ export const uploadRouter = {
         [UTFiles]: fileOverrides,
       };
     })
-    .onUploadComplete(async ({ file, metadata }) => {
+    .onUploadComplete(async ({ file }) => {
       console.log('Budget attachment upload complete:', file.name);
-
-      // Extrair nome original removendo o prefixo da organização
-      const originalName = file.name.replace(`${metadata.organizationId}_`, '');
 
       return {
         url: file.ufsUrl,
-        name: originalName,
+        name: file.name,
         size: file.size,
         key: file.key,
         type: file.type,
@@ -93,11 +88,9 @@ export const uploadRouter = {
     .middleware(async ({ files }) => {
       const auth = await getAuth();
 
-      // Renomear arquivos com prefixo da organização para organização no dashboard
       const fileOverrides = files.map((file) => ({
         ...file,
-        name: `${auth.organizationId}_${file.name}`,
-        customId: auth.organizationId,
+        name: file.name,
       }));
 
       return {
@@ -106,15 +99,12 @@ export const uploadRouter = {
         [UTFiles]: fileOverrides,
       };
     })
-    .onUploadComplete(async ({ file, metadata }) => {
+    .onUploadComplete(async ({ file }) => {
       console.log('Card attachment upload complete:', file.name);
-
-      // Extrair nome original removendo o prefixo da organização
-      const originalName = file.name.replace(`${metadata.organizationId}_`, '');
 
       return {
         url: file.ufsUrl,
-        name: originalName,
+        name: file.name,
         size: file.size,
         key: file.key,
         type: file.type,
