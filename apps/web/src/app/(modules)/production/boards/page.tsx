@@ -37,15 +37,19 @@ export default function BoardsPage() {
 
   const handleCreateDefaultBoard = async () => {
     try {
+      setLoading(true);
       const newBoard = await createBoard({
         title: 'Produção Geral',
         description: 'Quadro principal de produção',
       });
       setBoards([newBoard]);
+      setSelectedBoardId(newBoard.id);
       toast.success('Quadro criado com sucesso');
     } catch (error) {
       console.error(error);
       toast.error('Erro ao criar quadro');
+    } finally {
+      setLoading(false);
     }
   };
 
