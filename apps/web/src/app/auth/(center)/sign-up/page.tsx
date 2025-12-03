@@ -1,13 +1,53 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { registerUserBodySchema, type RegisterUserBody } from '@magic-system/schemas';
 import Link from 'next/link';
-import { useFormState } from 'react-dom';
+import { useTransition } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 
 import { signUpAction } from '../../actions';
 
 export default function SignUpPage() {
-  // @ts-ignore - useFormState types are tricky in RC
-  const [state, action] = useFormState(signUpAction, null);
+  const [isPending, startTransition] = useTransition();
+
+  const form = useForm<RegisterUserBody>({
+    resolver: zodResolver(registerUserBodySchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      earlyAccessCode: '',
+    },
+    mode: 'onChange',
+  });
+
+  const onSubmit = (data: RegisterUserBody) => {
+    startTransition(async () => {
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+
+      const result = await signUpAction(null, formData);
+
+      if (result?.error) {
+        toast.error(result.error);
+      }
+    });
+  };
 
   return (
     <div className="bg-background border rounded-lg shadow-sm p-6 max-w-md w-full">
@@ -16,72 +56,69 @@ export default function SignUpPage() {
         <p className="text-muted-foreground text-sm">Cadastre-se no sistema</p>
       </div>
 
-      <form action={action} className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="name" className="text-sm font-medium">
-            Nome
-          </label>
-          <input
-            id="name"
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
             name="name"
-            type="text"
-            required
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            placeholder="Seu nome completo"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome</FormLabel>
+                <FormControl>
+                  <Input placeholder="Seu nome completo" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium">
-            Email
-          </label>
-          <input
-            id="email"
+          <FormField
+            control={form.control}
             name="email"
-            type="email"
-            required
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            placeholder="seu@email.com"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="seu@email.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium">
-            Senha
-          </label>
-          <input
-            id="password"
+          <FormField
+            control={form.control}
             name="password"
-            type="password"
-            required
-            minLength={6}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Senha</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="Mínimo 6 caracteres" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div className="space-y-2">
-          <label htmlFor="earlyAccessCode" className="text-sm font-medium">
-            Código de Acesso Antecipado
-          </label>
-          <input
-            id="earlyAccessCode"
+          <FormField
+            control={form.control}
             name="earlyAccessCode"
-            type="text"
-            required
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            placeholder="Digite seu código"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Código de Acesso Antecipado</FormLabel>
+                <FormControl>
+                  <Input placeholder="Digite seu código" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        {state?.error && <div className="text-sm text-destructive text-center">{state.error}</div>}
-
-        <button
-          type="submit"
-          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md inline-flex items-center justify-center text-sm font-medium transition-colors"
-        >
-          Cadastrar
-        </button>
-      </form>
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? 'Cadastrando...' : 'Cadastrar'}
+          </Button>
+        </form>
+      </Form>
 
       <div className="mt-4 text-center text-sm">
         <Link href="/auth/sign-in" className="text-primary hover:underline">
