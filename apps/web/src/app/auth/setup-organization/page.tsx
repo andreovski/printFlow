@@ -3,9 +3,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createOrganizationBodySchema, type CreateOrganizationBody } from '@magic-system/schemas';
 import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
 import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { UTApi } from 'uploadthing/server';
 
 import { WebsiteMaintenanceIllustration } from '@/components/assets/website-maintenance-illustration';
 import { Button } from '@/components/ui/button';
@@ -18,8 +20,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { maskCNPJ, maskPhone, maskCEP } from '@/lib/masks';
 import { fetchCNPJData } from '@/lib/opencnpj';
+import { UploadButton } from '@/lib/uploadthing-components';
 
 import { createOrganizationAction } from '../actions';
 
@@ -27,6 +31,12 @@ export default function SetupOrganizationPage() {
   const [isPending, startTransition] = useTransition();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoadingCNPJ, setIsLoadingCNPJ] = useState(false);
+  const [logoData, setLogoData] = useState<{
+    url: string;
+    key: string;
+    size: number;
+    name: string;
+  } | null>(null);
 
   const form = useForm<CreateOrganizationBody>({
     resolver: zodResolver(createOrganizationBodySchema) as any,
@@ -118,12 +128,34 @@ export default function SetupOrganizationPage() {
     }
   };
 
+  const handleRemoveLogo = async () => {
+    if (logoData?.key) {
+      try {
+        const utapi = new UTApi();
+        await utapi.deleteFiles(logoData.key);
+        toast.success('Logo removida com sucesso!');
+      } catch (error) {
+        console.error('Error deleting logo:', error);
+        toast.error('Erro ao remover logo do servidor');
+      }
+    }
+    setLogoData(null);
+  };
+
   const onSubmit = (data: CreateOrganizationBody) => {
     startTransition(async () => {
       const formData = new FormData();
       Object.entries(data).forEach(([key, value]) => {
         if (value) formData.append(key, value);
       });
+
+      // Add logo metadata if uploaded
+      if (logoData) {
+        formData.append('logoUrl', logoData.url);
+        formData.append('logoKey', logoData.key);
+        formData.append('logoSize', logoData.size.toString());
+        formData.append('logoName', logoData.name);
+      }
 
       const result = await createOrganizationAction(null, formData);
 
@@ -157,6 +189,58 @@ export default function SetupOrganizationPage() {
                 {currentStep === 1 && (
                   <div className="space-y-4 animate-in fade-in-0 slide-in-from-right-4 duration-500">
                     <h2 className="text-lg font-semibold text-foreground">Dados da Organização</h2>
+
+                    {/* Logo Upload Section */}
+                    <div className="space-y-2">
+                      <Label>Logo da Organização (opcional)</Label>
+                      {logoData ? (
+                        <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/50">
+                          <div className="relative w-20 h-20 rounded-md overflow-hidden border">
+                            <Image
+                              src={logoData.url}
+                              alt="Logo preview"
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{logoData.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {(logoData.size / 1024).toFixed(0)} KB
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleRemoveLogo}
+                          >
+                            Remover
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="border-2 border-dashed rounded-lg p-4">
+                          <UploadButton
+                            endpoint="organizationLogo"
+                            onClientUploadComplete={(res) => {
+                              if (res && res.length > 0) {
+                                const file = res[0];
+                                setLogoData({
+                                  url: file.url,
+                                  key: file.key,
+                                  size: file.size,
+                                  name: file.name,
+                                });
+                                toast.success('Logo enviada com sucesso!');
+                              }
+                            }}
+                            onUploadError={(error: Error) => {
+                              toast.error(`Erro ao enviar logo: ${error.message}`);
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField

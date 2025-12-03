@@ -110,6 +110,36 @@ export const uploadRouter = {
         type: file.type,
       };
     }),
+
+  // Upload para logo de organização
+  organizationLogo: f({
+    image: { maxFileSize: '4MB', maxFileCount: 1 },
+  })
+    .middleware(async ({ files }) => {
+      const auth = await getAuth();
+
+      const fileOverrides = files.map((file) => ({
+        ...file,
+        name: file.name,
+      }));
+
+      return {
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        [UTFiles]: fileOverrides,
+      };
+    })
+    .onUploadComplete(async ({ file }) => {
+      console.log('Organization logo upload complete:', file.name);
+
+      return {
+        url: file.ufsUrl,
+        name: file.name,
+        size: file.size,
+        key: file.key,
+        type: file.type,
+      };
+    }),
 } satisfies FileRouter;
 
 export type UploadRouter = typeof uploadRouter;
