@@ -2,6 +2,7 @@ import { ThemeProvider } from 'next-themes';
 import { Poppins, Josefin_Sans } from 'next/font/google';
 
 import { FontProvider } from '@/components/font-provider';
+import { LoadingBarProvider } from '@/components/loading-bar-provider';
 import { PrimaryColorProvider } from '@/components/primary-color-provider';
 import { ThemeColorProvider } from '@/components/theme-color-provider';
 import { Toaster } from '@/components/ui/sonner';
@@ -41,6 +42,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           josefinSans.variable
         )}
       >
+        <LoadingBarProvider />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
