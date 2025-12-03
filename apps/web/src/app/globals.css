@@ -87,4 +87,16 @@
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
   }
+
+  .animate-spin-slow {
+    animation: spin 15s linear infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .animate-spin-reverse-slow {
+    animation: spin 15s linear infinite reverse;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
 }
