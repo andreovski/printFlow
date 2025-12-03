@@ -2,12 +2,11 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createOrganizationBodySchema, type CreateOrganizationBody } from '@magic-system/schemas';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload } from 'lucide-react';
 import Image from 'next/image';
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { UTApi } from 'uploadthing/server';
 
 import { WebsiteMaintenanceIllustration } from '@/components/assets/website-maintenance-illustration';
 import { Button } from '@/components/ui/button';
@@ -23,20 +22,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { maskCNPJ, maskPhone, maskCEP } from '@/lib/masks';
 import { fetchCNPJData } from '@/lib/opencnpj';
-import { UploadButton } from '@/lib/uploadthing-components';
+import { useUploadThing } from '@/lib/uploadthing-components';
 
-import { createOrganizationAction } from '../actions';
+import { createOrganizationAction, deleteUploadthingFileAction } from '../actions';
 
 export default function SetupOrganizationPage() {
   const [isPending, startTransition] = useTransition();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoadingCNPJ, setIsLoadingCNPJ] = useState(false);
-  const [logoData, setLogoData] = useState<{
-    url: string;
-    key: string;
-    size: number;
-    name: string;
-  } | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const { startUpload, isUploading: _isUploading } = useUploadThing('organizationLogo');
 
   const form = useForm<CreateOrganizationBody>({
     resolver: zodResolver(createOrganizationBodySchema) as any,
@@ -56,6 +52,15 @@ export default function SetupOrganizationPage() {
     },
     mode: 'onChange',
   });
+
+  // Cleanup preview URL when component unmounts or file changes
+  useEffect(() => {
+    return () => {
+      if (logoPreview) {
+        URL.revokeObjectURL(logoPreview);
+      }
+    };
+  }, [logoPreview]);
 
   const handleNextStep = async () => {
     const fieldsToValidate: (keyof CreateOrganizationBody)[] = [
@@ -128,39 +133,94 @@ export default function SetupOrganizationPage() {
     }
   };
 
-  const handleRemoveLogo = async () => {
-    if (logoData?.key) {
-      try {
-        const utapi = new UTApi();
-        await utapi.deleteFiles(logoData.key);
-        toast.success('Logo removida com sucesso!');
-      } catch (error) {
-        console.error('Error deleting logo:', error);
-        toast.error('Erro ao remover logo do servidor');
-      }
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione uma imagem válida');
+      return;
     }
-    setLogoData(null);
+
+    // Validate file size (4MB)
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 4MB');
+      return;
+    }
+
+    // Clean up previous preview
+    if (logoPreview) {
+      URL.revokeObjectURL(logoPreview);
+    }
+
+    // Create new preview
+    const previewUrl = URL.createObjectURL(file);
+    setLogoFile(file);
+    setLogoPreview(previewUrl);
+  };
+
+  const handleRemoveLogo = () => {
+    if (logoPreview) {
+      URL.revokeObjectURL(logoPreview);
+    }
+    setLogoFile(null);
+    setLogoPreview(null);
   };
 
   const onSubmit = (data: CreateOrganizationBody) => {
     startTransition(async () => {
-      const formData = new FormData();
-      Object.entries(data).forEach(([key, value]) => {
-        if (value) formData.append(key, value);
-      });
+      let uploadedFileKey: string | null = null;
 
-      // Add logo metadata if uploaded
-      if (logoData) {
-        formData.append('logoUrl', logoData.url);
-        formData.append('logoKey', logoData.key);
-        formData.append('logoSize', logoData.size.toString());
-        formData.append('logoName', logoData.name);
-      }
+      try {
+        const formData = new FormData();
+        Object.entries(data).forEach(([key, value]) => {
+          if (value) formData.append(key, value);
+        });
 
-      const result = await createOrganizationAction(null, formData);
+        // Upload logo if file is selected
+        if (logoFile) {
+          toast.info('Enviando logo...');
+          const uploadedFiles = await startUpload([logoFile]);
 
-      if (result?.error) {
-        toast.error(result.error);
+          if (uploadedFiles && uploadedFiles.length > 0) {
+            const uploadedFile = uploadedFiles[0];
+            uploadedFileKey = uploadedFile.key; // Store key for potential cleanup
+            formData.append('logoUrl', uploadedFile.url);
+            formData.append('logoKey', uploadedFile.key);
+            formData.append('logoSize', uploadedFile.size.toString());
+            formData.append('logoName', uploadedFile.name);
+          }
+        }
+
+        const result = await createOrganizationAction(null, formData);
+
+        if (result?.error) {
+          // If organization creation failed and logo was uploaded, delete it
+          if (uploadedFileKey) {
+            toast.info('Limpando arquivos...');
+            await deleteUploadthingFileAction(uploadedFileKey);
+          }
+          toast.error(result.error);
+        } else {
+          // Clean up preview on success
+          if (logoPreview) {
+            URL.revokeObjectURL(logoPreview);
+          }
+        }
+      } catch (error) {
+        console.error('Error submitting form:', error);
+
+        // If logo was uploaded, clean it up
+        if (uploadedFileKey) {
+          try {
+            await deleteUploadthingFileAction(uploadedFileKey);
+          } catch (deleteError) {
+            console.error('Error cleaning up uploaded file:', deleteError);
+          }
+        }
+
+        toast.error('Erro ao criar organização. Tente novamente.');
       }
     });
   };
@@ -168,7 +228,7 @@ export default function SetupOrganizationPage() {
   return (
     <div className="w-full min-h-screen grid lg:grid-cols-2">
       {/* Left Column - Form */}
-      <div className="flex flex-col justify-center p-6 lg:p-12 xl:p-24 bg-background">
+      <div className="flex flex-col justify-center p-6 lg:p-12 xl:p-12 bg-background">
         <div className="w-full max-w-[550px] mx-auto space-y-8">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -193,20 +253,20 @@ export default function SetupOrganizationPage() {
                     {/* Logo Upload Section */}
                     <div className="space-y-2">
                       <Label>Logo da Organização (opcional)</Label>
-                      {logoData ? (
+                      {logoPreview ? (
                         <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/50">
                           <div className="relative w-20 h-20 rounded-md overflow-hidden border">
                             <Image
-                              src={logoData.url}
+                              src={logoPreview}
                               alt="Logo preview"
                               fill
                               className="object-cover"
                             />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium">{logoData.name}</p>
+                            <p className="text-sm font-medium">{logoFile?.name}</p>
                             <p className="text-xs text-muted-foreground">
-                              {(logoData.size / 1024).toFixed(0)} KB
+                              {logoFile ? (logoFile.size / 1024).toFixed(0) : 0} KB
                             </p>
                           </div>
                           <Button
@@ -219,25 +279,30 @@ export default function SetupOrganizationPage() {
                           </Button>
                         </div>
                       ) : (
-                        <div className="border-2 border-dashed rounded-lg p-4">
-                          <UploadButton
-                            endpoint="organizationLogo"
-                            onClientUploadComplete={(res) => {
-                              if (res && res.length > 0) {
-                                const file = res[0];
-                                setLogoData({
-                                  url: file.url,
-                                  key: file.key,
-                                  size: file.size,
-                                  name: file.name,
-                                });
-                                toast.success('Logo enviada com sucesso!');
-                              }
-                            }}
-                            onUploadError={(error: Error) => {
-                              toast.error(`Erro ao enviar logo: ${error.message}`);
-                            }}
-                          />
+                        <div className="border-2 border-dashed rounded-lg p-6">
+                          <label
+                            htmlFor="logo-upload"
+                            className="flex flex-col items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Upload className="w-6 h-6 text-primary" />
+                            </div>
+                            <div className="text-center">
+                              <p className="text-sm font-medium text-foreground">
+                                Clique para selecionar
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                PNG, JPG ou WEBP (máx. 4MB)
+                              </p>
+                            </div>
+                            <Input
+                              id="logo-upload"
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={handleFileSelect}
+                            />
+                          </label>
                         </div>
                       )}
                     </div>

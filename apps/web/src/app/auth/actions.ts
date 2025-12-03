@@ -3,6 +3,7 @@
 import { HTTPError } from 'ky';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { UTApi } from 'uploadthing/server';
 
 import { authenticate, registerUser } from '@/app/http/requests/auth';
 import { createOrganization } from '@/app/http/requests/organizations';
@@ -134,6 +135,17 @@ export async function createOrganizationAction(prevState: any, formData: FormDat
   }
 
   redirect('/');
+}
+
+export async function deleteUploadthingFileAction(fileKey: string) {
+  try {
+    const utapi = new UTApi();
+    await utapi.deleteFiles(fileKey);
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting file from uploadthing:', error);
+    return { success: false, error: 'Erro ao deletar arquivo' };
+  }
 }
 
 export async function signOutAction() {
