@@ -33,6 +33,12 @@
     --ring: 192 91% 36%;
 
     --radius: 0.5rem;
+
+    --chart-1: 192 91% 36%;
+    --chart-2: 189 88% 53%;
+    --chart-3: 210 40% 60%;
+    --chart-4: 215 16% 47%;
+    --chart-5: 214 32% 91%;
   }
 
   .dark {
@@ -63,12 +69,39 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 189 88% 53%;
+
+    --chart-1: 189 88% 53%;
+    --chart-2: 192 91% 36%;
+    --chart-3: 217 33% 30%;
+    --chart-4: 215 20% 65%;
+    --chart-5: 217 33% 18%;
   }
 }
 
 @layer base {
   * {
     @apply border-border;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
   }
 
   body {
