@@ -22,7 +22,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { useDisclosure } from '@/hooks/use-disclosure';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { cn } from '@/lib/utils';
 
 import { FONTS, FONT_STORAGE_KEY, applyFont } from './font-provider';
@@ -71,29 +73,21 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
   const { user } = useAppContext();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [primaryColor, setPrimaryColor] = useState<string>('cyan');
-  const [completeTheme, setCompleteTheme] = useState<string>('ambar');
-  const [themeEnabled, setThemeEnabled] = useState(false);
-  const [font, setFont] = useState<string>('josefins');
+
+  const [primaryColor, setPrimaryColor] = useLocalStorage(PRIMARY_COLOR_STORAGE_KEY, 'cyan');
+  const [completeTheme, setCompleteTheme] = useLocalStorage(THEME_STORAGE_KEY, 'ambar');
+  const [themeEnabled, setThemeEnabled] = useLocalStorage(THEME_ENABLED_KEY, false);
+  const [font, setFont] = useLocalStorage(FONT_STORAGE_KEY, 'josefins');
+
+  const [floatingMenuEnabled, setFloatingMenuEnabled] = useLocalStorage(
+    'floating-menu-enabled',
+    true
+  );
   const drawer = useDisclosure();
 
-  // Avoid hydration mismatch e carregar preferências salvas
+  // Avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
-    const savedColor = localStorage.getItem(PRIMARY_COLOR_STORAGE_KEY);
-    if (savedColor) {
-      setPrimaryColor(savedColor);
-    }
-    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    if (savedTheme) {
-      setCompleteTheme(savedTheme);
-    }
-    const enabled = localStorage.getItem(THEME_ENABLED_KEY) === 'true';
-    setThemeEnabled(enabled);
-    const savedFont = localStorage.getItem(FONT_STORAGE_KEY);
-    if (savedFont) {
-      setFont(savedFont);
-    }
   }, []);
 
   // Aplicar cor ou tema completo
@@ -110,31 +104,26 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
 
   const handleColorChange = (colorValue: string) => {
     setPrimaryColor(colorValue);
-    localStorage.setItem(PRIMARY_COLOR_STORAGE_KEY, colorValue);
   };
 
   const handleThemeChange = (themeValue: string) => {
     setCompleteTheme(themeValue);
-    localStorage.setItem(THEME_STORAGE_KEY, themeValue);
-    applyCompleteTheme(themeValue, resolvedTheme);
   };
 
   const handleThemeToggle = (enabled: boolean) => {
     setThemeEnabled(enabled);
-    localStorage.setItem(THEME_ENABLED_KEY, enabled.toString());
-    if (enabled) {
-      applyCompleteTheme(completeTheme, resolvedTheme);
-    } else {
-      removeCompleteTheme();
-      applyPrimaryColor(primaryColor, resolvedTheme);
-    }
   };
 
   const handleFontChange = (fontValue: string) => {
     setFont(fontValue);
-    localStorage.setItem(FONT_STORAGE_KEY, fontValue);
-    applyFont(fontValue);
   };
+
+  // Apply font when it changes
+  useEffect(() => {
+    if (mounted) {
+      applyFont(font);
+    }
+  }, [mounted, font]);
 
   // Profile form
   const profileForm = useForm<UpdateProfileFormData>({
@@ -529,6 +518,30 @@ export function ProfileDrawer({ trigger }: ProfileDrawerProps) {
               <p className="text-xs text-muted-foreground">
                 Escolha a fonte que melhor se adapta ao seu estilo
               </p>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Interface Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Monitor className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-medium">Interface</h3>
+            </div>
+
+            <div className="flex items-center justify-between space-x-2">
+              <div className="space-y-0.5">
+                <Label htmlFor="floating-menu">Menu de Ações Rápido</Label>
+                <p className="text-xs text-muted-foreground">
+                  Habilita o botão flutuante no canto da tela
+                </p>
+              </div>
+              <Switch
+                id="floating-menu"
+                checked={floatingMenuEnabled}
+                onCheckedChange={setFloatingMenuEnabled}
+              />
             </div>
           </div>
         </div>

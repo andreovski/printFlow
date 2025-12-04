@@ -52,9 +52,10 @@ interface ClientFormProps {
     notes?: string;
     active: boolean;
   };
+  onSuccess?: () => void;
 }
 
-export function ClientForm({ id, initialData }: ClientFormProps) {
+export function ClientForm({ id, initialData, onSuccess }: ClientFormProps) {
   const router = useRouter();
 
   const isEditing = !!id && !!initialData;
@@ -156,14 +157,18 @@ export function ClientForm({ id, initialData }: ClientFormProps) {
     }
   };
 
-useEffect(() => {
-  if (state?.success) {
-    toast.success(state.message);
-    router.back();
-  } else if (state?.message) {
-    toast.error(state.message);
-  }
-}, [state, router]);
+  useEffect(() => {
+    if (state?.success) {
+      toast.success(state.message);
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.back();
+      }
+    } else if (state?.message) {
+      toast.error(state.message);
+    }
+  }, [state, router, onSuccess]);
 
   return (
     <>

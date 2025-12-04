@@ -99,9 +99,10 @@ type FormData = z.infer<typeof formSchema>;
 
 interface BudgetFormProps {
   initialData?: any;
+  onSuccess?: () => void;
 }
 
-export function BudgetForm({ initialData }: BudgetFormProps) {
+export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -234,8 +235,11 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
         await createBudgetAction(data);
         toast.success('Orçamento criado com sucesso');
       }
-      router.push('/finance/budgets');
-      router.refresh();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.back();
+      }
     } catch (error: any) {
       toast.error(error.message || 'Erro ao salvar orçamento');
       console.error(error);
@@ -283,8 +287,7 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
       };
       await duplicateBudgetAction(duplicateData);
       toast.success('Orçamento duplicado com sucesso');
-      router.push('/finance/budgets');
-      router.refresh();
+      router.back();
     } catch (error: any) {
       toast.error(error.message || 'Erro ao copiar orçamento');
       console.error(error);
@@ -310,8 +313,7 @@ export function BudgetForm({ initialData }: BudgetFormProps) {
     try {
       await archiveBudgetAction(initialData.id);
       toast.success('Orçamento arquivado com sucesso');
-      router.push('/finance/budgets');
-      router.refresh();
+      router.back();
     } catch (error: any) {
       toast.error(error.message || 'Erro ao arquivar orçamento');
       console.error(error);

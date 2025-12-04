@@ -3,6 +3,8 @@
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
+import { useLocalStorage } from '@/hooks/use-local-storage';
+
 // Temas completos disponíveis
 export const COMPLETE_THEMES = [
   {
@@ -107,18 +109,18 @@ export function ThemeColorProvider({ children }: ThemeColorProviderProps) {
     setMounted(true);
   }, []);
 
+  const [themeEnabled] = useLocalStorage(THEME_ENABLED_KEY, false);
+  const [savedTheme] = useLocalStorage(THEME_STORAGE_KEY, 'ambar');
+
   useEffect(() => {
     if (!mounted) return;
 
-    const themeEnabled = localStorage.getItem(THEME_ENABLED_KEY) === 'true';
-
     if (themeEnabled) {
-      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'ambar';
       applyCompleteTheme(savedTheme, resolvedTheme);
     } else {
       removeCompleteTheme();
     }
-  }, [mounted, resolvedTheme]);
+  }, [mounted, resolvedTheme, themeEnabled, savedTheme]);
 
   return <>{children}</>;
 }

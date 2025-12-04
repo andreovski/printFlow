@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 
+import { FloatingActionMenu } from '@/components/floating-action-menu';
 import { Sidebar } from '@/components/sidebar';
 
 import { AppContextProvider } from '../hooks/useAppContext';
@@ -55,6 +56,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className="flex h-screen overflow-hidden">
         <Sidebar />
         <main className="flex-1 overflow-y-auto">{children}</main>
+        <FloatingActionMenu />
       </div>
     </AppContextProvider>
   );

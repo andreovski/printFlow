@@ -39,9 +39,10 @@ interface ProductFormProps {
     active: boolean;
     organizationId?: string;
   };
+  onSuccess?: () => void;
 }
 
-export function ProductForm({ id, initialData }: ProductFormProps) {
+export function ProductForm({ id, initialData, onSuccess }: ProductFormProps) {
   const router = useRouter();
 
   const isEditing = !!id && !!initialData;
@@ -63,11 +64,15 @@ export function ProductForm({ id, initialData }: ProductFormProps) {
   useEffect(() => {
     if (state?.success) {
       toast.success(state.message || 'Operação realizada com sucesso');
-      router.back();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.back();
+      }
     } else if (state?.message) {
       toast.error(state.message);
     }
-  }, [state, router]);
+  }, [state, router, onSuccess]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {

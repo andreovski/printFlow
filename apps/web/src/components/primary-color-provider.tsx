@@ -3,6 +3,8 @@
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
+import { useLocalStorage } from '@/hooks/use-local-storage';
+
 // Cores primárias disponíveis com valores HSL para light e dark mode
 export const PRIMARY_COLORS = [
   {
@@ -102,17 +104,18 @@ export function PrimaryColorProvider({ children }: PrimaryColorProviderProps) {
     setMounted(true);
   }, []);
 
+  const [themeEnabled] = useLocalStorage('magic-system-theme-enabled', false);
+  const [savedColor] = useLocalStorage(PRIMARY_COLOR_STORAGE_KEY, 'cyan');
+
   useEffect(() => {
     if (!mounted) return;
 
     // Se o tema completo estiver ativado, não aplicamos a cor primária
     // pois ela é definida pelas classes do tema
-    const themeEnabled = localStorage.getItem('magic-system-theme-enabled') === 'true';
     if (themeEnabled) return;
 
-    const savedColor = localStorage.getItem(PRIMARY_COLOR_STORAGE_KEY) || 'cyan';
     applyPrimaryColor(savedColor, resolvedTheme);
-  }, [mounted, resolvedTheme]);
+  }, [mounted, resolvedTheme, themeEnabled, savedColor]);
 
   return <>{children}</>;
 }
