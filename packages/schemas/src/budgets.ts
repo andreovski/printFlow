@@ -223,5 +223,6 @@ export interface PublicBudgetResponse {
 export interface GenerateApprovalLinkResponse {
   approvalToken: string;
   approvalUrl: string;
+  shortUrl: string;
   expiresAt: Date | null;
 }

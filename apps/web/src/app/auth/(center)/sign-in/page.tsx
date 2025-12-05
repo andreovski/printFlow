@@ -6,7 +6,6 @@ import { useFormState } from 'react-dom';
 import { signInAction } from '../../actions';
 
 export default function SignInPage() {
-  // @ts-ignore - useFormState types are tricky in RC
   const [state, action] = useFormState(signInAction, null);
 
   return (

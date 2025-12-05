@@ -4,8 +4,10 @@ import {
   rejectBudgetBodySchema,
 } from '@magic-system/schemas';
 import { FastifyReply, FastifyRequest } from 'fastify';
+import { z } from 'zod';
 
 import { BudgetsService } from '@/services/budgets.service';
+import { shortUrlService } from '@/services/short-url.service';
 
 /**
  * Get public budget by approval token (no auth required)
@@ -189,9 +191,37 @@ export async function generateApprovalLinkController(request: FastifyRequest, re
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   const approvalUrl = `${frontendUrl}/approval/${token}`;
 
+  // Generate short URL
+  const { shortUrl } = await shortUrlService.createShortUrl({
+    targetUrl: `/approval/${token}`,
+    budgetId: id,
+    expiresAt: expiresAt || undefined,
+  });
+
   return reply.status(200).send({
     approvalToken: token,
     approvalUrl,
+    shortUrl,
     expiresAt,
   });
+}
+
+const shortCodeParamsSchema = z.object({
+  code: z.string().min(1),
+});
+
+/**
+ * Get target URL for a short code (no auth required)
+ * Returns the target URL for frontend to redirect
+ */
+export async function getShortUrlController(request: FastifyRequest, reply: FastifyReply) {
+  const { code } = shortCodeParamsSchema.parse(request.params);
+
+  const targetUrl = await shortUrlService.getTargetUrl(code);
+
+  if (!targetUrl) {
+    return reply.status(404).send({ message: 'Link not found or expired' });
+  }
+
+  return reply.status(200).send({ targetUrl });
 }

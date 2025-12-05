@@ -57,6 +57,7 @@ import {
   approvePublicBudgetController,
   rejectPublicBudgetController,
   generateApprovalLinkController,
+  getShortUrlController,
 } from './controllers/public-budgets.controller';
 import {
   createTagController,
@@ -94,6 +95,9 @@ export async function appRoutes(app: FastifyInstance) {
   app.get('/public/budgets/:token', getPublicBudgetController);
   app.post('/public/budgets/:token/approve', approvePublicBudgetController);
   app.post('/public/budgets/:token/reject', rejectPublicBudgetController);
+
+  // Short URL redirect
+  app.get('/short-url/:code', getShortUrlController);
 
   // Authenticated routes
   app.register(async (authRoutes) => {

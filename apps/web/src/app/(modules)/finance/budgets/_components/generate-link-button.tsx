@@ -51,7 +51,8 @@ export function GenerateLinkButton({
     try {
       setIsGenerating(true);
       const response = await generateApprovalLink(budgetId);
-      setApprovalUrl(response.approvalUrl);
+      // Use the short URL for better sharing experience
+      setApprovalUrl(response.shortUrl);
       setExpiresAt(response.expiresAt ? new Date(response.expiresAt) : null);
       toast.success('Link de aprovação gerado com sucesso!');
     } catch (_err) {

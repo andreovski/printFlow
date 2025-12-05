@@ -410,3 +410,19 @@ model Template {
   @@map("templates")
   @@index([scope])
 }
+
+model ShortUrl {
+  id        String   @id @default(uuid())
+  code      String   @unique  // Short code (6 chars)
+  targetUrl String             // Full approval URL path (e.g., /approval/{token})
+  clicks    Int      @default(0)
+  
+  // Optional: link to budget for analytics
+  budgetId  String?
+  
+  createdAt DateTime @default(now())
+  expiresAt DateTime?
+
+  @@index([code])
+  @@map("short_urls")
+}
