@@ -201,8 +201,135 @@ export class BudgetsService {
     }
   }
 
+  /**
+   * Optimized update - doesn't load relations after update
+   * Use when you don't need the full budget data returned
+   */
+  async updateOptimized(
+    id: string,
+    data: UpdateBudgetDTO
+  ): Promise<{ id: string; code: number; status: string }> {
+    const { items, tagIds, ...budgetData } = data;
+
+    // If items are provided, we need to recalculate everything
+    if (items) {
+      const productIds = items.map((i) => i.productId);
+      const products = await this.productsRepository.findByIds(productIds);
+      const productMap = new Map(products.map((p) => [p.id, p]));
+
+      let subtotal = 0;
+      const budgetItemsData = items.map((item) => {
+        const product = productMap.get(item.productId);
+        if (!product) {
+          throw new Error(`Product with ID ${item.productId} not found`);
+        }
+
+        const salePrice = Number(product.salePrice);
+        const quantity = item.quantity;
+        let itemTotal = salePrice * quantity;
+
+        if (item.discountType === 'PERCENT' && item.discountValue) {
+          itemTotal -= itemTotal * (item.discountValue / 100);
+        } else if (item.discountType === 'VALUE' && item.discountValue) {
+          itemTotal -= item.discountValue;
+        }
+
+        subtotal += itemTotal;
+
+        return {
+          productId: item.productId,
+          name: product.title,
+          costPrice: product.costPrice,
+          salePrice: product.salePrice,
+          quantity: item.quantity,
+          discountType: item.discountType,
+          discountValue: item.discountValue,
+          total: itemTotal,
+        };
+      });
+
+      let globalDiscountType = budgetData.discountType;
+      let globalDiscountValue = budgetData.discountValue;
+
+      // If not provided in update, fetch from DB to calculate total correctly
+      if (globalDiscountType === undefined || globalDiscountValue === undefined) {
+        const currentBudget = await this.budgetsRepository.findById(id);
+        if (currentBudget) {
+          if (globalDiscountType === undefined)
+            globalDiscountType = currentBudget.discountType as DiscountType;
+          if (globalDiscountValue === undefined)
+            globalDiscountValue = Number(currentBudget.discountValue);
+        }
+      }
+
+      let total = subtotal;
+      if (globalDiscountType === 'PERCENT' && globalDiscountValue) {
+        total -= total * (globalDiscountValue / 100);
+      } else if (globalDiscountType === 'VALUE' && globalDiscountValue) {
+        total -= globalDiscountValue;
+      }
+
+      // Handle advance payment
+      let advancePayment = budgetData.advancePayment;
+      if (advancePayment === undefined) {
+        const currentBudget = await this.budgetsRepository.findById(id);
+        if (currentBudget) {
+          advancePayment = Number(currentBudget.advancePayment) || 0;
+        }
+      }
+      if (advancePayment) {
+        total -= advancePayment;
+      }
+
+      return await this.budgetsRepository.updateWithItemsOptimized(
+        id,
+        {
+          ...budgetData,
+          tagIds,
+          subtotal,
+          total,
+        },
+        budgetItemsData
+      );
+    } else {
+      // Se apenas tagIds foi passado (sem items), atualizar normalmente
+      if (tagIds !== undefined) {
+        return await this.budgetsRepository.updateOptimized(id, {
+          ...budgetData,
+          tags: { set: tagIds.map((tagId) => ({ id: tagId })) },
+        });
+      }
+      return await this.budgetsRepository.updateOptimized(id, budgetData);
+    }
+  }
+
   async updateStatus(id: string, status: BudgetStatus): Promise<Budget> {
     return await this.budgetsRepository.update(id, { status });
+  }
+
+  /**
+   * Optimized status update - doesn't load relations
+   * Use this when you don't need the full budget after update
+   */
+  async updateStatusOptimized(
+    id: string,
+    status: BudgetStatus
+  ): Promise<{ id: string; status: string; code: number }> {
+    return await this.budgetsRepository.updateStatusOnly(id, status);
+  }
+
+  /**
+   * Check if budget exists without loading all data
+   */
+  async exists(id: string): Promise<boolean> {
+    return await this.budgetsRepository.exists(id);
+  }
+
+  /**
+   * Get only the budget status - optimized for status checks
+   */
+  async findStatusById(id: string): Promise<{ id: string; status: string } | null> {
+    return await this.budgetsRepository.findStatusById(id);
   }
 
   async findMany(organizationId: string, page: number = 1, pageSize: number = 10) {

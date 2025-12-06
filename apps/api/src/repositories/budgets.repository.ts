@@ -1,4 +1,4 @@
-import { Budget, Prisma } from '@prisma/client';
+import { Budget, BudgetStatus, Prisma } from '@prisma/client';
 
 import { prisma } from '@/lib/prisma';
 
@@ -102,6 +102,35 @@ export class BudgetsRepository {
   }
 
   /**
+   * Check if a budget exists without loading relations
+   * Much more efficient than findById when you only need to verify existence
+   */
+  async exists(id: string): Promise<boolean> {
+    const count = await prisma.budget.count({
+      where: { id, deletedAt: null },
+    });
+    return count > 0;
+  }
+
+  /**
+   * Get budget status only - optimized for status checks
+   */
+  async findStatusById(id: string): Promise<{ id: string; status: string } | null> {
+    const budget = await prisma.budget.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        deletedAt: true,
+      },
+    });
+
+    if (!budget || budget.deletedAt) return null;
+
+    return { id: budget.id, status: budget.status };
+  }
+
+  /**
    * Find budget by public approval token with organization info
    */
   async findByApprovalToken(token: string) {
@@ -196,6 +225,56 @@ export class BudgetsRepository {
     });
   }
 
+  /**
+   * Optimized update - doesn't load relations
+   * Use when you don't need the full budget after update
+   */
+  async updateOptimized(
+    id: string,
+    data: Prisma.BudgetUncheckedUpdateInput
+  ): Promise<{ id: string; code: number; status: string }> {
+    const result = await prisma.budget.update({
+      where: { id },
+      data,
+      select: {
+        id: true,
+        code: true,
+        status: true,
+      },
+    });
+    return { id: result.id, code: result.code, status: result.status };
+  }
+
+  /**
+   * Update budget status only - optimized version without loading relations
+   * Returns only the fields needed for status update confirmation
+   */
+  async updateStatusOnly(
+    id: string,
+    status: BudgetStatus
+  ): Promise<{ id: string; status: string; code: number }> {
+    const result = await prisma.budget.update({
+      where: { id },
+      data: { status },
+      select: {
+        id: true,
+        status: true,
+        code: true,
+      },
+    });
+    return { id: result.id, status: result.status, code: result.code };
+  }
+
+  /**
+   * Simple update without loading relations - for cases where you don't need the result
+   */
+  async updateSimple(id: string, data: Prisma.BudgetUncheckedUpdateInput): Promise<void> {
+    await prisma.budget.update({
+      where: { id },
+      data,
+    });
+  }
+
   async updateWithItems(
     id: string,
     data: Prisma.BudgetUncheckedUpdateInput & { tagIds?: string[] },
@@ -221,6 +300,39 @@ export class BudgetsRepository {
           client: true,
         },
       });
+    });
+  }
+
+  /**
+   * Optimized updateWithItems - doesn't load relations after update
+   * Use when you don't need the full budget after update
+   */
+  async updateWithItemsOptimized(
+    id: string,
+    data: Prisma.BudgetUncheckedUpdateInput & { tagIds?: string[] },
+    itemsData: Prisma.BudgetItemUncheckedCreateWithoutBudgetInput[]
+  ): Promise<{ id: string; code: number; status: string }> {
+    return await prisma.$transaction(async (tx) => {
+      await tx.budgetItem.deleteMany({ where: { budgetId: id } });
+
+      const { tagIds, ...budgetData } = data;
+
+      const result = await tx.budget.update({
+        where: { id },
+        data: {
+          ...budgetData,
+          tags: tagIds ? { set: tagIds.map((tagId) => ({ id: tagId })) } : undefined,
+          items: {
+            create: itemsData,
+          },
+        },
+        select: {
+          id: true,
+          code: true,
+          status: true,
+        },
+      });
+      return { id: result.id, code: result.code, status: result.status };
     });
   }
 
@@ -253,7 +365,7 @@ export class BudgetsRepository {
     Array<{
       id: string;
       code: number;
-      total: any;
+      total: Prisma.Decimal;
       notes: string | null;
       client: { name: string; phone: string };
       tags: Array<{ id: string; name: string; color: string; scope: string }>;

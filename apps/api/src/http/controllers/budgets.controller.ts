@@ -81,7 +81,8 @@ export async function updateBudgetController(request: FastifyRequest, reply: Fas
 
   const budgetsService = new BudgetsService();
 
-  const existingBudget = await budgetsService.findById(id);
+  // Optimized: Only fetch status instead of full budget with relations
+  const existingBudget = await budgetsService.findStatusById(id);
   if (!existingBudget) {
     return reply.status(404).send({ message: 'Budget not found' });
   }
@@ -95,7 +96,8 @@ export async function updateBudgetController(request: FastifyRequest, reply: Fas
     }
   }
 
-  const budget = await budgetsService.update(id, {
+  // Optimized: Use updateOptimized which doesn't load relations
+  const budget = await budgetsService.updateOptimized(id, {
     ...body,
     tagIds: body.tagIds || [],
   });
@@ -112,13 +114,15 @@ export async function updateBudgetStatusController(request: FastifyRequest, repl
 
   const budgetsService = new BudgetsService();
 
-  const existingBudget = await budgetsService.findById(id);
-  if (!existingBudget) {
+  // Optimized: Use exists() instead of findById() - much lighter query
+  const budgetExists = await budgetsService.exists(id);
+  if (!budgetExists) {
     return reply.status(404).send({ message: 'Budget not found' });
   }
 
-  const budget = await budgetsService.updateStatus(id, status);
-  return reply.status(200).send({ budget });
+  // Optimized: Use updateStatusOptimized() - doesn't load relations
+  const result = await budgetsService.updateStatusOptimized(id, status);
+  return reply.status(200).send({ budget: result });
 }
 
 export async function deleteBudgetController(request: FastifyRequest, reply: FastifyReply) {
