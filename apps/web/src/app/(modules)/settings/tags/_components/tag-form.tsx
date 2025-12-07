@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useFormState } from '@/app/hooks/useFormState';
+import { useInvalidateTags } from '@/app/http/hooks';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { useFormState } from '@/hooks/use-form-state';
 
 import { createTagAction, updateTagAction } from '../actions';
 import { ColorPicker } from './color-picker';
@@ -35,6 +36,7 @@ interface TagFormProps {
 
 export function TagForm({ id, initialData }: TagFormProps) {
   const router = useRouter();
+  const invalidateTags = useInvalidateTags();
 
   const isEditing = !!id && !!initialData;
   const actionFn = isEditing
@@ -52,11 +54,12 @@ export function TagForm({ id, initialData }: TagFormProps) {
   useEffect(() => {
     if (state?.success) {
       toast.success(state.message || 'Operação realizada com sucesso');
+      invalidateTags(); // Invalida cache do React Query
       router.back();
     } else if (state?.message && !state?.success) {
       toast.error(state.message);
     }
-  }, [state, router]);
+  }, [state, router, invalidateTags]);
 
   return (
     <Card className="border-0 shadow-none">

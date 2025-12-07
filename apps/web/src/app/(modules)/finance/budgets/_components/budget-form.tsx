@@ -10,12 +10,12 @@ import {
 import { useCurrentEditor } from '@tiptap/react';
 import { Archive, Copy, Package, Paperclip, Printer, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { Attachment, AttachmentsManager } from '@/components/attachments-manager';
+import { AttachmentsManager } from '@/components/attachments-manager';
 import { DialogAction } from '@/components/dialog-action';
 import { TagSelect } from '@/components/tag-select';
 import { TemplateSelector } from '@/components/template-selector';
@@ -105,7 +105,6 @@ interface BudgetFormProps {
 export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   const deleteDialog = useDisclosure();
   const duplicateDialog = useDisclosure();
@@ -118,10 +117,6 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
     setTemplateContent(template.content);
     form.setValue('notes', template.content);
   };
-
-  const handleAttachmentsChange = useCallback((newAttachments: Attachment[]) => {
-    setAttachments(newAttachments);
-  }, []);
 
   const attachmentsManagerRef = useRef<{ uploadFiles: (files: File[]) => void }>(null);
 
@@ -597,8 +592,6 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
               ref={attachmentsManagerRef}
               entityType="budget"
               entityId={initialData.id}
-              attachments={attachments}
-              onAttachmentsChange={handleAttachmentsChange}
               disabled={isReadOnly}
               maxFiles={5}
             />
@@ -685,12 +678,6 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
                   <Trash className="h-4 w-4" />
                 </Button>
               )}
-
-            {initialData?.status !== 'INACTIVE' && (
-              <Button variant="outline" type="button" onClick={() => router.back()}>
-                Cancelar
-              </Button>
-            )}
 
             <Button type="submit" disabled={isPending}>
               {isPending ? 'Salvando...' : 'Salvar'}

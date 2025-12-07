@@ -4,6 +4,7 @@ import { Poppins, Josefin_Sans } from 'next/font/google';
 import { FontProvider } from '@/components/font-provider';
 import { LoadingBarProvider } from '@/components/loading-bar-provider';
 import { PrimaryColorProvider } from '@/components/primary-color-provider';
+import { QueryProvider } from '@/components/query-provider';
 import { ThemeColorProvider } from '@/components/theme-color-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
@@ -43,21 +44,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
       >
         <LoadingBarProvider />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <ThemeColorProvider>
-            <PrimaryColorProvider>
-              <FontProvider>
-                {children}
-                <Toaster position="top-center" />
-              </FontProvider>
-            </PrimaryColorProvider>
-          </ThemeColorProvider>
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <ThemeColorProvider>
+              <PrimaryColorProvider>
+                <FontProvider>
+                  {children}
+                  <Toaster position="top-center" />
+                </FontProvider>
+              </PrimaryColorProvider>
+            </ThemeColorProvider>
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
+import { useInvalidateProducts } from '@/app/http/hooks';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,7 +15,6 @@ import {
 } from '@/components/ui/dialog';
 
 import { deleteProductAction } from '../actions';
-
 
 interface ProductActionDialogsProps {
   id: string;
@@ -28,6 +28,7 @@ export function ProductActionDialogs({
   setIsDeleteOpen,
 }: ProductActionDialogsProps) {
   const router = useRouter();
+  const invalidateProducts = useInvalidateProducts();
   return (
     <>
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen} modal={false}>
@@ -48,8 +49,9 @@ export function ProductActionDialogs({
                 const result = await deleteProductAction(id);
                 if (result?.success) {
                   toast.success(result.message);
+                  invalidateProducts();
                   setIsDeleteOpen(false);
-                  router.push('/register/clients');
+                  router.push('/register/products');
                 } else {
                   toast.error(result?.message || 'Erro ao excluir produto');
                 }

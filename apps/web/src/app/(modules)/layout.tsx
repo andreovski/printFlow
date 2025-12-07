@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { FloatingActionMenu } from '@/components/floating-action-menu';
 import { Sidebar } from '@/components/sidebar';
 
-import { AppContextProvider } from '../hooks/useAppContext';
+import { AppContextProvider } from '../../hooks/use-app-context';
 import { getOrganization } from '../http/requests/organization';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {

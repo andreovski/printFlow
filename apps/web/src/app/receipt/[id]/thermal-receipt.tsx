@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { forwardRef } from 'react';
 
-import { useAppContext } from '@/app/hooks/useAppContext';
+import { useAppContext } from '@/hooks/use-app-context';
 
 interface ThermalReceiptProps {
   budget: Budget;

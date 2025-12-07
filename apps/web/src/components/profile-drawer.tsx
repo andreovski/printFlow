@@ -9,7 +9,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { useAppContext } from '@/app/hooks/useAppContext';
+import { useAppContext } from '@/hooks/use-app-context';
 import { updateProfile, changePassword } from '@/app/http/requests/users';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

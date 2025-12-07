@@ -3,7 +3,6 @@
 import { ChevronsUpDown } from 'lucide-react';
 import * as React from 'react';
 
-import { getProducts } from '@/app/http/requests/products';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -14,6 +13,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useProducts } from '@/app/http/hooks';
 
 interface Product {
   id: string;
@@ -29,30 +29,22 @@ interface ProductSelectProps {
 
 export function ProductSelect({ onSelect, disabled }: ProductSelectProps) {
   const [open, setOpen] = React.useState(false);
-  const [products, setProducts] = React.useState<Product[]>([]);
   const [search, setSearch] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
+  const [debouncedSearch, setDebouncedSearch] = React.useState('');
 
+  // Debounce da busca
   React.useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      try {
-        const data = await getProducts({
-          page: 1,
-          pageSize: 10,
-          search: search || undefined,
-        });
-        if (data.data) setProducts(data.data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const timeout = setTimeout(fetchProducts, 300);
+    const timeout = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(timeout);
   }, [search]);
+
+  // Usar React Query para buscar produtos (com cache automático)
+  const { data: productsData, isLoading } = useProducts({
+    search: debouncedSearch || undefined,
+    pageSize: 10,
+  });
+
+  const products = productsData?.data || [];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -72,7 +64,9 @@ export function ProductSelect({ onSelect, disabled }: ProductSelectProps) {
         <Command>
           <CommandInput placeholder="Buscar produto..." onValueChange={setSearch} />
           <CommandList>
-            <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
+            <CommandEmpty>
+              {isLoading ? 'Carregando...' : 'Nenhum produto encontrado.'}
+            </CommandEmpty>
             <CommandGroup>
               {products.map((product) => (
                 <CommandItem

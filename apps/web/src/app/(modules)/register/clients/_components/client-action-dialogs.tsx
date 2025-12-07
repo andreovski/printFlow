@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useInvalidateClients } from '@/app/http/hooks';
 
 import { deleteClientAction } from '../actions';
 
@@ -26,6 +27,7 @@ export function ClientActionDialogs({
   setIsDeleteOpen,
 }: ClientActionDialogsProps) {
   const router = useRouter();
+  const invalidateClients = useInvalidateClients();
   return (
     <>
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen} modal={false}>
@@ -45,6 +47,7 @@ export function ClientActionDialogs({
               onClick={async () => {
                 const result = await deleteClientAction(id);
                 if (result?.success) {
+                  invalidateClients();
                   setIsDeleteOpen(false);
                   router.push('/register/clients');
                 }

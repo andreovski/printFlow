@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useAppContext } from '@/app/hooks/useAppContext';
+import { useAppContext } from '@/hooks/use-app-context';
 import { updateBudgetStatus } from '@/app/http/requests/budgets';
 import { Button } from '@/components/ui/button';
 import {

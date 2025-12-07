@@ -34,7 +34,7 @@ export function UpdateUserForm({ id, initialData }: UpdateUserFormProps) {
   const isMaster = initialData.role === 'MASTER';
 
   return (
-    <Card className="border-0 shadow-none">
+    <Card className="border-0 shadow-none px-4">
       <form action={action}>
         <CardContent className="space-y-4 pt-0 px-0">
           {isMaster && (

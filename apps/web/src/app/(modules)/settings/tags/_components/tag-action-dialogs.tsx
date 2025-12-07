@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useInvalidateTags } from '@/app/http/hooks';
 
 import { deleteTagAction } from '../actions';
 
@@ -23,6 +24,8 @@ interface TagActionDialogsProps {
 
 export function TagActionDialogs({ id, isDeleteOpen, setIsDeleteOpen }: TagActionDialogsProps) {
   const router = useRouter();
+  const invalidateTags = useInvalidateTags();
+
   return (
     <>
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen} modal={false}>
@@ -44,6 +47,7 @@ export function TagActionDialogs({ id, isDeleteOpen, setIsDeleteOpen }: TagActio
                 const result = await deleteTagAction(id);
                 if (result?.success) {
                   toast.success(result.message);
+                  invalidateTags(); // Invalida cache do React Query
                   setIsDeleteOpen(false);
                   router.push('/settings/tags');
                 } else {

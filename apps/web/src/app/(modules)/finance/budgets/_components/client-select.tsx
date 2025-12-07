@@ -3,7 +3,6 @@
 import { Check, ChevronsUpDown } from 'lucide-react';
 import * as React from 'react';
 
-import { getClient, getClients } from '@/app/http/requests/clients';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -14,12 +13,8 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useClients, useClient } from '@/app/http/hooks';
 import { cn } from '@/lib/utils';
-
-interface Client {
-  id: string;
-  name: string;
-}
 
 interface ClientSelectProps {
   value?: string;
@@ -30,42 +25,26 @@ interface ClientSelectProps {
 
 export function ClientSelect({ value, onSelect, error, disabled }: ClientSelectProps) {
   const [open, setOpen] = React.useState(false);
-  const [clients, setClients] = React.useState<Client[]>([]);
   const [search, setSearch] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [selectedLabel, setSelectedLabel] = React.useState('');
+  const [debouncedSearch, setDebouncedSearch] = React.useState('');
 
-  // Debounce search manually if hook not available or just use effect
+  // Debounce da busca
   React.useEffect(() => {
-    const fetchClients = async () => {
-      setLoading(true);
-      try {
-        const data = await getClients({
-          page: 1,
-          pageSize: 10,
-          search: search || undefined,
-        });
-        if (data.data) setClients(data.data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const timeout = setTimeout(fetchClients, 300);
+    const timeout = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(timeout);
   }, [search]);
 
-  React.useEffect(() => {
-    if (value) {
-      getClient(value)
-        .then((data) => {
-          if (data.client) setSelectedLabel(data.client.name);
-        })
-        .catch(console.error);
-    }
-  }, [value]);
+  // Usar React Query para buscar lista de clientes (com cache automático)
+  const { data: clientsData, isLoading } = useClients({
+    search: debouncedSearch || undefined,
+    pageSize: 10,
+  });
+
+  // Usar React Query para buscar dados do cliente selecionado
+  const { data: selectedClientData } = useClient(value);
+
+  const clients = clientsData?.data || [];
+  const selectedLabel = selectedClientData?.client?.name || '';
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -85,7 +64,9 @@ export function ClientSelect({ value, onSelect, error, disabled }: ClientSelectP
         <Command>
           <CommandInput placeholder="Buscar cliente..." onValueChange={setSearch} />
           <CommandList>
-            <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+            <CommandEmpty>
+              {isLoading ? 'Carregando...' : 'Nenhum cliente encontrado.'}
+            </CommandEmpty>
             <CommandGroup>
               {clients.map((client) => (
                 <CommandItem
@@ -93,7 +74,6 @@ export function ClientSelect({ value, onSelect, error, disabled }: ClientSelectP
                   value={client.name}
                   onSelect={() => {
                     onSelect(client.id);
-                    setSelectedLabel(client.name);
                     setOpen(false);
                   }}
                 >

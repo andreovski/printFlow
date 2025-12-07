@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useFormState } from '@/app/hooks/useFormState';
+import { useInvalidateTemplates } from '@/app/http/hooks';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { EditorProvider } from '@/components/ui/shadcn-io/editor';
 import { Switch } from '@/components/ui/switch';
+import { useFormState } from '@/hooks/use-form-state';
 
 import { createTemplateAction, updateTemplateAction } from '../actions';
 import { TemplateActionDialogs } from './template-action-dialogs';
@@ -35,6 +36,7 @@ interface TemplateFormProps {
 
 export function TemplateForm({ id, initialData }: TemplateFormProps) {
   const router = useRouter();
+  const invalidateTemplates = useInvalidateTemplates();
 
   const isEditing = !!id && !!initialData;
   const actionFn = isEditing
@@ -51,11 +53,12 @@ export function TemplateForm({ id, initialData }: TemplateFormProps) {
   useEffect(() => {
     if (state?.success) {
       toast.success(state.message || 'Operação realizada com sucesso');
+      invalidateTemplates(); // Invalida cache do React Query
       router.back();
     } else if (state?.message && !state?.success) {
       toast.error(state.message);
     }
-  }, [state, router]);
+  }, [state, router, invalidateTemplates]);
 
   return (
     <Card className="border-0 shadow-none">

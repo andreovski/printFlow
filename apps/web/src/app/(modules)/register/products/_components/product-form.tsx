@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useFormState } from '@/app/hooks/useFormState';
+import { useInvalidateProducts } from '@/app/http/hooks';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { useFormState } from '@/hooks/use-form-state';
 import { maskCurrency } from '@/lib/masks';
 
 import { createProductAction, updateProductAction } from '../actions';
@@ -44,6 +45,7 @@ interface ProductFormProps {
 
 export function ProductForm({ id, initialData, onSuccess }: ProductFormProps) {
   const router = useRouter();
+  const invalidateProducts = useInvalidateProducts();
 
   const isEditing = !!id && !!initialData;
   const actionFn = isEditing
@@ -64,6 +66,7 @@ export function ProductForm({ id, initialData, onSuccess }: ProductFormProps) {
   useEffect(() => {
     if (state?.success) {
       toast.success(state.message || 'Operação realizada com sucesso');
+      invalidateProducts(); // Invalida cache do React Query
       if (onSuccess) {
         onSuccess();
       } else {
@@ -72,7 +75,7 @@ export function ProductForm({ id, initialData, onSuccess }: ProductFormProps) {
     } else if (state?.message) {
       toast.error(state.message);
     }
-  }, [state, router, onSuccess]);
+  }, [state, router, onSuccess, invalidateProducts]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -213,10 +216,6 @@ export function ProductForm({ id, initialData, onSuccess }: ProductFormProps) {
 
         <CardFooter className="p-0 flex flex-col gap-2 sticky bottom-0 z-10 mt-auto border-t">
           <div className="flex w-full bg-background/35 backdrop-blur-sm py-2 px-4 gap-2">
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? 'Salvando...' : isEditing ? 'Atualizar Produto' : 'Criar Produto'}
-            </Button>
-
             {isEditing && (
               <div className="flex gap-2 w-full items-center">
                 <div className="flex items-center gap-2 w-1/2 justify-center border p-2 rounded-md">
@@ -234,6 +233,9 @@ export function ProductForm({ id, initialData, onSuccess }: ProductFormProps) {
                 </Button>
               </div>
             )}
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? 'Salvando...' : isEditing ? 'Atualizar Produto' : 'Criar Produto'}
+            </Button>
           </div>
         </CardFooter>
       </form>

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useFormState } from '@/app/hooks/useFormState';
+import { useInvalidateClients } from '@/app/http/hooks';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { useFormState } from '@/hooks/use-form-state';
 import { BRAZILIAN_STATES } from '@/lib/constants';
 import { maskCNPJ, maskCPF, maskOnlyNumbers, maskPhone, maskCEP } from '@/lib/masks';
 import { fetchCNPJData } from '@/lib/opencnpj';
@@ -57,6 +58,7 @@ interface ClientFormProps {
 
 export function ClientForm({ id, initialData, onSuccess }: ClientFormProps) {
   const router = useRouter();
+  const invalidateClients = useInvalidateClients();
 
   const isEditing = !!id && !!initialData;
   const actionFn = isEditing
@@ -160,6 +162,7 @@ export function ClientForm({ id, initialData, onSuccess }: ClientFormProps) {
   useEffect(() => {
     if (state?.success) {
       toast.success(state.message);
+      invalidateClients(); // Invalida cache do React Query
       if (onSuccess) {
         onSuccess();
       } else {
@@ -168,7 +171,7 @@ export function ClientForm({ id, initialData, onSuccess }: ClientFormProps) {
     } else if (state?.message) {
       toast.error(state.message);
     }
-  }, [state, router, onSuccess]);
+  }, [state, router, onSuccess, invalidateClients]);
 
   return (
     <>
@@ -580,10 +583,6 @@ export function ClientForm({ id, initialData, onSuccess }: ClientFormProps) {
 
           <CardFooter className="p-0 flex flex-col gap-2 sticky bottom-0 z-10 mt-auto border-t">
             <div className="flex w-full bg-background/35 backdrop-blur-sm py-2 px-4 gap-2">
-              <Button type="submit" className="w-full" disabled={isPending}>
-                {isPending ? 'Salvando...' : isEditing ? 'Atualizar Cliente' : 'Criar Cliente'}
-              </Button>
-
               {isEditing && (
                 <div className="flex gap-2 w-full items-center">
                   <div className="flex items-center gap-2 w-1/2 justify-center border p-2 rounded-md">
@@ -601,6 +600,9 @@ export function ClientForm({ id, initialData, onSuccess }: ClientFormProps) {
                   </Button>
                 </div>
               )}
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending ? 'Salvando...' : isEditing ? 'Atualizar Cliente' : 'Criar Cliente'}
+              </Button>
             </div>
           </CardFooter>
         </form>

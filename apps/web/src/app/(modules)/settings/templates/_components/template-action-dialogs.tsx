@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useInvalidateTemplates } from '@/app/http/hooks';
 
 import { deleteTemplateAction } from '../actions';
 
@@ -27,6 +28,7 @@ export function TemplateActionDialogs({
   setIsDeleteOpen,
 }: TemplateActionDialogsProps) {
   const router = useRouter();
+  const invalidateTemplates = useInvalidateTemplates();
 
   return (
     <>
@@ -49,6 +51,7 @@ export function TemplateActionDialogs({
                 const result = await deleteTemplateAction(id);
                 if (result?.success) {
                   toast.success(result.message);
+                  invalidateTemplates(); // Invalida cache do React Query
                   setIsDeleteOpen(false);
                   router.push('/settings/templates');
                 } else {

@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { FileIcon, ImageIcon, Loader2, Paperclip, Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 import * as React from 'react';
@@ -15,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useAttachments } from '@/app/http/hooks';
 import { useUploadThing } from '@/lib/uploadthing-components';
 import { cn } from '@/lib/utils';
 
@@ -31,8 +33,6 @@ export interface Attachment {
 interface AttachmentsManagerProps {
   entityType: 'budget' | 'card';
   entityId: string;
-  attachments: Attachment[];
-  onAttachmentsChange: (attachments: Attachment[]) => void;
   disabled?: boolean;
   maxFiles?: number;
   className?: string;
@@ -63,24 +63,29 @@ export const AttachmentsManager = React.forwardRef<
   },
   AttachmentsManagerProps
 >(function AttachmentsManager(
-  {
-    entityType,
-    entityId,
-    attachments,
-    onAttachmentsChange,
-    disabled = false,
-    maxFiles = 10,
-    className,
-  },
+  { entityType, entityId, disabled = false, maxFiles = 10, className },
   ref
 ) {
+  const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = React.useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [attachmentToDelete, setAttachmentToDelete] = React.useState<Attachment | null>(null);
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [previewImage, setPreviewImage] = React.useState<string | null>(null);
 
+  // Usar React Query para buscar attachments (com cache automático)
+  const { data: attachments = [], isLoading: isLoadingAttachments } = useAttachments({
+    entityType,
+    entityId,
+  });
+
   const endpoint = entityType === 'budget' ? 'budgetAttachment' : 'cardAttachment';
+
+  const invalidateAttachments = React.useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: ['attachments', entityType, entityId],
+    });
+  }, [queryClient, entityType, entityId]);
 
   const { startUpload, isUploading: uploadThingUploading } = useUploadThing(endpoint, {
     onClientUploadComplete: async (res) => {
@@ -108,8 +113,8 @@ export const AttachmentsManager = React.forwardRef<
           json: { attachments: newAttachments },
         });
 
-        // Recarregar lista de attachments
-        await fetchAttachments();
+        // Invalidar cache para recarregar lista de attachments
+        invalidateAttachments();
 
         toast.success(
           `${res.length} ${res.length === 1 ? 'arquivo enviado' : 'arquivos enviados'} com sucesso!`
@@ -130,27 +135,6 @@ export const AttachmentsManager = React.forwardRef<
       setIsUploading(true);
     },
   });
-
-  const fetchAttachments = React.useCallback(async () => {
-    try {
-      const apiEndpoint =
-        entityType === 'budget'
-          ? `budgets/${entityId}/attachments`
-          : `cards/${entityId}/attachments`;
-
-      const response = await api.get(apiEndpoint).json<{ attachments: Attachment[] }>();
-      onAttachmentsChange(response.attachments);
-    } catch (error) {
-      console.error('Error fetching attachments:', error);
-    }
-  }, [entityType, entityId, onAttachmentsChange]);
-
-  // Buscar attachments ao montar o componente
-  React.useEffect(() => {
-    if (entityId) {
-      fetchAttachments();
-    }
-  }, [entityId, fetchAttachments]);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -193,8 +177,9 @@ export const AttachmentsManager = React.forwardRef<
 
       await api.delete(apiEndpoint);
 
-      // Remover da lista local
-      onAttachmentsChange(attachments.filter((a) => a.id !== attachmentToDelete.id));
+      // Invalidar cache para recarregar lista de attachments
+      invalidateAttachments();
+
       toast.success('Anexo removido com sucesso');
     } catch (error) {
       console.error('Error deleting attachment:', error);
@@ -206,7 +191,7 @@ export const AttachmentsManager = React.forwardRef<
     }
   };
 
-  const isLoading = isUploading || uploadThingUploading;
+  const isLoading = isUploading || uploadThingUploading || isLoadingAttachments;
   const canAddMore = attachments.length < maxFiles;
   const inputRef = React.useRef<HTMLInputElement>(null);
 

@@ -4,7 +4,6 @@ import { Tag, TagScope } from '@magic-system/schemas';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
 import * as React from 'react';
 
-import { getTags } from '@/app/http/requests/tags';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +15,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useTagsWithGlobal } from '@/app/http/hooks';
 import { cn } from '@/lib/utils';
 
 interface TagSelectProps {
@@ -30,92 +30,22 @@ interface TagSelectProps {
 export function TagSelect({
   value = [],
   onSelect,
-  scope,
+  scope = 'GLOBAL',
   disabled,
   placeholder = 'Selecione tags...',
   className,
 }: TagSelectProps) {
   const [open, setOpen] = React.useState(false);
-  const [tags, setTags] = React.useState<Tag[]>([]);
-  const [selectedTags, setSelectedTags] = React.useState<Tag[]>([]);
   const [search, setSearch] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
 
-  // Buscar tags quando o popover abre ou quando a busca muda
-  React.useEffect(() => {
-    const fetchTags = async () => {
-      setLoading(true);
-      try {
-        if (scope && scope !== 'GLOBAL') {
-          const [scopedData, globalData] = await Promise.all([
-            getTags({
-              page: 1,
-              pageSize: 50,
-              search: search || undefined,
-              scope: scope,
-              active: true,
-            }),
-            getTags({
-              page: 1,
-              pageSize: 50,
-              search: search || undefined,
-              scope: 'GLOBAL',
-              active: true,
-            }),
-          ]);
+  // Usar React Query para buscar tags (com cache automático)
+  const { data: tags = [], isLoading } = useTagsWithGlobal(scope, search || undefined);
 
-          // Combinar e remover duplicatas
-          const allTags = [...(scopedData.data || []), ...(globalData.data || [])];
-          const uniqueTags = allTags.filter(
-            (tag, index, self) => index === self.findIndex((t) => t.id === tag.id)
-          );
-          setTags(uniqueTags);
-        } else {
-          const data = await getTags({
-            page: 1,
-            pageSize: 50,
-            search: search || undefined,
-            scope: scope,
-            active: true,
-          });
-          if (data.data) setTags(data.data);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const timeout = setTimeout(fetchTags, 300);
-    return () => clearTimeout(timeout);
-  }, [search, scope]);
-
-  // Sincronizar selectedTags quando value muda externamente
-  React.useEffect(() => {
-    const fetchSelectedTags = async () => {
-      if (value.length === 0) {
-        setSelectedTags([]);
-        return;
-      }
-
-      try {
-        const data = await getTags({
-          page: 1,
-          pageSize: 100,
-          active: true,
-        });
-        if (data.data) {
-          const selected = data.data.filter((tag) => value.includes(tag.id));
-          setSelectedTags(selected);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    fetchSelectedTags();
-  }, [value]);
+  // Filtrar tags selecionadas a partir dos dados em cache
+  const selectedTags = React.useMemo(() => {
+    if (value.length === 0) return [];
+    return tags.filter((tag) => value.includes(tag.id));
+  }, [tags, value]);
 
   const handleSelect = (tag: Tag) => {
     const isSelected = value.includes(tag.id);
@@ -188,7 +118,7 @@ export function TagSelect({
           <Command>
             <CommandInput placeholder="Buscar tag..." onValueChange={setSearch} />
             <CommandList>
-              <CommandEmpty>{loading ? 'Carregando...' : 'Nenhuma tag encontrada.'}</CommandEmpty>
+              <CommandEmpty>{isLoading ? 'Carregando...' : 'Nenhuma tag encontrada.'}</CommandEmpty>
               <CommandGroup>
                 {tags.map((tag) => (
                   <CommandItem key={tag.id} value={tag.name} onSelect={() => handleSelect(tag)}>

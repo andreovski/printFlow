@@ -4,9 +4,9 @@ import { Template, TemplateScope } from '@magic-system/schemas';
 import { FileText, Loader2 } from 'lucide-react';
 import * as React from 'react';
 
-import { getTemplates } from '@/app/http/requests/templates';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { useTemplatesWithGlobal } from '@/app/http/hooks';
 import { cn } from '@/lib/utils';
 
 interface TemplateSelectorProps {
@@ -16,56 +16,10 @@ interface TemplateSelectorProps {
 }
 
 export function TemplateSelector({ scope, onSelect, className }: TemplateSelectorProps) {
-  const [templates, setTemplates] = React.useState<Template[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  // Usar React Query para buscar templates (com cache automático)
+  const { data: templates = [], isLoading } = useTemplatesWithGlobal(scope);
 
-  React.useEffect(() => {
-    const fetchTemplates = async () => {
-      setLoading(true);
-      try {
-        // Fetch templates for the specific scope and global templates
-        if (scope !== 'GLOBAL') {
-          const [scopedData, globalData] = await Promise.all([
-            getTemplates({
-              page: 1,
-              pageSize: 50,
-              scope: scope,
-              active: true,
-            }),
-            getTemplates({
-              page: 1,
-              pageSize: 50,
-              scope: 'GLOBAL',
-              active: true,
-            }),
-          ]);
-
-          // Combine and remove duplicates
-          const allTemplates = [...(scopedData.data || []), ...(globalData.data || [])];
-          const uniqueTemplates = allTemplates.filter(
-            (template, index, self) => index === self.findIndex((t) => t.id === template.id)
-          );
-          setTemplates(uniqueTemplates);
-        } else {
-          const data = await getTemplates({
-            page: 1,
-            pageSize: 50,
-            scope: scope,
-            active: true,
-          });
-          setTemplates(data.data || []);
-        }
-      } catch (e) {
-        console.error('Error fetching templates:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTemplates();
-  }, [scope]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className={cn('flex items-center gap-2 text-sm text-muted-foreground', className)}>
         <Loader2 className="h-4 w-4 animate-spin" />

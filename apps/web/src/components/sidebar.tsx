@@ -30,7 +30,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import { signOutAction } from '@/app/auth/actions';
-import { useAppContext } from '@/app/hooks/useAppContext';
+import { useAppContext } from '@/hooks/use-app-context';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
