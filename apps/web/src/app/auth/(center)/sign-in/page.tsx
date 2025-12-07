@@ -1,9 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { useFormState } from 'react-dom';
+import { useFormStatus, useFormState } from 'react-dom';
 
 import { signInAction } from '../../actions';
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md inline-flex items-center justify-center text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      disabled={pending}
+    >
+      {pending ? 'Entrando...' : 'Entrar'}
+    </button>
+  );
+}
 
 export default function SignInPage() {
   const [state, action] = useFormState(signInAction, null);
@@ -44,12 +58,7 @@ export default function SignInPage() {
 
         {state?.error && <div className="text-sm text-destructive text-center">{state.error}</div>}
 
-        <button
-          type="submit"
-          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md inline-flex items-center justify-center text-sm font-medium transition-colors"
-        >
-          Entrar
-        </button>
+        <SubmitButton />
       </form>
 
       <div className="mt-4 text-center text-sm">

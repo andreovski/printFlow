@@ -23,18 +23,20 @@ import {
   Kanban,
   Building2,
   Menu,
+  Loader2,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { useFormStatus } from 'react-dom';
 
 import { signOutAction } from '@/app/auth/actions';
-import { useAppContext } from '@/hooks/use-app-context';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Separator } from '@/components/ui/separator';
+import { useAppContext } from '@/hooks/use-app-context';
 import { useCookieStorage } from '@/hooks/use-cookie-storage';
 import { useDisclosure } from '@/hooks/use-disclosure';
 import { cn } from '@/lib/utils';
@@ -46,6 +48,33 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   module: NavigationSubjectType;
+}
+
+interface SignOutButtonProps {
+  isMobile: boolean;
+  collapsedOpen: boolean;
+}
+
+function SignOutButton({ isMobile, collapsedOpen }: SignOutButtonProps) {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      variant="ghost"
+      disabled={pending}
+      className={cn(
+        'w-full flex items-center gap-3 justify-start text-muted-foreground hover:text-foreground',
+        !isMobile && collapsedOpen && 'justify-center px-0'
+      )}
+    >
+      {pending ? (
+        <Loader2 className="h-5 w-5 shrink-0 animate-spin" />
+      ) : (
+        <LogOut className="h-5 w-5 shrink-0" />
+      )}
+      {(isMobile || !collapsedOpen) && <span>{pending ? 'Saindo...' : 'Sair'}</span>}
+    </Button>
+  );
 }
 
 export function Sidebar() {
@@ -636,16 +665,7 @@ export function Sidebar() {
         {/* Logout */}
         <div className="p-4 border-t">
           <form action={signOutAction}>
-            <Button
-              variant="ghost"
-              className={cn(
-                'w-full flex items-center gap-3 justify-start text-muted-foreground hover:text-foreground',
-                !isMobile && collapsed.isOpen && 'justify-center px-0'
-              )}
-            >
-              <LogOut className="h-5 w-5 shrink-0" />
-              {(isMobile || !collapsed.isOpen) && <span>Sair</span>}
-            </Button>
+            <SignOutButton isMobile={isMobile} collapsedOpen={collapsed.isOpen} />
           </form>
         </div>
       </aside>
