@@ -13,7 +13,7 @@ import * as React from 'react';
 import { useForm, type Path } from 'react-hook-form';
 import { z } from 'zod';
 
-import { Attachment, AttachmentsManager } from '@/components/attachments-manager';
+import { AttachmentsManager } from '@/components/attachments-manager';
 import { BudgetSelect } from '@/components/budget-select';
 import { TagSelect } from '@/components/tag-select';
 import { TemplateSelector } from '@/components/template-selector';
@@ -119,14 +119,8 @@ export function CardForm<T extends z.ZodType<any, any>>({
       mimeType: string | null;
     }>
   >([]);
-  // State for attachments
-  const [attachments, setAttachments] = React.useState<Attachment[]>([]);
 
   const attachmentsManagerRef = React.useRef<{ uploadFiles: (files: File[]) => void }>(null);
-
-  const handleAttachmentsChange = React.useCallback((newAttachments: Attachment[]) => {
-    setAttachments(newAttachments);
-  }, []);
 
   // Handle paste event for images
   React.useEffect(() => {
@@ -422,8 +416,6 @@ export function CardForm<T extends z.ZodType<any, any>>({
                 ref={attachmentsManagerRef}
                 entityType="card"
                 entityId={cardId}
-                attachments={attachments}
-                onAttachmentsChange={handleAttachmentsChange}
                 maxFiles={5}
               />
             </div>
