@@ -141,12 +141,6 @@ export function ProductionKanbanCard({
                     <div className="text-xs">
                       <p className="font-medium">Orçamento vinculado</p>
                       <p>{item.budget.client.name}</p>
-                      <p>
-                        {new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        }).format(item.budget.total)}
-                      </p>
                     </div>
                   </TooltipContent>
                 </Tooltip>

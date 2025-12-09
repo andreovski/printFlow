@@ -95,14 +95,11 @@ export interface CardBudgetItem {
   id: string;
   name: string;
   quantity: number;
-  salePrice: number;
-  total: number;
 }
 
 export interface CardBudget {
   id: string;
   code: number;
-  total: number;
   client: {
     name: string;
     phone: string;

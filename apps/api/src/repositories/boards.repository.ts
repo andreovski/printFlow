@@ -25,7 +25,6 @@ const cardInclude = {
     select: {
       id: true,
       code: true,
-      total: true,
       client: {
         select: {
           name: true,
@@ -37,8 +36,6 @@ const cardInclude = {
           id: true,
           name: true,
           quantity: true,
-          salePrice: true,
-          total: true,
         },
       },
     },
@@ -96,7 +93,26 @@ export class BoardsRepository {
         columns: {
           include: {
             cards: {
-              include: cardInclude,
+              include: {
+                ...cardInclude,
+                budget: {
+                  select: {
+                    id: true,
+                    code: true,
+                    client: {
+                      select: {
+                        name: true,
+                      },
+                    },
+                    items: {
+                      select: {
+                        name: true,
+                        quantity: true,
+                      },
+                    },
+                  },
+                },
+              },
               orderBy: {
                 position: 'asc',
               },

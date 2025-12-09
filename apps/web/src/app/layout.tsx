@@ -1,3 +1,4 @@
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { ThemeProvider } from 'next-themes';
 import { Poppins, Josefin_Sans } from 'next/font/google';
 
@@ -44,6 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
       >
         <LoadingBarProvider />
+        <SpeedInsights />
         <QueryProvider>
           <ThemeProvider
             attribute="class"

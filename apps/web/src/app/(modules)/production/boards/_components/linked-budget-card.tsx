@@ -9,13 +9,6 @@ interface LinkedBudgetCardProps {
   budget: CardBudget;
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
-
 function BudgetItemRow({ item }: { item: CardBudgetItem }) {
   return (
     <div className="flex items-center justify-between py-1.5 text-sm border-b last:border-b-0 border-border/50">
@@ -25,9 +18,6 @@ function BudgetItemRow({ item }: { item: CardBudgetItem }) {
       </div>
       <div className="flex items-center gap-4 shrink-0 text-muted-foreground">
         <span className="text-xs">x{item.quantity}</span>
-        <span className="font-medium text-foreground min-w-[80px] text-right">
-          {formatCurrency(Number(item.total))}
-        </span>
       </div>
     </div>
   );
@@ -61,7 +51,6 @@ export function LinkedBudgetCard({ budget }: LinkedBudgetCardProps) {
           <p className="font-semibold flex-1">
             #{budget.code} • {budget.client.name}
           </p>
-          <span className="font-bold text-primary">{formatCurrency(Number(budget.total))}</span>
         </div>
 
         {/* Products Toggle */}
