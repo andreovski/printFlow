@@ -24,6 +24,7 @@ import {
   Building2,
   Menu,
   Loader2,
+  TrendingUp,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -166,6 +167,12 @@ export function Sidebar() {
       label: 'Orçamentos',
       icon: FileText,
       module: NavigationSubject.FinanceBudgets,
+    },
+    {
+      href: '/finance/sales-movement',
+      label: 'Vendas',
+      icon: TrendingUp,
+      module: NavigationSubject.FinanceSalesMovement,
     },
   ];
 

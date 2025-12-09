@@ -10,6 +10,7 @@ import { columns, Product } from './columns';
 async function getProducts(): Promise<Product[]> {
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
+  // TODO: Move this call to @http/requests/products.ts
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
     headers: {
       Authorization: `Bearer ${token}`,

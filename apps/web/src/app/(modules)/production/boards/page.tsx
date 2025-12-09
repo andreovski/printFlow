@@ -14,6 +14,7 @@ export default function BoardsPage() {
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // TODO: Use react-query
   useEffect(() => {
     loadBoards();
   }, []);

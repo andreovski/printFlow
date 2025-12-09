@@ -202,7 +202,8 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
   const globalDiscountValue = form.watch('discountValue');
   const advancePayment = form.watch('advancePayment');
 
-  const subtotal = items.reduce((acc, item) => {
+  // Soma dos itens com descontos individuais
+  const itemsTotal = items.reduce((acc, item) => {
     let itemTotal = item.salePrice * item.quantity;
     if (item.discountType === 'PERCENT' && item.discountValue) {
       itemTotal -= itemTotal * (item.discountValue / 100);
@@ -212,13 +213,16 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
     return acc + itemTotal;
   }, 0);
 
-  let total = subtotal;
+  // Subtotal = itens com descontos individuais + desconto global
+  let subtotal = itemsTotal;
   if (globalDiscountType === 'PERCENT' && globalDiscountValue) {
-    total -= total * (globalDiscountValue / 100);
+    subtotal -= subtotal * (globalDiscountValue / 100);
   } else if (globalDiscountType === 'VALUE' && globalDiscountValue) {
-    total -= globalDiscountValue;
+    subtotal -= globalDiscountValue;
   }
-  total -= advancePayment || 0;
+
+  // Total = subtotal - adiantamento
+  const total = subtotal - (advancePayment || 0);
 
   const onSubmit = async (data: FormData) => {
     setIsPending(true);

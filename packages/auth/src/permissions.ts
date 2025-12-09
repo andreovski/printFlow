@@ -21,6 +21,7 @@ function defineNavigationPermissions(can: AbilityBuilder<AppAbility>['can'], rol
       can('access', NavigationSubject.RegisterProducts);
       can('access', NavigationSubject.RegisterAccesses);
       can('access', NavigationSubject.FinanceBudgets);
+      can('access', NavigationSubject.FinanceSalesMovement);
       can('access', NavigationSubject.ProductionBoards);
       can('access', NavigationSubject.SettingsCompany);
       can('access', NavigationSubject.SettingsTags);
@@ -34,6 +35,7 @@ function defineNavigationPermissions(can: AbilityBuilder<AppAbility>['can'], rol
       can('access', NavigationSubject.RegisterProducts);
       // No access: RegisterAccesses
       can('access', NavigationSubject.FinanceBudgets);
+      // No access: FinanceSalesMovement (restricted to ADM/MASTER)
       can('access', NavigationSubject.ProductionBoards);
       // No access: SettingsCompany
       can('access', NavigationSubject.SettingsTags);

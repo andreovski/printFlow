@@ -213,6 +213,9 @@ model Budget {
   approvedAt       DateTime?           // When approved/rejected via link
   rejectionReason  String?   @db.Text  // Optional reason if rejected
 
+  // Sales Movement control
+  excludedFromSales Boolean  @default(false)  // Se true, orçamento é ignorado nos cálculos financeiros
+
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   deletedAt      DateTime?
@@ -416,10 +419,10 @@ model ShortUrl {
   code      String   @unique  // Short code (6 chars)
   targetUrl String             // Full approval URL path (e.g., /approval/{token})
   clicks    Int      @default(0)
-  
+
   // Optional: link to budget for analytics
   budgetId  String?
-  
+
   createdAt DateTime @default(now())
   expiresAt DateTime?
 

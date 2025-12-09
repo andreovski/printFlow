@@ -60,6 +60,11 @@ import {
   getShortUrlController,
 } from './controllers/public-budgets.controller';
 import {
+  getSalesMovementKPIsController,
+  listSalesMovementController,
+  toggleExcludeFromSalesController,
+} from './controllers/sales-movement.controller';
+import {
   createTagController,
   fetchTagsController,
   getTagController,
@@ -211,5 +216,22 @@ export async function appRoutes(app: FastifyInstance) {
     authRoutes.post('/cards/:cardId/attachments', createCardAttachmentsController);
     authRoutes.get('/cards/:cardId/attachments', fetchCardAttachmentsController);
     authRoutes.delete('/cards/:cardId/attachments/:attachmentId', deleteCardAttachmentController);
+
+    // Sales Movement (Admin/Master only)
+    authRoutes.get(
+      '/sales-movement',
+      { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
+      listSalesMovementController
+    );
+    authRoutes.get(
+      '/sales-movement/kpis',
+      { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
+      getSalesMovementKPIsController
+    );
+    authRoutes.patch(
+      '/sales-movement/:id/toggle-exclude',
+      { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
+      toggleExcludeFromSalesController
+    );
   });
 }
