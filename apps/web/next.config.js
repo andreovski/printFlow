@@ -2,6 +2,9 @@ const path = require('path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Optimize for Docker/Railawy deployments (smaller container size)
+  output: 'standalone',
+
   // Set the root for output file tracing in monorepo
   outputFileTracingRoot: path.join(__dirname, '../../'),
 
