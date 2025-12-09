@@ -1,3 +1,9 @@
+import type {
+  CreateBoardBody,
+  CreateCardBody,
+  CreateColumnBody,
+  UpdateCardBody,
+} from '@magic-system/schemas';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -11,13 +17,6 @@ import {
   moveColumn,
   updateCard,
 } from '@/app/http/requests/boards';
-import type {
-  Board,
-  CreateBoardBody,
-  CreateCardBody,
-  CreateColumnBody,
-  UpdateCardBody,
-} from '@magic-system/schemas';
 
 export function useBoards({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({

@@ -15,12 +15,10 @@ export default function BoardsPage() {
   const { data: boards = [], isLoading: loading, error } = useBoards();
   const createBoardMutation = useCreateBoard();
 
-  // Set the first board as selected by default when boards load
   if (boards.length > 0 && !selectedBoardId) {
     setSelectedBoardId(boards[0].id);
   }
 
-  // Show error toast if boards failed to load
   if (error) {
     toast.error('Erro ao carregar quadros');
   }

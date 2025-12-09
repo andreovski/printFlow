@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prod": "export $(grep -v '^#' .env.prod | xargs) && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

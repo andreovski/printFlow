@@ -30,7 +30,6 @@ export function useAttachments({ entityType, entityId, enabled = true }: UseAtta
   });
 }
 
-// Hook para invalidar cache de attachments após upload/delete
 export function useInvalidateAttachments() {
   const queryClient = useQueryClient();
 

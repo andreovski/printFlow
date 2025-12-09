@@ -1,12 +1,12 @@
 'use client';
 
+import type { Product } from '@magic-system/schemas';
 import { ColumnDef } from '@tanstack/react-table';
 import { Pencil } from 'lucide-react';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 
-import type { Product } from '@magic-system/schemas';
 
 export type { Product };
 
