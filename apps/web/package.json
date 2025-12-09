@@ -6,7 +6,7 @@
     "dev": "next dev",
     "prod": "export $(grep -v '^#' .env.prod | xargs) && next dev",
     "build": "next build",
-    "start": "node .next/standalone/server.js",
+    "start": "node apps/web/.next/standalone/apps/web/server.js",
     "lint": "next lint"
   },
   "dependencies": {
