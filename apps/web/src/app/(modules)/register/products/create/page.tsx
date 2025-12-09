@@ -1,5 +1,7 @@
 import { PackagePlus } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 import { ResponsiveDrawer } from '@/components/responsive-drawer';
 
 import { ProductForm } from '../_components/product-form';

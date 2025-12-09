@@ -1,6 +1,8 @@
 import { PencilRuler } from 'lucide-react';
 import { cookies } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+
 import { ResponsiveDrawer } from '@/components/responsive-drawer';
 
 import { ProductForm } from '../../_components/product-form';
