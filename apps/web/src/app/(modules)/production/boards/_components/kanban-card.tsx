@@ -92,13 +92,14 @@ export function ProductionKanbanCard({
         <div className="flex flex-col gap-1 group/card min-w-0 w-full">
           {/* Imagem de capa do card - estilo Trello */}
           {coverImage && (
-            <div className="-mx-2 -mt-2 mb-1 relative aspect-video overflow-hidden rounded-t-md">
+            <div className="-mx-2 -mt-2 mb-1 relative aspect-video overflow-hidden rounded-t-md bg-slate-500 dark:bg-slate-800">
               <Image
                 src={coverImage.url}
                 alt={coverImage.name}
                 fill
                 className="object-cover"
                 sizes="(max-width: 300px) 100vw, 280px"
+                quality={40}
               />
             </div>
           )}
