@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { createColumn } from '@/app/http/requests/boards';
+import { useCreateColumn } from '@/app/http/hooks/use-boards';
 import { ResponsiveDrawer } from '@/components/responsive-drawer';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,6 +36,7 @@ export function CreateColumnDialog({
   onColumnCreated,
 }: CreateColumnDialogProps) {
   const [open, setOpen] = useState(false);
+  const createColumnMutation = useCreateColumn();
 
   const form = useForm<FormData, any, FormData>({
     resolver: zodResolver(formSchema) as any,
@@ -46,7 +47,7 @@ export function CreateColumnDialog({
 
   const onSubmit = async (data: FormData) => {
     try {
-      const newColumn = await createColumn({ ...data, boardId });
+      const newColumn = await createColumnMutation.mutateAsync({ ...data, boardId });
       toast.success('Coluna criada com sucesso');
       onColumnCreated(newColumn);
       setOpen(false);

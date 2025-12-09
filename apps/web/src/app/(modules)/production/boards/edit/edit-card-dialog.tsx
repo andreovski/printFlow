@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { deleteCard, updateCard } from '@/app/http/requests/boards';
+import { useDeleteCard, useUpdateCard } from '@/app/http/hooks/use-boards';
 import { DialogAction } from '@/components/dialog-action';
 import { ResponsiveDrawer } from '@/components/responsive-drawer';
 import { Button } from '@/components/ui/button';
@@ -31,10 +31,12 @@ export function EditCardDialog({
 }: EditCardDialogProps) {
   const [open, setOpen] = useState(false);
   const deleteDialog = useDisclosure();
+  const updateCardMutation = useUpdateCard();
+  const deleteCardMutation = useDeleteCard();
 
   const onSubmit = async (data: FormData) => {
     try {
-      const updatedCard = await updateCard(card.id, data);
+      const updatedCard = await updateCardMutation.mutateAsync({ id: card.id, data });
       toast.success('Cartão atualizado com sucesso');
       onCardUpdated(updatedCard);
       setOpen(false);
@@ -46,7 +48,7 @@ export function EditCardDialog({
 
   const handleDelete = async () => {
     try {
-      await deleteCard(card.id);
+      await deleteCardMutation.mutateAsync(card.id);
       toast.success('Cartão excluído com sucesso');
       deleteDialog.close();
       setOpen(false);

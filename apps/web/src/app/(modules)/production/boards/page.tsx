@@ -1,60 +1,45 @@
 'use client';
 
 import { Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { Board, createBoard, fetchBoards } from '@/app/http/requests/boards';
+import { useBoards, useCreateBoard } from '@/app/http/hooks/use-boards';
 import { Button } from '@/components/ui/button';
 
 import { KanbanView } from './_components/kanban-view';
 
 export default function BoardsPage() {
-  const [boards, setBoards] = useState<Board[]>([]);
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  // TODO: Use react-query
-  useEffect(() => {
-    loadBoards();
-  }, []);
+  const { data: boards = [], isLoading: loading, error } = useBoards();
+  const createBoardMutation = useCreateBoard();
 
-  const loadBoards = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchBoards();
-      setBoards(data);
-      // Set the first board as selected by default
-      if (data.length > 0) {
-        setSelectedBoardId(data[0].id);
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error('Erro ao carregar quadros');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Set the first board as selected by default when boards load
+  if (boards.length > 0 && !selectedBoardId) {
+    setSelectedBoardId(boards[0].id);
+  }
+
+  // Show error toast if boards failed to load
+  if (error) {
+    toast.error('Erro ao carregar quadros');
+  }
 
   const handleCreateDefaultBoard = async () => {
     try {
-      setLoading(true);
-      const newBoard = await createBoard({
+      const newBoard = await createBoardMutation.mutateAsync({
         title: 'Produção Geral',
         description: 'Quadro principal de produção',
       });
-      setBoards([newBoard]);
       setSelectedBoardId(newBoard.id);
       toast.success('Quadro criado com sucesso');
     } catch (error) {
       console.error(error);
       toast.error('Erro ao criar quadro');
-    } finally {
-      setLoading(false);
     }
   };
 
-  if (loading) {
+  if (loading || createBoardMutation.isPending) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

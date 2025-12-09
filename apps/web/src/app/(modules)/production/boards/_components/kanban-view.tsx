@@ -5,13 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import {
-  Board,
-  moveCard,
-  Card as ApiCard,
-  deleteColumn,
-  moveColumn,
-} from '@/app/http/requests/boards';
+import { useDeleteColumn, useMoveCard, useMoveColumn } from '@/app/http/hooks/use-boards';
+import { Board, Card as ApiCard } from '@/app/http/requests/boards';
 import { DialogAction } from '@/components/dialog-action';
 import { Button } from '@/components/ui/button';
 import {
@@ -65,6 +60,9 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
   const [isReorderMode, setIsReorderMode] = useState(false);
 
   const dialogDelete = useDisclosure();
+  const moveCardMutation = useMoveCard();
+  const deleteColumnMutation = useDeleteColumn();
+  const moveColumnMutation = useMoveColumn();
 
   // Update columns and cards when selectedBoard changes
   useEffect(() => {
@@ -116,7 +114,11 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
           newData.findIndex((c) => c.id === activeDragId))
     ) {
       try {
-        await moveCard(activeDragId, destinationColumnId, newPosition);
+        await moveCardMutation.mutateAsync({
+          cardId: activeDragId,
+          destinationColumnId,
+          newPosition,
+        });
       } catch (error) {
         toast.error('Erro ao mover cartão');
         // Revert state if needed (complex without full history)
@@ -127,7 +129,7 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
 
   const handleDeleteColumn = async (columnId: string) => {
     try {
-      await deleteColumn(columnId);
+      await deleteColumnMutation.mutateAsync(columnId);
       setColumns((prev) => prev.filter((c) => c.id !== columnId));
       toast.success('Coluna excluída com sucesso');
     } catch (error) {
@@ -142,7 +144,9 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
 
     try {
       await Promise.all(
-        newColumns.map((col, index) => moveColumn(col.id, selectedBoard.id, index))
+        newColumns.map((col, index) =>
+          moveColumnMutation.mutateAsync({ columnId: col.id, boardId: selectedBoard.id, newOrder: index })
+        )
       );
       toast.success('Colunas reordenadas com sucesso');
 

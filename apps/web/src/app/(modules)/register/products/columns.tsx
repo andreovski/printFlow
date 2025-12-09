@@ -6,15 +6,9 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 
-export type Product = {
-  id: string;
-  title: string;
-  code?: string;
-  unitType: 'm2' | 'unidade';
-  stock: number;
-  category?: string[];
-  salePrice: number;
-};
+import type { Product } from '@magic-system/schemas';
+
+export type { Product };
 
 export const columns: ColumnDef<Product>[] = [
   {

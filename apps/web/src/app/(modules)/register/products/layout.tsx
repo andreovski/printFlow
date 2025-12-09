@@ -1,35 +1,25 @@
+import type { Product } from '@magic-system/schemas';
 import { Plus } from 'lucide-react';
-import { cookies } from 'next/headers';
 import Link from 'next/link';
 
+import { getProducts } from '@/app/http/requests/products';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 
-import { columns, Product } from './columns';
+import { columns } from './columns';
 
-async function getProducts(): Promise<Product[]> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
-  // TODO: Move this call to @http/requests/products.ts
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    next: {
-      tags: ['products'],
-    },
-  });
-
-  if (!res.ok) {
+async function fetchProducts(): Promise<Product[]> {
+  try {
+    const response = await getProducts({ page: 1, pageSize: 100 });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
     return [];
   }
-
-  const response = await res.json();
-  return response.data;
 }
 
 export default async function ProductsLayout({ children }: { children: React.ReactNode }) {
-  const products = await getProducts();
+  const products = await fetchProducts();
 
   return (
     <div className="p-6">

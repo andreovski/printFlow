@@ -4,7 +4,7 @@ import { createCardBodySchema, type Card } from '@magic-system/schemas';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { createCard } from '@/app/http/requests/boards';
+import { useCreateCard } from '@/app/http/hooks/use-boards';
 import { ResponsiveDrawer } from '@/components/responsive-drawer';
 import { useDisclosure } from '@/hooks/use-disclosure';
 
@@ -20,10 +20,11 @@ interface CreateCardDialogProps {
 
 export function CreateCardDialog({ columnId, children, onCardCreated }: CreateCardDialogProps) {
   const { isOpen: open, toggle } = useDisclosure();
+  const createCardMutation = useCreateCard();
 
   const onSubmit = async (data: FormData) => {
     try {
-      const newCard = await createCard(columnId, data);
+      const newCard = await createCardMutation.mutateAsync({ columnId, data });
       toast.success('Cartão criado com sucesso');
       onCardCreated(newCard);
       toggle();
