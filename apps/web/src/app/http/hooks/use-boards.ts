@@ -7,6 +7,7 @@ import type {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
+  Board,
   createBoard,
   createCard,
   createColumn,
@@ -31,8 +32,10 @@ export function useCreateBoard() {
 
   return useMutation({
     mutationFn: (data: CreateBoardBody) => createBoard(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['boards'] });
+    onSuccess: (newBoard) => {
+      queryClient.setQueryData<Board[]>(['boards'], (old) => {
+        return old ? [newBoard, ...old] : [newBoard];
+      });
     },
   });
 }
@@ -42,8 +45,19 @@ export function useCreateColumn() {
 
   return useMutation({
     mutationFn: (data: CreateColumnBody) => createColumn(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['boards'] });
+    onSuccess: (newColumn) => {
+      queryClient.setQueryData<Board[]>(['boards'], (old) => {
+        if (!old) return old;
+        return old.map((board) => {
+          if (board.id === newColumn.boardId) {
+            return {
+              ...board,
+              columns: [...(board.columns || []), newColumn],
+            };
+          }
+          return board;
+        });
+      });
     },
   });
 }
@@ -53,8 +67,14 @@ export function useDeleteColumn() {
 
   return useMutation({
     mutationFn: (columnId: string) => deleteColumn(columnId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['boards'] });
+    onSuccess: (_, columnId) => {
+      queryClient.setQueryData<Board[]>(['boards'], (old) => {
+        if (!old) return old;
+        return old.map((board) => ({
+          ...board,
+          columns: (board.columns || []).filter((col) => col.id !== columnId),
+        }));
+      });
     },
   });
 }
@@ -84,8 +104,22 @@ export function useCreateCard() {
   return useMutation({
     mutationFn: ({ columnId, data }: { columnId: string; data: CreateCardBody }) =>
       createCard(columnId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['boards'] });
+    onSuccess: (newCard, { columnId }) => {
+      queryClient.setQueryData<Board[]>(['boards'], (old) => {
+        if (!old) return old;
+        return old.map((board) => ({
+          ...board,
+          columns: (board.columns || []).map((col) => {
+            if (col.id === columnId) {
+              return {
+                ...col,
+                cards: [...(col.cards || []), newCard],
+              };
+            }
+            return col;
+          }),
+        }));
+      });
     },
   });
 }
@@ -95,8 +129,19 @@ export function useUpdateCard() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateCardBody }) => updateCard(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['boards'] });
+    onSuccess: (updatedCard) => {
+      queryClient.setQueryData<Board[]>(['boards'], (old) => {
+        if (!old) return old;
+        return old.map((board) => ({
+          ...board,
+          columns: (board.columns || []).map((col) => ({
+            ...col,
+            cards: (col.cards || []).map((card) =>
+              card.id === updatedCard.id ? { ...card, ...updatedCard } : card
+            ),
+          })),
+        }));
+      });
     },
   });
 }
@@ -106,8 +151,17 @@ export function useDeleteCard() {
 
   return useMutation({
     mutationFn: (cardId: string) => deleteCard(cardId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['boards'] });
+    onSuccess: (_, cardId) => {
+      queryClient.setQueryData<Board[]>(['boards'], (old) => {
+        if (!old) return old;
+        return old.map((board) => ({
+          ...board,
+          columns: (board.columns || []).map((col) => ({
+            ...col,
+            cards: (col.cards || []).filter((card) => card.id !== cardId),
+          })),
+        }));
+      });
     },
   });
 }

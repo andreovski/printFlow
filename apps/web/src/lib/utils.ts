@@ -5,23 +5,26 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const entityMap: Record<string, string> = {
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&#39;': "'",
+  '&nbsp;': ' ',
+};
+
 export function stripHtml(html: string): string {
-  // Remove HTML tags and decode entities
-  const text = html
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  // Decode common HTML entities
-  const textarea = typeof document !== 'undefined' ? document.createElement('textarea') : null;
-  if (textarea) {
-    textarea.innerHTML = text;
-    return textarea.value;
-  }
-  return text
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ');
+  if (!html) return '';
+
+  // Remove HTML tags
+  let text = html.replace(/<[^>]*>/g, ' ');
+
+  // Decode common entities using simple replace for better performance
+  // This covers the most common cases without overhead of DOM creation
+  text = text.replace(/&[a-z0-9#]+;/g, (entity) => {
+    return entityMap[entity] || entity;
+  });
+
+  return text.replace(/\s+/g, ' ').trim();
 }

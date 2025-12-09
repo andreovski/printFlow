@@ -1,7 +1,6 @@
 import { Button } from './ui/button';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -32,12 +31,12 @@ export const DialogAction = ({
           <DialogDescription>{subtitle}</DialogDescription>
         </DialogHeader>
         <DialogFooter className="p-0">
-          <DialogClose className="flex gap-2">
+          <div className="flex gap-2 w-full justify-end">
             <Button variant="outline" onClick={() => onRefuse?.()}>
               Cancelar
             </Button>
             {confirmButton}
-          </DialogClose>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

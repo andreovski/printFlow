@@ -1,11 +1,15 @@
 'use client';
 
 import { Plus, Trash2, ArrowUpDown, GripVertical } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useDeleteColumn, useMoveCard, useMoveColumn } from '@/app/http/hooks/use-boards';
+import {
+  useBoards,
+  useDeleteColumn,
+  useMoveCard,
+  useMoveColumn,
+} from '@/app/http/hooks/use-boards';
 import { Board, Card as ApiCard } from '@/app/http/requests/boards';
 import { DialogAction } from '@/components/dialog-action';
 import { Button } from '@/components/ui/button';
@@ -35,8 +39,15 @@ interface KanbanViewProps {
   onBoardChange: (boardId: string) => void;
 }
 
-export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewProps) {
-  const router = useRouter();
+export function KanbanView({
+  boards: initialBoards,
+  selectedBoard: initialSelectedBoard,
+  onBoardChange,
+}: KanbanViewProps) {
+  const { data: boards = initialBoards } = useBoards({ enabled: true });
+
+  const selectedBoard =
+    boards.find((b) => b.id === initialSelectedBoard.id) || initialSelectedBoard;
 
   const [columns, setColumns] = useState(
     (selectedBoard.columns || [])
@@ -64,7 +75,6 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
   const deleteColumnMutation = useDeleteColumn();
   const moveColumnMutation = useMoveColumn();
 
-  // Update columns and cards when selectedBoard changes
   useEffect(() => {
     const newColumns = (selectedBoard.columns || [])
       .sort((a, b) => a.order - b.order)
@@ -98,11 +108,9 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
 
     const oldCard = cards.find((c) => c.id === activeDragId);
 
-    // Update UI immediately
     setCards(newData);
     setActiveDragId(null);
 
-    // Calculate new position
     const destinationColumnId = movedCard.column;
     const cardsInDestColumn = newData.filter((c) => c.column === destinationColumnId);
     const newPosition = cardsInDestColumn.findIndex((c) => c.id === activeDragId);
@@ -121,8 +129,8 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
         });
       } catch (error) {
         toast.error('Erro ao mover cartão');
-        // Revert state if needed (complex without full history)
         console.error(error);
+        setCards(cards); // Revert to 'cards' (the old state captured in closure)
       }
     }
   };
@@ -130,6 +138,7 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
   const handleDeleteColumn = async (columnId: string) => {
     try {
       await deleteColumnMutation.mutateAsync(columnId);
+      // Optimistic update
       setColumns((prev) => prev.filter((c) => c.id !== columnId));
       toast.success('Coluna excluída com sucesso');
     } catch (error) {
@@ -145,12 +154,15 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
     try {
       await Promise.all(
         newColumns.map((col, index) =>
-          moveColumnMutation.mutateAsync({ columnId: col.id, boardId: selectedBoard.id, newOrder: index })
+          moveColumnMutation.mutateAsync({
+            columnId: col.id,
+            boardId: selectedBoard.id,
+            newOrder: index,
+          })
         )
       );
       toast.success('Colunas reordenadas com sucesso');
-
-      router.refresh();
+      // No router.refresh needed, query invalidation handles it
     } catch (error) {
       console.error(error);
       toast.error('Erro ao reordenar colunas');
@@ -178,11 +190,14 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
           <CreateColumnDialog
             boardId={selectedBoard.id}
             onColumnCreated={(newColumn) => {
+              // Optimistic add (or wait for query invalidation)
+              // Since we rely on onBoardChange/Query, simply waiting for invalidation is safer but slower UI
+              // But we can do optimistic add:
               setColumns((prev) => [
                 ...prev,
                 { id: newColumn.id, name: newColumn.title, order: newColumn.order },
               ]);
-              router.refresh();
+              // Hook calls invalidateQueries
             }}
           >
             <Button variant="outline" size="sm">
@@ -261,7 +276,7 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
                         ...prev,
                         { ...newCard, name: newCard.title, column: column.id },
                       ]);
-                      router.refresh();
+                      // Hook calls invalidateQueries
                     }}
                   >
                     <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -282,11 +297,11 @@ export function KanbanView({ boards, selectedBoard, onBoardChange }: KanbanViewP
                             : c
                         )
                       );
-                      router.refresh();
+                      // Hook calls invalidateQueries
                     }}
                     onCardDeleted={(cardId: string) => {
                       setCards((prev) => prev.filter((c) => c.id !== cardId));
-                      router.refresh();
+                      // Hook calls invalidateQueries
                     }}
                   />
                 )}
