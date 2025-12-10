@@ -18,5 +18,10 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
     redirect(`/finance/budgets/${id}`);
   }
 
-  return <ReceiptPageClient budget={budget} />;
+  // Fetch organization data to ensure it's available in the new tab/window
+  const { getOrganization } = await import('@/app/http/requests/organization');
+  const orgData = await getOrganization();
+  const organization = orgData?.organization;
+
+  return <ReceiptPageClient budget={budget} organization={organization} />;
 }

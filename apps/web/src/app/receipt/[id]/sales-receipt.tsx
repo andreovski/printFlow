@@ -1,6 +1,6 @@
 'use client';
 
-import { Budget, paymentTypeLabel } from '@magic-system/schemas';
+import { Budget, type Organization, paymentTypeLabel } from '@magic-system/schemas';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { forwardRef } from 'react';
@@ -9,6 +9,7 @@ import { useAppContext } from '@/hooks/use-app-context';
 
 interface SalesReceiptProps {
   budget: Budget;
+  organization?: Organization;
   /** Reserved for future use - company logo URL */
   logoUrl?: string;
 }
@@ -28,8 +29,9 @@ const formatDocument = (document: string, personType: string): string => {
 };
 
 export const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(
-  ({ budget, logoUrl }, ref) => {
-    const { organization } = useAppContext();
+  ({ budget, logoUrl, organization: propOrganization }, ref) => {
+    const context = useAppContext();
+    const organization = propOrganization || context.organization;
 
     const client = budget.client;
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Budget } from '@magic-system/schemas';
+import { Budget, Organization } from '@magic-system/schemas';
 import { FileText, Printer, Receipt } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
@@ -15,9 +15,10 @@ type PrintFormat = 'a4' | 'thermal';
 
 interface ReceiptPageClientProps {
   budget: Budget;
+  organization: Organization;
 }
 
-export function ReceiptPageClient({ budget }: ReceiptPageClientProps) {
+export function ReceiptPageClient({ budget, organization }: ReceiptPageClientProps) {
   const [printFormat, setPrintFormat] = useState<PrintFormat>('a4');
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -97,9 +98,9 @@ export function ReceiptPageClient({ budget }: ReceiptPageClientProps) {
       {/* Receipt content */}
       <div className="py-8 print:py-0">
         {printFormat === 'a4' ? (
-          <SalesReceipt ref={receiptRef} budget={budget} />
+          <SalesReceipt ref={receiptRef} budget={budget} organization={organization} />
         ) : (
-          <ThermalReceipt ref={receiptRef} budget={budget} />
+          <ThermalReceipt ref={receiptRef} budget={budget} organization={organization} />
         )}
       </div>
     </div>
