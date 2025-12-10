@@ -104,6 +104,7 @@ export async function createOrganizationAction(prevState: any, formData: FormDat
     city: formData.get('city') as string,
     state: formData.get('state') as string,
     country: (formData.get('country') as string) || 'Brasil',
+    logoUrl: (formData.get('logoUrl') as string) || undefined,
   };
 
   try {

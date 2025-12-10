@@ -5,7 +5,6 @@ import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useFormState } from '@/hooks/use-form-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,8 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useFormState } from '@/hooks/use-form-state';
 import { BRAZILIAN_STATES } from '@/lib/constants';
 import { maskCNPJ, maskPhone, maskCEP } from '@/lib/masks';
+import { useUploadThing } from '@/lib/uploadthing-components';
 import { fetchAddressByCEP } from '@/lib/viacep';
 
 import { updateCompanySettingsAction } from '../actions';
@@ -28,7 +29,39 @@ interface CompanyFormProps {
 }
 
 export function CompanyForm({ initialData }: CompanyFormProps) {
-  const [state, action, isPending] = useFormState(updateCompanySettingsAction);
+  // Logo state
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(initialData?.logoUrl || null);
+  const { startUpload, isUploading } = useUploadThing('organizationLogo');
+
+  const [state, handleSubmit, isPending] = useFormState(async (formData: FormData) => {
+    // If a new file was selected, upload it first
+    if (logoFile) {
+      toast.info('Enviando logo...');
+      try {
+        const uploadedFiles = await startUpload([logoFile]);
+
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          const uploadedFile = uploadedFiles[0];
+          formData.append('logoUrl', uploadedFile.url);
+        }
+      } catch (error) {
+        console.error('Upload failed:', error);
+        toast.error('Erro ao fazer upload da logo');
+        // Return a compatible error state if upload fails
+        return {
+          success: false,
+          message: 'Erro ao fazer upload da logo',
+          errors: null,
+        };
+      }
+    } else if (logoPreview === null && initialData?.logoUrl) {
+      // If logo was removed (and no new file selected)
+      formData.append('logoUrl', '');
+    }
+
+    return await updateCompanySettingsAction(formData);
+  });
 
   // Address fields state
   const [addressFields, setAddressFields] = useState({
@@ -73,6 +106,50 @@ export function CompanyForm({ initialData }: CompanyFormProps) {
     }
   };
 
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione uma imagem válida');
+      return;
+    }
+
+    // Validate file size (4MB)
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 4MB');
+      return;
+    }
+
+    // Clean up previous preview if it was a blob URL
+    if (logoPreview && logoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(logoPreview);
+    }
+
+    // Create new preview
+    const previewUrl = URL.createObjectURL(file);
+    setLogoFile(file);
+    setLogoPreview(previewUrl);
+  };
+
+  const handleRemoveLogo = () => {
+    if (logoPreview && logoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(logoPreview);
+    }
+    setLogoFile(null);
+    setLogoPreview(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      // Cleanup preview on unmount
+      if (logoPreview && logoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(logoPreview);
+      }
+    };
+  }, [logoPreview]);
+
   useEffect(() => {
     if (state?.success) {
       toast.success(state.message);
@@ -83,11 +160,59 @@ export function CompanyForm({ initialData }: CompanyFormProps) {
 
   return (
     <Card className="border-0 shadow-none h-full flex flex-col overflow-hidden p-2 pt-0">
-      <form onSubmit={action} className="flex flex-col h-full overflow-hidden">
+      <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
         <CardContent className="space-y-6 flex-1 overflow-y-auto">
           {/* Seção: Dados da Empresa */}
           <div className="space-y-2">
             <h3 className="text-lg font-semibold">Dados cadastrais</h3>
+
+            {/* Logo Upload Section */}
+            <div className="space-y-2 mb-6">
+              <Label>Logo da Organização</Label>
+              <div className="flex items-start gap-6">
+                {logoPreview ? (
+                  <div className="relative w-32 h-32 rounded-lg overflow-hidden border bg-muted/50">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={logoPreview}
+                      alt="Logo preview"
+                      className="w-full h-full object-contain p-2"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-32 h-32 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/10">
+                    <span className="text-xs text-muted-foreground text-center px-2">Sem logo</span>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-3 pt-2">
+                  <div className="flex gap-3">
+                    <Label
+                      htmlFor="logo-upload"
+                      className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-secondary text-secondary-foreground hover:bg-secondary/80 h-9 px-4 py-2"
+                    >
+                      Alterar Logo
+                    </Label>
+                    <Input
+                      id="logo-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileSelect}
+                    />
+                    {logoPreview && (
+                      <Button type="button" variant="outline" onClick={handleRemoveLogo}>
+                        Remover
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground max-w-[200px]">
+                    Recomendado: 500x500px, PNG ou JPG. Máximo 4MB.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="cnpj">CNPJ</Label>
@@ -305,8 +430,8 @@ export function CompanyForm({ initialData }: CompanyFormProps) {
 
         <CardFooter className="p-0 flex flex-col gap-2 mt-auto border-t shrink-0">
           <div className="flex w-full bg-background/35 backdrop-blur-sm py-2 px-4 gap-2">
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? 'Salvando...' : 'Salvar Configurações'}
+            <Button type="submit" className="w-full" disabled={isPending || isUploading}>
+              {isPending || isUploading ? 'Salvando...' : 'Salvar Configurações'}
             </Button>
           </div>
         </CardFooter>

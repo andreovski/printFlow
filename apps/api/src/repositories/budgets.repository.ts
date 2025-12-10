@@ -442,6 +442,16 @@ export class BudgetsRepository {
       take: 50, // Limita a 50 resultados para performance
     });
 
-    return budgets;
+    return budgets.map((budget) => ({
+      ...budget,
+      tags: budget.tags.map((tag) => ({
+        ...tag,
+        scope: tag.scope as string,
+      })),
+      items: budget.items.map((item) => ({
+        ...item,
+        quantity: item.quantity.toNumber(),
+      })),
+    }));
   }
 }

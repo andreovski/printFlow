@@ -40,6 +40,7 @@ export const organizationSchema = z.object({
   fantasyName: z.string().optional().nullable(),
   mainEmail: z.string().optional().nullable(),
   mainPhone: z.string().optional().nullable(),
+  logoUrl: z.string().optional().nullable(),
   // Address
   cep: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
@@ -72,6 +73,7 @@ export const updateCompanySettingsBodySchema = z.object({
   mainPhone: z
     .string({ required_error: 'Telefone é obrigatório' })
     .min(1, 'Telefone é obrigatório'),
+  logoUrl: z.string().optional(),
   cep: z.string({ required_error: 'CEP é obrigatório' }).min(1, 'CEP é obrigatório'),
   address: z.string({ required_error: 'Endereço é obrigatório' }).min(1, 'Endereço é obrigatório'),
   addressNumber: z
@@ -93,6 +95,7 @@ export const createOrganizationBodySchema = z.object({
   enterpriseName: z.string().optional(),
   mainEmail: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
   mainPhone: z.string().min(1, 'Telefone é obrigatório'),
+  logoUrl: z.string().optional(),
   cep: z.string().min(1, 'CEP é obrigatório'),
   address: z.string().min(1, 'Endereço é obrigatório'),
   number: z.string().min(1, 'Número é obrigatório'),

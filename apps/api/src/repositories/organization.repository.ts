@@ -19,8 +19,9 @@ export class OrganizationRepository {
         cnpj: true,
         enterpriseName: true,
         fantasyName: true,
-        mainEmail: true,
+
         mainPhone: true,
+        logoUrl: true,
         // Address
         cep: true,
         address: true,

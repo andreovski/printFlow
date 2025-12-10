@@ -68,7 +68,7 @@ export class SalesMovementService {
 
       // Soma o custo de todos os itens do orçamento
       for (const item of budget.items) {
-        totalCost += Number(item.costPrice) * item.quantity;
+        totalCost += Number(item.costPrice) * item.quantity.toNumber();
       }
     }
 
@@ -145,7 +145,7 @@ export class SalesMovementService {
       const saleValue = Number(budget.subtotal);
 
       const costValue = budget.items.reduce(
-        (sum, item) => sum + Number(item.costPrice) * item.quantity,
+        (sum, item) => sum + Number(item.costPrice) * item.quantity.toNumber(),
         0
       );
       const profit = saleValue - costValue;

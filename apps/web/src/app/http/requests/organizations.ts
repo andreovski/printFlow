@@ -13,6 +13,7 @@ export async function createOrganization(data: {
   city: string;
   state: string;
   country?: string;
+  logoUrl?: string;
 }) {
   return api.post('organizations/create', { json: data }).json<{ token: string }>();
 }

@@ -35,7 +35,9 @@ export async function updateOrganizationController(request: FastifyRequest, repl
     enterpriseName: z.string().optional(),
     fantasyName: z.string().optional(),
     mainEmail: z.string().email().optional(),
+
     mainPhone: z.string().optional(),
+    logoUrl: z.string().optional(),
     // Address
     cep: z.string().optional(),
     address: z.string().optional(),

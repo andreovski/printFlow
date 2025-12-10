@@ -71,11 +71,15 @@ export const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(
         <div className="border-2 border-gray-800 p-4 mb-4">
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              {/* Logo placeholder for future use */}
-              {logoUrl && (
+              {/* Logo */}
+              {(logoUrl || organization?.logoUrl) && (
                 <div className="mb-2">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={logoUrl} alt="Logo" className="h-16 object-contain" />
+                  <img
+                    src={logoUrl || organization?.logoUrl || ''}
+                    alt="Logo"
+                    className="h-16 object-contain"
+                  />
                 </div>
               )}
               <h1 className="text-2xl font-bold">

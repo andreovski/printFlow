@@ -56,6 +56,16 @@ export const ThermalReceipt = forwardRef<HTMLDivElement, ThermalReceiptProps>(({
     >
       {/* Header - Company Info */}
       <div className="text-center mb-2">
+        {organization?.logoUrl && (
+          <div className="flex justify-center mb-1">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={organization.logoUrl}
+              alt="Logo"
+              className="w-16 h-16 object-contain grayscale"
+            />
+          </div>
+        )}
         <p className="font-bold text-[10px] uppercase">
           {organization?.fantasyName || organization?.enterpriseName || organization?.name}
         </p>
