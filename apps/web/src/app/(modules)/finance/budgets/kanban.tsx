@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useAppContext } from '@/hooks/use-app-context';
+import { useInvalidateSalesMovement } from '@/app/http/hooks/use-sales-movement';
 import { updateBudgetStatus } from '@/app/http/requests/budgets';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +18,7 @@ import {
   KanbanProvider,
 } from '@/components/ui/shadcn-io/kanban';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAppContext } from '@/hooks/use-app-context';
 import { formatPhone } from '@/lib/masks';
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
@@ -47,6 +48,7 @@ interface KanbanProps {
 export const Kanban = ({ budgets }: KanbanProps) => {
   const router = useRouter();
   const { organization } = useAppContext();
+  const invalidateSalesMovement = useInvalidateSalesMovement();
 
   // Transform budgets to kanban data format
   const initialData: BudgetKanbanData[] = budgets.map((budget) => ({
@@ -91,6 +93,11 @@ export const Kanban = ({ budgets }: KanbanProps) => {
   }));
 
   const handleDataChange = async (newData: BudgetKanbanData[]) => {
+    const isApprovedToOtherStatus = newData.find((newItem) => {
+      const oldItem = kanbanData.find((old) => old.id === newItem.id);
+      return oldItem && oldItem.column === 'ACCEPTED' && newItem.column !== 'ACCEPTED';
+    });
+
     // Find which budget changed status
     const changedBudget = newData.find((newItem) => {
       const oldItem = kanbanData.find((old) => old.id === newItem.id);
@@ -99,8 +106,11 @@ export const Kanban = ({ budgets }: KanbanProps) => {
 
     if (changedBudget) {
       try {
-        // Update budget status in the backend
         await updateBudgetStatus(changedBudget.id, changedBudget.column);
+
+        if (changedBudget.column === 'ACCEPTED' || isApprovedToOtherStatus) {
+          invalidateSalesMovement();
+        }
         toast.success('Status do orçamento atualizado com sucesso');
         setKanbanData(newData);
         router.refresh();
@@ -146,7 +156,7 @@ export const Kanban = ({ budgets }: KanbanProps) => {
             </div>
           </KanbanHeader>
           {!columnsCollapsed.includes(column.id) ? (
-            <KanbanCards id={column.id}>
+            <KanbanCards id={column.id} className="w-full">
               {(budget: BudgetKanbanData) => (
                 <KanbanCard
                   column={column.id}
@@ -154,11 +164,11 @@ export const Kanban = ({ budgets }: KanbanProps) => {
                   key={budget.id}
                   name={budget.name}
                   onClick={() => router.push(`/finance/budgets/${budget.id}`)}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  className="cursor-pointer hover:shadow-md transition-shadow w-full max-w-full"
                 >
                   <div className="flex flex-col gap-2">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex flex-col gap-1 flex-1">
+                      <div className="flex flex-col gap-1 flex-1 min-w-0">
                         <div className="flex gap-2 items-center">
                           <p className="m-0 font-bold text-sm">#{budget.code}</p>
                           <p className="text-xs">{formatPhone(budget.clientPhone ?? '')}</p>
@@ -189,7 +199,7 @@ export const Kanban = ({ budgets }: KanbanProps) => {
                               </TooltipProvider>
                             )}
                         </div>
-                        <p className="m-0 text-xs text-muted-foreground truncate">
+                        <p className="m-0 text-xs text-muted-foreground break-words">
                           {budget.clientName}
                         </p>
 

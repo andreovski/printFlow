@@ -11,13 +11,16 @@ export async function getOrganizationController(request: FastifyRequest, reply: 
   }
 
   const organizationRepository = new OrganizationRepository();
-  const organization = await organizationRepository.getOrganizationById(organizationId);
 
-  if (!organization) {
-    return reply.status(404).send({ message: 'Organization not found' });
+  try {
+    const organization = await organizationRepository.getOrganizationById(organizationId);
+    return reply.status(200).send({ organization });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'Organization not found') {
+      return reply.status(404).send({ message: 'Organization not found' });
+    }
+    throw err;
   }
-
-  return reply.status(200).send({ organization });
 }
 
 export async function updateOrganizationController(request: FastifyRequest, reply: FastifyReply) {

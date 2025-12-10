@@ -24,7 +24,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -57,7 +56,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mb-16">
       {searchKey && (
         <div className="flex items-center">
           <Input

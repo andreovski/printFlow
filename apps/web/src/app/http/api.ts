@@ -47,6 +47,16 @@ export const api = ky.create({
             // Try to extract error message from response body
             const errorData = (await response.json()) as { message?: string; error?: string };
             errorMessage = errorData.message || errorData.error || errorMessage;
+
+            // Handle "Organization not found" specifically
+            if (response.status === 404 && errorMessage === 'Organization not found') {
+              // Call server-side logout to clear cookies
+              await ky.post('/api/auth/logout');
+
+              // Force redirect to sign-in
+              window.location.href = '/auth/sign-in';
+              return;
+            }
           } catch {
             // If parsing fails, use status-based messages
             switch (response.status) {

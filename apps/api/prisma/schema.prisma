@@ -156,8 +156,8 @@ model Product {
   code           String?
   ncm            Decimal?     @db.Decimal(10, 2)
   unitType       String
-  costPrice      Decimal
-  salePrice      Decimal
+  costPrice      Decimal      @db.Decimal(10, 2)
+  salePrice      Decimal      @db.Decimal(10, 2)
   stock          Int
   category       String[]
   active         Boolean      @default(true)
@@ -236,9 +236,9 @@ model BudgetItem {
 
   name           String
   costPrice      Decimal      @db.Decimal(10, 2)
-
-  quantity       Int
   salePrice      Decimal      @db.Decimal(10, 2)
+
+  quantity       Decimal      @db.Decimal(10, 2)
 
   discountType   DiscountType?
   discountValue  Decimal?      @db.Decimal(10, 2)

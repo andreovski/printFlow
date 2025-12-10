@@ -42,6 +42,7 @@ export const uploadRouter = {
       maxFileSize: '32MB',
       maxFileCount: 5,
     },
+    blob: { maxFileSize: '32MB', maxFileCount: 5 },
   })
     .middleware(async ({ files }) => {
       const auth = await getAuth();

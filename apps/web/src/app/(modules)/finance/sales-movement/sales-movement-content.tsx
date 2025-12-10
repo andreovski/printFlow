@@ -282,7 +282,7 @@ export function SalesMovementContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mb-16">
       {/* Filtros */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
         <div className="flex flex-col gap-2">

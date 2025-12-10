@@ -54,3 +54,11 @@ export function useToggleExcludeFromSales() {
     },
   });
 }
+
+export function useInvalidateSalesMovement() {
+  const queryClient = useQueryClient();
+
+  return () => {
+    queryClient.invalidateQueries({ queryKey: ['sales-movement'] });
+  };
+}

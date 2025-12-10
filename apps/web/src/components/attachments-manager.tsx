@@ -7,6 +7,7 @@ import * as React from 'react';
 import { toast } from 'sonner';
 
 import { api } from '@/app/http/api';
+import { useAttachments } from '@/app/http/hooks';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -16,7 +17,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useAttachments } from '@/app/http/hooks';
 import { useUploadThing } from '@/lib/uploadthing-components';
 import { cn } from '@/lib/utils';
 
@@ -36,6 +36,7 @@ interface AttachmentsManagerProps {
   disabled?: boolean;
   maxFiles?: number;
   className?: string;
+  onUploadStatusChange?: (isUploading: boolean) => void;
 }
 
 function formatFileSize(bytes: number): string {
@@ -63,11 +64,17 @@ export const AttachmentsManager = React.forwardRef<
   },
   AttachmentsManagerProps
 >(function AttachmentsManager(
-  { entityType, entityId, disabled = false, maxFiles = 10, className },
+  { entityType, entityId, disabled = false, maxFiles = 10, className, onUploadStatusChange },
   ref
 ) {
   const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = React.useState(false);
+
+  // Sync internal state with external handler
+  React.useEffect(() => {
+    onUploadStatusChange?.(isUploading);
+  }, [isUploading, onUploadStatusChange]);
+
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [attachmentToDelete, setAttachmentToDelete] = React.useState<Attachment | null>(null);
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -89,7 +96,11 @@ export const AttachmentsManager = React.forwardRef<
 
   const { startUpload, isUploading: uploadThingUploading } = useUploadThing(endpoint, {
     onClientUploadComplete: async (res) => {
-      if (!res || res.length === 0) return;
+      // Ensure we turn off loading state even if there's no result, though typical flow continues
+      if (!res || res.length === 0) {
+        setIsUploading(false);
+        return;
+      }
 
       // Preparar dados para salvar no backend
       const newAttachments = res.map((file) => {
@@ -241,7 +252,7 @@ export const AttachmentsManager = React.forwardRef<
           onChange={handleFileSelect}
           disabled={disabled || isLoading || !canAddMore}
           multiple
-          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.psd,.psb,.cdr"
         />
         <span className="text-xs text-muted-foreground">
           {attachments.length}/{maxFiles} arquivos

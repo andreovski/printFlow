@@ -251,11 +251,17 @@ export class BudgetsRepository {
    */
   async updateStatusOnly(
     id: string,
-    status: BudgetStatus
+    status: BudgetStatus,
+    approvedAt?: Date | null
   ): Promise<{ id: string; status: string; code: number }> {
+    const data: Prisma.BudgetUncheckedUpdateInput = { status };
+    if (approvedAt !== undefined) {
+      data.approvedAt = approvedAt;
+    }
+
     const result = await prisma.budget.update({
       where: { id },
-      data: { status },
+      data,
       select: {
         id: true,
         status: true,

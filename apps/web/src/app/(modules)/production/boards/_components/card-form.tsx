@@ -108,6 +108,9 @@ export function CardForm<T extends z.ZodType<any, any>>({
   const [selectedBudgetItems, setSelectedBudgetItems] = React.useState<ApprovedBudgetOptionItem[]>(
     []
   );
+  // State to track upload status
+  const [isUploading, setIsUploading] = React.useState(false);
+
   // State to track selected budget attachments for display in create mode
   const [selectedBudgetAttachments, setSelectedBudgetAttachments] = React.useState<
     Array<{
@@ -417,6 +420,7 @@ export function CardForm<T extends z.ZodType<any, any>>({
                 entityType="card"
                 entityId={cardId}
                 maxFiles={5}
+                onUploadStatusChange={setIsUploading}
               />
             </div>
           )}
@@ -431,14 +435,17 @@ export function CardForm<T extends z.ZodType<any, any>>({
               onClick={onDelete}
               className="hover:bg-destructive hover:text-white"
               title="Excluir cartão"
+              disabled={isUploading}
             >
               <Trash className="h-4 w-4" />
             </Button>
           )}
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isUploading}>
             Cancelar
           </Button>
-          <Button type="submit">{submitLabel}</Button>
+          <Button type="submit" disabled={isUploading}>
+            {submitLabel}
+          </Button>
         </CardFooter>
       </form>
     </Form>

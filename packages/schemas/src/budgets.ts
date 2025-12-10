@@ -17,7 +17,7 @@ export const paymentTypeSchema = z.enum([
 
 export const budgetItemSchema = z.object({
   productId: z.string().uuid(),
-  quantity: z.coerce.number().int().positive(),
+  quantity: z.coerce.number().positive(),
   discountType: discountTypeSchema.optional().nullable(),
   discountValue: z.coerce.number().nonnegative().optional().nullable(),
 });

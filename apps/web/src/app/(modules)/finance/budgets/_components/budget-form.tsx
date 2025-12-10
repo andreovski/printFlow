@@ -7,6 +7,7 @@ import {
   paymentTypeLabel,
   Template,
 } from '@magic-system/schemas';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCurrentEditor } from '@tiptap/react';
 import { Archive, Copy, Package, Paperclip, Printer, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -86,7 +87,7 @@ const formSchema = z.object({
         name: z.string(),
         costPrice: z.number(),
         salePrice: z.number(),
-        quantity: z.coerce.number().min(1),
+        quantity: z.coerce.number().min(0.01),
         discountType: z.enum(['PERCENT', 'VALUE']).optional(),
         discountValue: z.coerce.number().optional(),
         total: z.number(),
@@ -103,8 +104,10 @@ interface BudgetFormProps {
 }
 
 export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
+  const queryClient = useQueryClient();
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const deleteDialog = useDisclosure();
   const duplicateDialog = useDisclosure();
@@ -143,6 +146,8 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
             const newFile = new File([file], `pasted-image-${timestamp}.${extension}`, {
               type: mimeType,
             });
+            // We can't easily track upload status from paste here without exposing another method or state from AttachmentsManager
+            // But AttachmentsManager will update isUploading via the prop we are about to add.
             attachmentsManagerRef.current.uploadFiles([newFile]);
           }
           break; // Only handle the first image
@@ -230,6 +235,12 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
       if (initialData) {
         await updateBudgetAction(initialData.id, data);
         toast.success('Orçamento atualizado com sucesso');
+
+        if (initialData.status !== 'ACCEPTED' && data.status === 'ACCEPTED') {
+          queryClient.invalidateQueries({
+            queryKey: ['sales-movement'],
+          });
+        }
       } else {
         await createBudgetAction(data);
         toast.success('Orçamento criado com sucesso');
@@ -251,6 +262,13 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
     setIsPending(true);
     try {
       await deleteBudgetAction(initialData.id);
+
+      if (initialData.status === 'ACCEPTED') {
+        queryClient.invalidateQueries({
+          queryKey: ['sales-movement'],
+        });
+      }
+
       toast.success('Orçamento excluído com sucesso');
       router.push('/finance/budgets');
       router.refresh();
@@ -429,7 +447,8 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
                     <TableCell>
                       <Input
                         type="number"
-                        min="1"
+                        min="0.01"
+                        step="0.01"
                         {...form.register(`items.${index}.quantity`)}
                         disabled={isReadOnly}
                         className="w-[100px]"
@@ -598,6 +617,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
               entityId={initialData.id}
               disabled={isReadOnly}
               maxFiles={5}
+              onUploadStatusChange={setIsUploading}
             />
           </CardContent>
         </Card>
@@ -631,7 +651,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
                 variant="outline"
                 type="button"
                 onClick={() => window.open(`/receipt/${initialData.id}`, '_blank')}
-                disabled={isPending}
+                disabled={isPending || isUploading}
                 title="Imprimir Recibo"
               >
                 <Printer className="h-4 w-4" />
@@ -651,7 +671,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
                 variant="outline"
                 type="button"
                 onClick={() => duplicateDialog.open()}
-                disabled={isPending}
+                disabled={isPending || isUploading}
                 title="Copiar orçamento"
               >
                 <Copy className="h-4 w-4" />
@@ -662,7 +682,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
                 variant="outline"
                 type="button"
                 onClick={() => archiveDialog.open()}
-                disabled={isPending}
+                disabled={isPending || isUploading}
                 title="Arquivar orçamento"
               >
                 <Archive className="h-4 w-4" />
@@ -675,7 +695,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
                   variant="outline"
                   type="button"
                   onClick={() => deleteDialog.open()}
-                  disabled={isPending}
+                  disabled={isPending || isUploading}
                   title="Excluir orçamento"
                   className="hover:bg-destructive hover:text-white"
                 >
@@ -683,7 +703,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
                 </Button>
               )}
 
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending || isUploading}>
               {isPending ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
@@ -694,8 +714,9 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
         title="Excluir orçamento"
         subtitle="Tem certeza que deseja excluir este orçamento?"
         modal={false}
+        disabled={isUploading}
         confirmButton={
-          <Button variant="destructive" onClick={handleDelete}>
+          <Button variant="destructive" onClick={handleDelete} disabled={isUploading}>
             <Trash className="h-4 w-4" />
             Excluir
           </Button>
@@ -708,8 +729,9 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
         title="Copiar orçamento"
         subtitle="Tem certeza que deseja copiar este orçamento para um novo?"
         modal={false}
+        disabled={isUploading}
         confirmButton={
-          <Button onClick={handleDuplicate}>
+          <Button onClick={handleDuplicate} disabled={isUploading}>
             <Copy className="h-4 w-4" />
             Copiar
           </Button>
@@ -722,8 +744,9 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
         title="Arquivar orçamento"
         subtitle="Tem certeza que deseja arquivar este orçamento?"
         modal={false}
+        disabled={isUploading}
         confirmButton={
-          <Button variant="destructive" onClick={handleArchive}>
+          <Button variant="destructive" onClick={handleArchive} disabled={isUploading}>
             <Archive className="h-4 w-4" />
             Arquivar
           </Button>

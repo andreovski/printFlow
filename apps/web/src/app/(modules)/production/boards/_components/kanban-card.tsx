@@ -90,7 +90,6 @@ export function ProductionKanbanCard({
     <KanbanCard id={item.id} name={item.name} column={item.column} className="w-full max-w-full">
       <EditCardDialog card={item} onCardUpdated={onCardUpdated} onCardDeleted={onCardDeleted}>
         <div className="flex flex-col gap-1 group/card min-w-0 w-full">
-          {/* Imagem de capa do card - estilo Trello */}
           {coverImage && (
             <div className="-mx-2 -mt-2 mb-1 relative aspect-video overflow-hidden rounded-t-md bg-slate-500 dark:bg-slate-800">
               <Image

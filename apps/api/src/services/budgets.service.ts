@@ -186,18 +186,37 @@ export class BudgetsService {
           tagIds,
           subtotal,
           total,
+          ...(budgetData.status === 'ACCEPTED'
+            ? { approvedAt: new Date() }
+            : budgetData.status && budgetData.status !== 'INACTIVE'
+              ? { approvedAt: null }
+              : {}),
         },
         budgetItemsData
       );
     } else {
+      // Handle approvedAt based on status change
+      let approvedAt: Date | null | undefined;
+      if (budgetData.status) {
+        if (budgetData.status === 'ACCEPTED') {
+          approvedAt = new Date();
+        } else if (budgetData.status !== 'INACTIVE') {
+          approvedAt = null;
+        }
+      }
+
       // Se apenas tagIds foi passado (sem items), atualizar normalmente
       if (tagIds !== undefined) {
         return await this.budgetsRepository.update(id, {
           ...budgetData,
+          ...(approvedAt !== undefined && { approvedAt }),
           tags: { set: tagIds.map((tagId) => ({ id: tagId })) },
         });
       }
-      return await this.budgetsRepository.update(id, budgetData);
+      return await this.budgetsRepository.update(id, {
+        ...budgetData,
+        ...(approvedAt !== undefined && { approvedAt }),
+      });
     }
   }
 
@@ -288,23 +307,52 @@ export class BudgetsService {
           tagIds,
           subtotal,
           total,
+          ...(budgetData.status === 'ACCEPTED'
+            ? { approvedAt: new Date() }
+            : budgetData.status && budgetData.status !== 'INACTIVE'
+              ? { approvedAt: null }
+              : {}),
         },
         budgetItemsData
       );
     } else {
+      // Handle approvedAt based on status change
+      let approvedAt: Date | null | undefined;
+      if (budgetData.status) {
+        if (budgetData.status === 'ACCEPTED') {
+          approvedAt = new Date();
+        } else if (budgetData.status !== 'INACTIVE') {
+          approvedAt = null;
+        }
+      }
+
       // Se apenas tagIds foi passado (sem items), atualizar normalmente
       if (tagIds !== undefined) {
         return await this.budgetsRepository.updateOptimized(id, {
           ...budgetData,
+          ...(approvedAt !== undefined && { approvedAt }),
           tags: { set: tagIds.map((tagId) => ({ id: tagId })) },
         });
       }
-      return await this.budgetsRepository.updateOptimized(id, budgetData);
+      return await this.budgetsRepository.updateOptimized(id, {
+        ...budgetData,
+        ...(approvedAt !== undefined && { approvedAt }),
+      });
     }
   }
 
   async updateStatus(id: string, status: BudgetStatus): Promise<Budget> {
-    return await this.budgetsRepository.update(id, { status });
+    let approvedAt: Date | null | undefined;
+    if (status === 'ACCEPTED') {
+      approvedAt = new Date();
+    } else if (status !== 'INACTIVE') {
+      approvedAt = null;
+    }
+
+    return await this.budgetsRepository.update(id, {
+      status,
+      ...(approvedAt !== undefined && { approvedAt }),
+    });
   }
 
   /**
@@ -315,7 +363,14 @@ export class BudgetsService {
     id: string,
     status: BudgetStatus
   ): Promise<{ id: string; status: string; code: number }> {
-    return await this.budgetsRepository.updateStatusOnly(id, status);
+    let approvedAt: Date | null | undefined;
+    if (status === 'ACCEPTED') {
+      approvedAt = new Date();
+    } else if (status !== 'INACTIVE') {
+      approvedAt = null;
+    }
+
+    return await this.budgetsRepository.updateStatusOnly(id, status, approvedAt);
   }
 
   /**
