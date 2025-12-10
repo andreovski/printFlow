@@ -1,4 +1,7 @@
 import type { Product } from '@magic-system/schemas';
+
+export const dynamic = 'force-dynamic';
+
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 
