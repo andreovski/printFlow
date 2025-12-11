@@ -35,6 +35,7 @@ interface BudgetKanbanData extends Record<string, unknown> {
   clientName: string;
   clientPhone?: string;
   tags: Tag[];
+  subtotal: number;
   total: number;
   createdAt: Date;
   expirationDate: Date | null;
@@ -59,6 +60,7 @@ export const Kanban = ({ budgets }: KanbanProps) => {
     clientName: budget.client.name,
     clientPhone: budget.client.phone,
     tags: budget.tags || [],
+    subtotal: Number(budget.subtotal),
     total: Number(budget.total),
     createdAt: new Date(budget.createdAt),
     expirationDate: budget.expirationDate ? new Date(budget.expirationDate) : null,
@@ -78,6 +80,7 @@ export const Kanban = ({ budgets }: KanbanProps) => {
         clientName: budget.client.name,
         clientPhone: budget.client.phone,
         tags: budget.tags || [],
+        subtotal: Number(budget.subtotal),
         total: Number(budget.total),
         createdAt: new Date(budget.createdAt),
         expirationDate: budget.expirationDate ? new Date(budget.expirationDate) : null,
@@ -216,14 +219,22 @@ export const Kanban = ({ budgets }: KanbanProps) => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-end justify-between">
                       {organization?.budgetShowTotalInKanban && (
-                        <p className="m-0 font-semibold text-sm text-green-600">
-                          {new Intl.NumberFormat('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL',
-                          }).format(budget.total)}
-                        </p>
+                        <div className="flex flex-col items-start">
+                          <p className="m-0 text-[10px] text-muted-foreground/60 mr-1">
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            }).format(budget.subtotal)}
+                          </p>
+                          <p className="m-0 font-semibold text-sm text-green-600">
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            }).format(budget.total)}
+                          </p>
+                        </div>
                       )}
                       <p className="m-0 text-xs ml-auto">
                         {budget.expirationDate && dateFormatter.format(budget.expirationDate)}

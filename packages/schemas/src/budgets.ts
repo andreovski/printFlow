@@ -42,6 +42,7 @@ export const createBudgetBodySchema = z.object({
 export const updateBudgetBodySchema = createBudgetBodySchema.partial().extend({
   status: budgetStatusSchema.optional(),
   archived: z.boolean().optional(),
+  isPaidInFull: z.boolean().optional(),
 });
 
 export const getBudgetParamsSchema = z.object({
@@ -127,6 +128,7 @@ export interface Budget {
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
+  isPaidInFull: boolean;
   archived: boolean;
   // Public approval link fields
   approvalToken: string | null;

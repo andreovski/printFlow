@@ -24,6 +24,7 @@ interface CreateBudgetDTO {
   advancePayment?: number | null;
   notes?: string | null;
   tagIds?: string[];
+  isPaidInFull?: boolean;
   items: CreateBudgetItemDTO[];
 }
 
@@ -38,6 +39,7 @@ interface UpdateBudgetDTO {
   notes?: string | null;
   tagIds?: string[];
   items?: CreateBudgetItemDTO[];
+  isPaidInFull?: boolean;
   archived?: boolean;
 }
 
@@ -51,7 +53,7 @@ export class BudgetsService {
   }
 
   async create(data: CreateBudgetDTO): Promise<Budget> {
-    const { items, tagIds, ...budgetData } = data;
+    const { items, tagIds, isPaidInFull, ...budgetData } = data;
 
     // Fetch products to get snapshot data
     const productIds = items.map((i) => i.productId);
@@ -119,11 +121,17 @@ export class BudgetsService {
       total -= budgetData.advancePayment;
     }
 
+    // Se estiver pago totalmente, zera o total
+    if (isPaidInFull) {
+      total = 0;
+    }
+
     return await this.budgetsRepository.create({
       ...budgetData,
       status: 'DRAFT',
       subtotal,
       total,
+      isPaidInFull: isPaidInFull || false,
       tags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
       items: {
         create: budgetItemsData,
@@ -187,13 +195,15 @@ export class BudgetsService {
       let globalDiscountValue = budgetData.discountValue;
       let globalSurchargeType = budgetData.surchargeType;
       let globalSurchargeValue = budgetData.surchargeValue;
+      let isPaidInFull = budgetData.isPaidInFull;
 
       // If not provided in update, fetch from DB to calculate total correctly
       if (
         globalDiscountType === undefined ||
         globalDiscountValue === undefined ||
         globalSurchargeType === undefined ||
-        globalSurchargeValue === undefined
+        globalSurchargeValue === undefined ||
+        isPaidInFull === undefined
       ) {
         const currentBudget = await this.budgetsRepository.findById(id);
         if (currentBudget) {
@@ -205,6 +215,7 @@ export class BudgetsService {
             globalSurchargeType = currentBudget.surchargeType as DiscountType;
           if (globalSurchargeValue === undefined)
             globalSurchargeValue = Number(currentBudget.surchargeValue);
+          if (isPaidInFull === undefined) isPaidInFull = currentBudget.isPaidInFull;
         }
       }
 
@@ -234,6 +245,10 @@ export class BudgetsService {
         total -= advancePayment;
       }
 
+      if (isPaidInFull) {
+        total = 0;
+      }
+
       return await this.budgetsRepository.updateWithItems(
         id,
         {
@@ -250,6 +265,80 @@ export class BudgetsService {
         budgetItemsData
       );
     } else {
+      // Logic for update WITHOUT items (potentially just changing payment status or other fields)
+      let needsRecalculation = false;
+      const fieldsAffectingTotal = [
+        'discountType',
+        'discountValue',
+        'surchargeType',
+        'surchargeValue',
+        'advancePayment',
+        'isPaidInFull',
+      ];
+
+      // Check if any field affecting total is present
+      for (const field of fieldsAffectingTotal) {
+        if (field in budgetData) {
+          needsRecalculation = true;
+          break;
+        }
+      }
+
+      let total: number | undefined;
+
+      if (needsRecalculation) {
+        const currentBudget = await this.budgetsRepository.findById(id);
+        if (currentBudget) {
+          const subtotal = Number(currentBudget.subtotal);
+          const globalDiscountType =
+            budgetData.discountType !== undefined
+              ? budgetData.discountType
+              : (currentBudget.discountType as DiscountType);
+          const globalDiscountValue =
+            budgetData.discountValue !== undefined
+              ? budgetData.discountValue
+              : Number(currentBudget.discountValue);
+          const globalSurchargeType =
+            budgetData.surchargeType !== undefined
+              ? budgetData.surchargeType
+              : (currentBudget.surchargeType as DiscountType);
+          const globalSurchargeValue =
+            budgetData.surchargeValue !== undefined
+              ? budgetData.surchargeValue
+              : Number(currentBudget.surchargeValue);
+          const advancePayment =
+            budgetData.advancePayment !== undefined
+              ? budgetData.advancePayment
+              : Number(currentBudget.advancePayment);
+          const isPaidInFull =
+            budgetData.isPaidInFull !== undefined
+              ? budgetData.isPaidInFull
+              : currentBudget.isPaidInFull;
+
+          total = subtotal;
+
+          // Recalculate based on (maybe) new values
+          if (globalSurchargeType === 'PERCENT' && globalSurchargeValue) {
+            total += total * (globalSurchargeValue / 100);
+          } else if (globalSurchargeType === 'VALUE' && globalSurchargeValue) {
+            total += globalSurchargeValue;
+          }
+          if (globalDiscountType === 'PERCENT' && globalDiscountValue) {
+            total -= total * (globalDiscountValue / 100);
+          } else if (globalDiscountType === 'VALUE' && globalDiscountValue) {
+            total -= globalDiscountValue;
+          }
+
+          if (advancePayment) {
+            total -= advancePayment;
+          }
+
+          if (isPaidInFull) {
+            total = 0;
+          }
+        }
+      }
+
       // Handle approvedAt based on status change
       let approvedAt: Date | null | undefined;
       if (budgetData.status) {
@@ -264,12 +353,14 @@ export class BudgetsService {
       if (tagIds !== undefined) {
         return await this.budgetsRepository.update(id, {
           ...budgetData,
+          ...(total !== undefined && { total }),
           ...(approvedAt !== undefined && { approvedAt }),
           tags: { set: tagIds.map((tagId) => ({ id: tagId })) },
         });
       }
       return await this.budgetsRepository.update(id, {
         ...budgetData,
+        ...(total !== undefined && { total }),
         ...(approvedAt !== undefined && { approvedAt }),
       });
     }
@@ -338,13 +429,15 @@ export class BudgetsService {
       let globalDiscountValue = budgetData.discountValue;
       let globalSurchargeType = budgetData.surchargeType;
       let globalSurchargeValue = budgetData.surchargeValue;
+      let isPaidInFull = budgetData.isPaidInFull;
 
       // If not provided in update, fetch from DB to calculate total correctly
       if (
         globalDiscountType === undefined ||
         globalDiscountValue === undefined ||
         globalSurchargeType === undefined ||
-        globalSurchargeValue === undefined
+        globalSurchargeValue === undefined ||
+        isPaidInFull === undefined
       ) {
         const currentBudget = await this.budgetsRepository.findById(id);
         if (currentBudget) {
@@ -356,6 +449,7 @@ export class BudgetsService {
             globalSurchargeType = currentBudget.surchargeType as DiscountType;
           if (globalSurchargeValue === undefined)
             globalSurchargeValue = Number(currentBudget.surchargeValue);
+          if (isPaidInFull === undefined) isPaidInFull = currentBudget.isPaidInFull;
         }
       }
 
@@ -385,6 +479,10 @@ export class BudgetsService {
         total -= advancePayment;
       }
 
+      if (isPaidInFull) {
+        total = 0;
+      }
+
       return await this.budgetsRepository.updateWithItemsOptimized(
         id,
         {
@@ -401,6 +499,79 @@ export class BudgetsService {
         budgetItemsData
       );
     } else {
+      let needsRecalculation = false;
+      const fieldsAffectingTotal = [
+        'discountType',
+        'discountValue',
+        'surchargeType',
+        'surchargeValue',
+        'advancePayment',
+        'isPaidInFull',
+      ];
+
+      // Check if any field affecting total is present
+      for (const field of fieldsAffectingTotal) {
+        if (field in budgetData) {
+          needsRecalculation = true;
+          break;
+        }
+      }
+
+      let total: number | undefined;
+
+      if (needsRecalculation) {
+        const currentBudget = await this.budgetsRepository.findById(id);
+        if (currentBudget) {
+          const subtotal = Number(currentBudget.subtotal);
+          const globalDiscountType =
+            budgetData.discountType !== undefined
+              ? budgetData.discountType
+              : (currentBudget.discountType as DiscountType);
+          const globalDiscountValue =
+            budgetData.discountValue !== undefined
+              ? budgetData.discountValue
+              : Number(currentBudget.discountValue);
+          const globalSurchargeType =
+            budgetData.surchargeType !== undefined
+              ? budgetData.surchargeType
+              : (currentBudget.surchargeType as DiscountType);
+          const globalSurchargeValue =
+            budgetData.surchargeValue !== undefined
+              ? budgetData.surchargeValue
+              : Number(currentBudget.surchargeValue);
+          const advancePayment =
+            budgetData.advancePayment !== undefined
+              ? budgetData.advancePayment
+              : Number(currentBudget.advancePayment);
+          const isPaidInFull =
+            budgetData.isPaidInFull !== undefined
+              ? budgetData.isPaidInFull
+              : currentBudget.isPaidInFull;
+
+          total = subtotal;
+
+          // Recalculate based on (maybe) new values
+          if (globalSurchargeType === 'PERCENT' && globalSurchargeValue) {
+            total += total * (globalSurchargeValue / 100);
+          } else if (globalSurchargeType === 'VALUE' && globalSurchargeValue) {
+            total += globalSurchargeValue;
+          }
+          if (globalDiscountType === 'PERCENT' && globalDiscountValue) {
+            total -= total * (globalDiscountValue / 100);
+          } else if (globalDiscountType === 'VALUE' && globalDiscountValue) {
+            total -= globalDiscountValue;
+          }
+
+          if (advancePayment) {
+            total -= advancePayment;
+          }
+
+          if (isPaidInFull) {
+            total = 0;
+          }
+        }
+      }
+
       // Handle approvedAt based on status change
       let approvedAt: Date | null | undefined;
       if (budgetData.status) {
@@ -415,12 +586,14 @@ export class BudgetsService {
       if (tagIds !== undefined) {
         return await this.budgetsRepository.updateOptimized(id, {
           ...budgetData,
+          ...(total !== undefined && { total }),
           ...(approvedAt !== undefined && { approvedAt }),
           tags: { set: tagIds.map((tagId) => ({ id: tagId })) },
         });
       }
       return await this.budgetsRepository.updateOptimized(id, {
         ...budgetData,
+        ...(total !== undefined && { total }),
         ...(approvedAt !== undefined && { approvedAt }),
       });
     }

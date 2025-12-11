@@ -22,6 +22,7 @@ import { TagSelect } from '@/components/tag-select';
 import { TemplateSelector } from '@/components/template-selector';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -100,6 +101,7 @@ const formSchema = z.object({
       })
     )
     .min(1, 'Adicione pelo menos um produto'),
+  isPaidInFull: z.boolean().default(false).optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -197,6 +199,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
             discountValue: Number(i.discountValue),
             total: Number(i.total),
           })),
+          isPaidInFull: initialData.isPaidInFull || false,
         }
       : {
           clientId: '',
@@ -209,6 +212,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
           advancePayment: 0,
           paymentType: undefined,
           tagIds: [],
+          isPaidInFull: false,
         },
   });
 
@@ -223,6 +227,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
   const globalSurchargeType = form.watch('surchargeType');
   const globalSurchargeValue = form.watch('surchargeValue');
   const advancePayment = form.watch('advancePayment');
+  const isPaidInFull = form.watch('isPaidInFull');
 
   // Soma dos itens com descontos individuais
   const itemsTotal = items.reduce((acc, item) => {
@@ -266,7 +271,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
   }
 
   // Total = subtotal - adiantamento
-  const total = subtotal - (advancePayment || 0);
+  const total = isPaidInFull ? 0 : subtotal - (advancePayment || 0);
 
   const onSubmit = async (data: FormData) => {
     setIsPending(true);
@@ -747,6 +752,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
               </span>
             </div>
 
+            {/* Total Display */}
             <div className="flex gap-2 items-center">
               <Label className="text-sm font-semibold">Total: </Label>
               <span className="text-lg font-semibold">
@@ -755,6 +761,28 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
                 )}
               </span>
             </div>
+
+            {/* Paid In Full Checkbox */}
+            {initialData?.status === 'ACCEPTED' && (
+              <div className="flex items-center space-x-2">
+                <Controller
+                  control={form.control}
+                  name="isPaidInFull"
+                  render={({ field }) => (
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        id="paidInFull"
+                      />
+                      <Label htmlFor="paidInFull" className="text-sm cursor-pointer">
+                        Pago Totalmente
+                      </Label>
+                    </div>
+                  )}
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2">

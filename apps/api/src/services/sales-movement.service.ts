@@ -34,14 +34,14 @@ export class SalesMovementService {
     const endOfDay = new Date(filters.endDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Busca todos os orçamentos ACCEPTED do período que não estão excluídos
+    // Busca todos os orçamentos aprovados do período que não estão excluídos
     const budgets = await prisma.budget.findMany({
       where: {
         organizationId: filters.organizationId,
-        status: 'ACCEPTED',
         excludedFromSales: false,
         deletedAt: null,
         approvedAt: {
+          not: null,
           gte: filters.startDate,
           lte: endOfDay,
         },
@@ -121,9 +121,9 @@ export class SalesMovementService {
 
     const where = {
       organizationId: filters.organizationId,
-      status: 'ACCEPTED' as const,
       deletedAt: null,
       approvedAt: {
+        not: null,
         gte: filters.startDate,
         lte: endOfDay,
       },
