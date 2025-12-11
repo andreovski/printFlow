@@ -32,7 +32,7 @@ interface ProductFormProps {
     description?: string;
     code?: string;
     ncm?: number | null;
-    unitType: 'm2' | 'unidade';
+    unitType: 'M2' | 'UNIDADE';
     costPrice: number;
     salePrice: number;
     stock: number;
@@ -139,13 +139,13 @@ export function ProductForm({ id, initialData, onSuccess }: ProductFormProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="unitType">Unidade</Label>
-                <Select name="unitType" defaultValue={initialData?.unitType || 'unidade'}>
+                <Select name="unitType" defaultValue={initialData?.unitType || 'UNIDADE'}>
                   <SelectTrigger className={getError('unitType') ? 'border-red-500' : ''}>
                     <SelectValue placeholder="Selecione a unidade" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="unidade">Unidade</SelectItem>
-                    <SelectItem value="m2">M²</SelectItem>
+                    <SelectItem value="UNIDADE">Unidade</SelectItem>
+                    <SelectItem value="M2">M²</SelectItem>
                   </SelectContent>
                 </Select>
                 {getError('unitType') && (

@@ -1,13 +1,14 @@
 import { z } from 'zod';
 
+export const unitTypeSchema = z.enum(['M2', 'UNIDADE']);
+export type UnitType = z.infer<typeof unitTypeSchema>;
+
 export const createProductBodySchema = z.object({
   title: z.string({ required_error: 'Título é obrigatório' }).min(1, 'Título é obrigatório'),
   description: z.string().optional(),
   code: z.string().optional(),
   ncm: z.coerce.number().optional(),
-  unitType: z.enum(['m2', 'unidade'], {
-    required_error: 'Tipo de unidade é obrigatório',
-  }),
+  unitType: unitTypeSchema.default('UNIDADE'),
   costPrice: z.coerce.number({ required_error: 'Preço de custo é obrigatório' }),
   salePrice: z.coerce.number({ required_error: 'Preço de venda é obrigatório' }),
   stock: z.coerce.number({ required_error: 'Estoque é obrigatório' }),
@@ -29,7 +30,7 @@ export const updateProductBodySchema = z.object({
   description: z.string().optional(),
   code: z.string().optional(),
   ncm: z.coerce.number().optional(),
-  unitType: z.enum(['m2', 'unidade']).optional(),
+  unitType: unitTypeSchema.optional(),
   costPrice: z.coerce.number().optional(),
   salePrice: z.coerce.number().optional(),
   stock: z.coerce.number().optional(),
@@ -50,7 +51,7 @@ export interface Product {
   description: string | null;
   code: string | null;
   ncm: number | null;
-  unitType: string;
+  unitType: UnitType;
   costPrice: number;
   salePrice: number;
   stock: number;

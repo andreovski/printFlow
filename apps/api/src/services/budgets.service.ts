@@ -7,6 +7,8 @@ import { ProductsRepository } from '@/repositories/products.repository';
 interface CreateBudgetItemDTO {
   productId: string;
   quantity: number;
+  width?: number | null;
+  height?: number | null;
   discountType?: 'PERCENT' | 'VALUE' | null;
   discountValue?: number | null;
 }
@@ -17,6 +19,8 @@ interface CreateBudgetDTO {
   expirationDate?: Date | null;
   discountType?: 'PERCENT' | 'VALUE' | null;
   discountValue?: number | null;
+  surchargeType?: 'PERCENT' | 'VALUE' | null;
+  surchargeValue?: number | null;
   advancePayment?: number | null;
   notes?: string | null;
   tagIds?: string[];
@@ -28,6 +32,8 @@ interface UpdateBudgetDTO {
   expirationDate?: Date | null;
   discountType?: 'PERCENT' | 'VALUE' | null;
   discountValue?: number | null;
+  surchargeType?: 'PERCENT' | 'VALUE' | null;
+  surchargeValue?: number | null;
   advancePayment?: number | null;
   notes?: string | null;
   tagIds?: string[];
@@ -61,8 +67,17 @@ export class BudgetsService {
       }
 
       const salePrice = Number(product.salePrice);
+      const costPrice = Number(product.costPrice);
       const quantity = item.quantity;
-      let itemTotal = salePrice * quantity;
+
+      // Calcular total com base no tipo de unidade
+      let itemTotal: number;
+      if (product.unitType === 'M2' && item.width && item.height) {
+        const area = item.width * item.height; // width e height em metros
+        itemTotal = area * (salePrice * quantity);
+      } else {
+        itemTotal = salePrice * quantity;
+      }
 
       if (item.discountType === 'PERCENT' && item.discountValue) {
         itemTotal -= itemTotal * (item.discountValue / 100);
@@ -75,9 +90,12 @@ export class BudgetsService {
       return {
         productId: item.productId,
         name: product.title, // Snapshot
-        costPrice: product.costPrice, // Snapshot
-        salePrice: product.salePrice,
+        costPrice: costPrice, // Snapshot
+        salePrice: salePrice,
         quantity: item.quantity,
+        width: item.width || null,
+        height: item.height || null,
+        unitType: product.unitType,
         discountType: item.discountType,
         discountValue: item.discountValue,
         total: itemTotal,
@@ -85,6 +103,13 @@ export class BudgetsService {
     });
 
     let total = subtotal;
+    // Aplicar acréscimo global
+    if (budgetData.surchargeType === 'PERCENT' && budgetData.surchargeValue) {
+      total += total * (budgetData.surchargeValue / 100);
+    } else if (budgetData.surchargeType === 'VALUE' && budgetData.surchargeValue) {
+      total += budgetData.surchargeValue;
+    }
+    // Aplicar desconto global
     if (budgetData.discountType === 'PERCENT' && budgetData.discountValue) {
       total -= total * (budgetData.discountValue / 100);
     } else if (budgetData.discountType === 'VALUE' && budgetData.discountValue) {
@@ -123,8 +148,17 @@ export class BudgetsService {
         }
 
         const salePrice = Number(product.salePrice);
+        const costPrice = Number(product.costPrice);
         const quantity = item.quantity;
-        let itemTotal = salePrice * quantity;
+
+        // Calcular total com base no tipo de unidade
+        let itemTotal: number;
+        if (product.unitType === 'M2' && item.width && item.height) {
+          const area = item.width * item.height; // width e height em metros
+          itemTotal = area * (salePrice * quantity);
+        } else {
+          itemTotal = salePrice * quantity;
+        }
 
         if (item.discountType === 'PERCENT' && item.discountValue) {
           itemTotal -= itemTotal * (item.discountValue / 100);
@@ -137,9 +171,12 @@ export class BudgetsService {
         return {
           productId: item.productId,
           name: product.title,
-          costPrice: product.costPrice,
-          salePrice: product.salePrice,
+          costPrice: costPrice,
+          salePrice: salePrice,
           quantity: item.quantity,
+          width: item.width || null,
+          height: item.height || null,
+          unitType: product.unitType,
           discountType: item.discountType,
           discountValue: item.discountValue,
           total: itemTotal,
@@ -148,19 +185,37 @@ export class BudgetsService {
 
       let globalDiscountType = budgetData.discountType;
       let globalDiscountValue = budgetData.discountValue;
+      let globalSurchargeType = budgetData.surchargeType;
+      let globalSurchargeValue = budgetData.surchargeValue;
 
       // If not provided in update, fetch from DB to calculate total correctly
-      if (globalDiscountType === undefined || globalDiscountValue === undefined) {
+      if (
+        globalDiscountType === undefined ||
+        globalDiscountValue === undefined ||
+        globalSurchargeType === undefined ||
+        globalSurchargeValue === undefined
+      ) {
         const currentBudget = await this.budgetsRepository.findById(id);
         if (currentBudget) {
           if (globalDiscountType === undefined)
             globalDiscountType = currentBudget.discountType as DiscountType;
           if (globalDiscountValue === undefined)
             globalDiscountValue = Number(currentBudget.discountValue);
+          if (globalSurchargeType === undefined)
+            globalSurchargeType = currentBudget.surchargeType as DiscountType;
+          if (globalSurchargeValue === undefined)
+            globalSurchargeValue = Number(currentBudget.surchargeValue);
         }
       }
 
       let total = subtotal;
+      // Aplicar acréscimo global
+      if (globalSurchargeType === 'PERCENT' && globalSurchargeValue) {
+        total += total * (globalSurchargeValue / 100);
+      } else if (globalSurchargeType === 'VALUE' && globalSurchargeValue) {
+        total += globalSurchargeValue;
+      }
+      // Aplicar desconto global
       if (globalDiscountType === 'PERCENT' && globalDiscountValue) {
         total -= total * (globalDiscountValue / 100);
       } else if (globalDiscountType === 'VALUE' && globalDiscountValue) {
@@ -244,8 +299,17 @@ export class BudgetsService {
         }
 
         const salePrice = Number(product.salePrice);
+        const costPrice = Number(product.costPrice);
         const quantity = item.quantity;
-        let itemTotal = salePrice * quantity;
+
+        // Calcular total com base no tipo de unidade
+        let itemTotal: number;
+        if (product.unitType === 'M2' && item.width && item.height) {
+          const area = item.width * item.height; // width e height em metros
+          itemTotal = area * (salePrice * quantity);
+        } else {
+          itemTotal = salePrice * quantity;
+        }
 
         if (item.discountType === 'PERCENT' && item.discountValue) {
           itemTotal -= itemTotal * (item.discountValue / 100);
@@ -258,9 +322,12 @@ export class BudgetsService {
         return {
           productId: item.productId,
           name: product.title,
-          costPrice: product.costPrice,
-          salePrice: product.salePrice,
+          costPrice: costPrice,
+          salePrice: salePrice,
           quantity: item.quantity,
+          width: item.width || null,
+          height: item.height || null,
+          unitType: product.unitType,
           discountType: item.discountType,
           discountValue: item.discountValue,
           total: itemTotal,
@@ -269,19 +336,37 @@ export class BudgetsService {
 
       let globalDiscountType = budgetData.discountType;
       let globalDiscountValue = budgetData.discountValue;
+      let globalSurchargeType = budgetData.surchargeType;
+      let globalSurchargeValue = budgetData.surchargeValue;
 
       // If not provided in update, fetch from DB to calculate total correctly
-      if (globalDiscountType === undefined || globalDiscountValue === undefined) {
+      if (
+        globalDiscountType === undefined ||
+        globalDiscountValue === undefined ||
+        globalSurchargeType === undefined ||
+        globalSurchargeValue === undefined
+      ) {
         const currentBudget = await this.budgetsRepository.findById(id);
         if (currentBudget) {
           if (globalDiscountType === undefined)
             globalDiscountType = currentBudget.discountType as DiscountType;
           if (globalDiscountValue === undefined)
             globalDiscountValue = Number(currentBudget.discountValue);
+          if (globalSurchargeType === undefined)
+            globalSurchargeType = currentBudget.surchargeType as DiscountType;
+          if (globalSurchargeValue === undefined)
+            globalSurchargeValue = Number(currentBudget.surchargeValue);
         }
       }
 
       let total = subtotal;
+      // Aplicar acréscimo global
+      if (globalSurchargeType === 'PERCENT' && globalSurchargeValue) {
+        total += total * (globalSurchargeValue / 100);
+      } else if (globalSurchargeType === 'VALUE' && globalSurchargeValue) {
+        total += globalSurchargeValue;
+      }
+      // Aplicar desconto global
       if (globalDiscountType === 'PERCENT' && globalDiscountValue) {
         total -= total * (globalDiscountValue / 100);
       } else if (globalDiscountType === 'VALUE' && globalDiscountValue) {

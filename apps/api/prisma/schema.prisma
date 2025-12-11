@@ -156,7 +156,7 @@ model Product {
   description    String?
   code           String?
   ncm            Decimal?     @db.Decimal(10, 2)
-  unitType       String
+  unitType       UnitType     @default(UNIDADE)
   costPrice      Decimal      @db.Decimal(10, 2)
   salePrice      Decimal      @db.Decimal(10, 2)
   stock          Int
@@ -189,6 +189,8 @@ model Budget {
 
   discountType   DiscountType?
   discountValue  Decimal?      @db.Decimal(10, 2)
+  surchargeType  DiscountType?
+  surchargeValue Decimal?      @db.Decimal(10, 2)
   advancePayment Decimal?      @db.Decimal(10, 2)
   paymentType    PaymentType?
 
@@ -240,6 +242,11 @@ model BudgetItem {
   salePrice      Decimal      @db.Decimal(10, 2)
 
   quantity       Decimal      @db.Decimal(10, 2)
+
+  // Campos para produtos por m²
+  width          Decimal?     @db.Decimal(10, 4)  // Metragem X (largura)
+  height         Decimal?     @db.Decimal(10, 4)  // Metragem Y (altura)
+  unitType       UnitType?                        // Snapshot do tipo de unidade
 
   discountType   DiscountType?
   discountValue  Decimal?      @db.Decimal(10, 2)
@@ -361,6 +368,11 @@ enum TemplateScope {
   GLOBAL
   BOARD
   BUDGET
+}
+
+enum UnitType {
+  M2
+  UNIDADE
 }
 
 model Attachment {

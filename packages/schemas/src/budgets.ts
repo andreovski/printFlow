@@ -18,6 +18,9 @@ export const paymentTypeSchema = z.enum([
 export const budgetItemSchema = z.object({
   productId: z.string().uuid(),
   quantity: z.coerce.number().positive(),
+  width: z.coerce.number().positive().optional().nullable(),
+  height: z.coerce.number().positive().optional().nullable(),
+  unitType: z.enum(['M2', 'UNIDADE']).optional().nullable(),
   discountType: discountTypeSchema.optional().nullable(),
   discountValue: z.coerce.number().nonnegative().optional().nullable(),
 });
@@ -27,6 +30,8 @@ export const createBudgetBodySchema = z.object({
   expirationDate: z.coerce.date().optional().nullable(),
   discountType: discountTypeSchema.optional().nullable(),
   discountValue: z.coerce.number().nonnegative().optional().nullable(),
+  surchargeType: discountTypeSchema.optional().nullable(),
+  surchargeValue: z.coerce.number().nonnegative().optional().nullable(),
   advancePayment: z.coerce.number().nonnegative().optional().nullable(),
   paymentType: paymentTypeSchema.optional().nullable(),
   notes: z.string().optional().nullable(),
@@ -92,6 +97,9 @@ export interface BudgetItemEntity {
   costPrice: number;
   quantity: number;
   salePrice: number;
+  width: number | null;
+  height: number | null;
+  unitType: 'M2' | 'UNIDADE' | null;
   discountType: DiscountType | null;
   discountValue: number | null;
   total: number;
@@ -107,6 +115,8 @@ export interface Budget {
   expirationDate: Date | null;
   discountType: DiscountType | null;
   discountValue: number | null;
+  surchargeType: DiscountType | null;
+  surchargeValue: number | null;
   advancePayment: number | null;
   paymentType: PaymentType | null;
   subtotal: number;
@@ -195,6 +205,8 @@ export interface PublicBudgetResponse {
     subtotal: number;
     discountType: DiscountType | null;
     discountValue: number | null;
+    surchargeType: DiscountType | null;
+    surchargeValue: number | null;
     advancePayment: number | null;
     paymentType: PaymentType | null;
     notes: string | null;

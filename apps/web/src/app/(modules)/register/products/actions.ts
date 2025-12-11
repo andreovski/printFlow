@@ -6,7 +6,6 @@ import { revalidateTag } from 'next/cache';
 
 import { createProduct, updateProduct, deleteProduct } from '@/app/http/requests/products';
 
-
 export async function createProductAction(_prevState: any, formData: FormData) {
   const cleanCurrency = (value: string | null) => {
     if (!value) return undefined;
@@ -18,7 +17,7 @@ export async function createProductAction(_prevState: any, formData: FormData) {
     title: formData.get('title') as string,
     description: optionalString(formData.get('description') as string),
     code: optionalString(formData.get('code') as string),
-    unitType: formData.get('unitType') as 'm2' | 'unidade',
+    unitType: formData.get('unitType') as 'M2' | 'UNIDADE',
     costPrice: cleanCurrency(formData.get('costPrice') as string),
     salePrice: cleanCurrency(formData.get('salePrice') as string),
     stock: Number(formData.get('stock')),
@@ -74,7 +73,7 @@ export async function updateProductAction(id: string, _prevState: any, formData:
     title: formData.get('title') as string,
     description: optionalString(formData.get('description') as string),
     code: optionalString(formData.get('code') as string),
-    unitType: formData.get('unitType') as 'm2' | 'unidade',
+    unitType: formData.get('unitType') as 'M2' | 'UNIDADE',
     costPrice: cleanCurrency(formData.get('costPrice') as string),
     salePrice: cleanCurrency(formData.get('salePrice') as string),
     stock: Number(formData.get('stock')),

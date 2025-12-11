@@ -75,6 +75,8 @@ const formSchema = z.object({
   expirationDate: z.string().optional(),
   discountType: z.enum(['PERCENT', 'VALUE']).optional(),
   discountValue: z.coerce.number().optional(),
+  surchargeType: z.enum(['PERCENT', 'VALUE']).optional(),
+  surchargeValue: z.coerce.number().optional(),
   advancePayment: z.coerce.number().optional(),
   paymentType: paymentTypeSchema.optional(),
   notes: z.string().nullish(),
@@ -87,6 +89,9 @@ const formSchema = z.object({
         name: z.string(),
         costPrice: z.number(),
         salePrice: z.number(),
+        unitType: z.enum(['M2', 'UNIDADE']).optional().nullable(),
+        width: z.coerce.number().optional().nullable(),
+        height: z.coerce.number().optional().nullable(),
         quantity: z.coerce.number().min(0.01),
         discountType: z.enum(['PERCENT', 'VALUE']).optional(),
         discountValue: z.coerce.number().optional(),
@@ -167,8 +172,10 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
           expirationDate: initialData.expirationDate
             ? new Date(initialData.expirationDate).toISOString().split('T')[0]
             : '',
-          discountType: initialData.discountType,
+          discountType: initialData.discountType || 'VALUE',
           discountValue: initialData.discountValue ? Number(initialData.discountValue) : 0,
+          surchargeType: initialData.surchargeType || 'VALUE',
+          surchargeValue: initialData.surchargeValue ? Number(initialData.surchargeValue) : 0,
           advancePayment: initialData.advancePayment ? Number(initialData.advancePayment) : 0,
           paymentType: initialData.paymentType || undefined,
           notes: initialData.notes,
@@ -179,6 +186,9 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
             name: i.name,
             costPrice: Number(i.costPrice),
             salePrice: Number(i.salePrice),
+            unitType: i.unitType || null,
+            width: i.width ? Number(i.width) : null,
+            height: i.height ? Number(i.height) : null,
             quantity: i.quantity,
             discountType: i.discountType,
             discountValue: Number(i.discountValue),
@@ -188,9 +198,11 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
       : {
           clientId: '',
           items: [],
-          status: 'DRAFT' as const,
-          discountType: 'VALUE' as const,
+          status: 'DRAFT',
+          discountType: 'VALUE',
           discountValue: 0,
+          surchargeType: 'VALUE',
+          surchargeValue: 0,
           advancePayment: 0,
           paymentType: undefined,
           tagIds: [],
@@ -205,11 +217,22 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
   const items = form.watch('items');
   const globalDiscountType = form.watch('discountType');
   const globalDiscountValue = form.watch('discountValue');
+  const globalSurchargeType = form.watch('surchargeType');
+  const globalSurchargeValue = form.watch('surchargeValue');
   const advancePayment = form.watch('advancePayment');
 
   // Soma dos itens com descontos individuais
   const itemsTotal = items.reduce((acc, item) => {
-    let itemTotal = item.salePrice * item.quantity;
+    // Calcular total com base no tipo de unidade
+    let baseValue: number;
+    if (item.unitType === 'M2' && item.width && item.height) {
+      const area = Number(item.width) * Number(item.height); // width e height em metros
+      baseValue = area * (item.salePrice * item.quantity);
+    } else {
+      baseValue = item.salePrice * item.quantity;
+    }
+
+    let itemTotal = baseValue;
     if (item.discountType === 'PERCENT' && item.discountValue) {
       itemTotal -= itemTotal * (item.discountValue / 100);
     } else if (item.discountType === 'VALUE' && item.discountValue) {
@@ -218,12 +241,25 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
     return acc + itemTotal;
   }, 0);
 
-  // Subtotal = itens com descontos individuais + desconto global
+  // Subtotal = itens com descontos individuais + acréscimo global - desconto global
   let subtotal = itemsTotal;
-  if (globalDiscountType === 'PERCENT' && globalDiscountValue) {
-    subtotal -= subtotal * (globalDiscountValue / 100);
-  } else if (globalDiscountType === 'VALUE' && globalDiscountValue) {
-    subtotal -= globalDiscountValue;
+  // Aplicar acréscimo global primeiro
+  const surchargeVal = Number(globalSurchargeValue) || 0;
+  const surchargeType = globalSurchargeType || 'VALUE'; // Default to VALUE if not set
+  if (surchargeType === 'PERCENT' && surchargeVal) {
+    subtotal += subtotal * (surchargeVal / 100);
+  } else if (surchargeVal) {
+    // VALUE type or default
+    subtotal += surchargeVal;
+  }
+  // Aplicar desconto global
+  const discountVal = Number(globalDiscountValue) || 0;
+  const discountType = globalDiscountType || 'VALUE'; // Default to VALUE if not set
+  if (discountType === 'PERCENT' && discountVal) {
+    subtotal -= subtotal * (discountVal / 100);
+  } else if (discountVal) {
+    // VALUE type or default
+    subtotal -= discountVal;
   }
 
   // Total = subtotal - adiantamento
@@ -288,6 +324,8 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
         expirationDate: initialData.expirationDate,
         discountType: initialData.discountType,
         discountValue: initialData.discountValue,
+        surchargeType: initialData.surchargeType,
+        surchargeValue: initialData.surchargeValue,
         advancePayment: initialData.advancePayment,
         notes: initialData.notes || '',
         tagIds: initialData.tags?.map((t: any) => t.id) || [],
@@ -319,6 +357,9 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
       name: product.title,
       costPrice: Number(product.costPrice),
       salePrice: Number(product.salePrice),
+      unitType: product.unitType || null,
+      width: null,
+      height: null,
       quantity: 1,
       discountType: 'VALUE',
       discountValue: 0,
@@ -416,6 +457,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
               <TableRow>
                 <TableHead>Produto</TableHead>
                 <TableHead className="w-[100px]">Qtd</TableHead>
+                <TableHead className="w-[180px]">Metragem</TableHead>
                 <TableHead className="w-[100px]">Preço</TableHead>
                 <TableHead className="w-[150px]">Desconto</TableHead>
                 <TableHead className="w-[100px] text-right">Total</TableHead>
@@ -426,10 +468,20 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
             <TableBody>
               {fields.map((field, index) => {
                 const item = items[index];
+
+                // Calcular total com base no tipo de unidade
+                let baseValue: number;
+                if (item.unitType === 'M2' && item.width && item.height) {
+                  const area = Number(item.width) * Number(item.height); // width e height em metros
+                  baseValue = area * (item.salePrice * item.quantity);
+                } else {
+                  baseValue = item.salePrice * item.quantity;
+                }
+
                 const itemTotal =
-                  item.salePrice * item.quantity -
+                  baseValue -
                   (item.discountType === 'PERCENT'
-                    ? (item.salePrice * item.quantity * (item.discountValue || 0)) / 100
+                    ? (baseValue * (item.discountValue || 0)) / 100
                     : item.discountValue || 0);
 
                 return (
@@ -453,6 +505,36 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
                         disabled={isReadOnly}
                         className="w-[100px]"
                       />
+                    </TableCell>
+                    <TableCell>
+                      {item.unitType === 'M2' ? (
+                        <div className="flex gap-1 items-center">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            placeholder="L (m)"
+                            {...form.register(`items.${index}.width`)}
+                            disabled={isReadOnly}
+                            className="w-[65px]"
+                          />
+                          <span className="text-muted-foreground">×</span>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            placeholder="A (m)"
+                            {...form.register(`items.${index}.height`)}
+                            disabled={isReadOnly}
+                            className="w-[65px]"
+                          />
+                          {item.width && item.height && (
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                              = {(Number(item.width) * Number(item.height)).toFixed(2)}m²
+                            </span>
+                          )}
+                        </div>
+                      ) : null}
                     </TableCell>
                     <TableCell>
                       {new Intl.NumberFormat('pt-BR', {
@@ -506,7 +588,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
               })}
               {fields.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     Nenhum item adicionado.
                   </TableCell>
                 </TableRow>
@@ -541,6 +623,31 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
                 step="0.01"
                 className="w-[100px]"
                 {...form.register('discountValue')}
+                disabled={isReadOnly}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label className="text-xs font-semibold">Acréscimo Global</Label>
+            <div className="flex gap-2">
+              <Select
+                value={globalSurchargeType || 'VALUE'}
+                onValueChange={(val) => form.setValue('surchargeType', val as any)}
+              >
+                <SelectTrigger className="w-[70px]" disabled={isReadOnly}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="VALUE">R$</SelectItem>
+                  <SelectItem value="PERCENT">%</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                type="number"
+                step="0.01"
+                className="w-[100px]"
+                {...form.register('surchargeValue')}
                 disabled={isReadOnly}
               />
             </div>

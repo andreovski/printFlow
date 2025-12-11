@@ -137,11 +137,6 @@ export const ThermalReceipt = forwardRef<HTMLDivElement, ThermalReceiptProps>(
 
         {/* Totals */}
         <div className="my-1">
-          <div className="flex justify-between">
-            <span>Subtotal:</span>
-            <span>{formatCurrency(budget.subtotal)}</span>
-          </div>
-
           {budget.discountValue && Number(budget.discountValue) > 0 && (
             <div className="flex justify-between">
               <span>

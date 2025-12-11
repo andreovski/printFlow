@@ -17,6 +17,8 @@ export async function createBudgetAction(data: any) {
       items: data.items.map((i: any) => ({
         productId: i.productId,
         quantity: i.quantity,
+        width: i.width || null,
+        height: i.height || null,
         discountType: i.discountType || null,
         discountValue: i.discountValue || null,
       })),
@@ -37,6 +39,8 @@ export async function updateBudgetAction(id: string, data: any) {
       items: data.items.map((i: any) => ({
         productId: i.productId,
         quantity: i.quantity,
+        width: i.width || null,
+        height: i.height || null,
         discountType: i.discountType || null,
         discountValue: i.discountValue || null,
       })),
@@ -67,6 +71,8 @@ export async function duplicateBudgetAction(data: any) {
       items: data.items.map((i: any) => ({
         productId: i.productId,
         quantity: i.quantity,
+        width: i.width || null,
+        height: i.height || null,
         discountType: i.discountType || null,
         discountValue: i.discountValue || null,
       })),

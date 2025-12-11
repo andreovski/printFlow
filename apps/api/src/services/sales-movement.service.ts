@@ -48,6 +48,10 @@ export class SalesMovementService {
       },
       select: {
         subtotal: true,
+        discountType: true,
+        discountValue: true,
+        surchargeType: true,
+        surchargeValue: true,
         items: {
           select: {
             costPrice: true,
@@ -62,9 +66,27 @@ export class SalesMovementService {
     let totalCost = 0;
 
     for (const budget of budgets) {
-      // O subtotal já inclui todos os descontos (itens + global)
-      // Não considera adiantamento, pois é forma de pagamento, não desconto
-      totalRevenue += Number(budget.subtotal);
+      // O subtotal do BD inclui apenas descontos de itens
+      // Precisamos aplicar acréscimo e desconto globais
+      let revenue = Number(budget.subtotal);
+
+      // Aplicar acréscimo global primeiro
+      const surchargeValue = Number(budget.surchargeValue) || 0;
+      if (budget.surchargeType === 'PERCENT' && surchargeValue) {
+        revenue += revenue * (surchargeValue / 100);
+      } else if (surchargeValue) {
+        revenue += surchargeValue;
+      }
+
+      // Aplicar desconto global
+      const discountValue = Number(budget.discountValue) || 0;
+      if (budget.discountType === 'PERCENT' && discountValue) {
+        revenue -= revenue * (discountValue / 100);
+      } else if (discountValue) {
+        revenue -= discountValue;
+      }
+
+      totalRevenue += revenue;
 
       // Soma o custo de todos os itens do orçamento
       for (const item of budget.items) {
@@ -115,6 +137,10 @@ export class SalesMovementService {
           code: true,
           status: true,
           subtotal: true,
+          discountType: true,
+          discountValue: true,
+          surchargeType: true,
+          surchargeValue: true,
           approvedAt: true,
           excludedFromSales: true,
           client: {
@@ -140,9 +166,25 @@ export class SalesMovementService {
 
     // Mapeia para o formato de resposta
     const data: SalesMovementBudget[] = budgets.map((budget) => {
-      // O subtotal já inclui todos os descontos (itens + global)
-      // Não considera adiantamento, pois é forma de pagamento, não desconto
-      const saleValue = Number(budget.subtotal);
+      // O subtotal do BD inclui apenas descontos de itens
+      // Precisamos aplicar acréscimo e desconto globais
+      let saleValue = Number(budget.subtotal);
+
+      // Aplicar acréscimo global primeiro
+      const surchargeValue = Number(budget.surchargeValue) || 0;
+      if (budget.surchargeType === 'PERCENT' && surchargeValue) {
+        saleValue += saleValue * (surchargeValue / 100);
+      } else if (surchargeValue) {
+        saleValue += surchargeValue;
+      }
+
+      // Aplicar desconto global
+      const discountValue = Number(budget.discountValue) || 0;
+      if (budget.discountType === 'PERCENT' && discountValue) {
+        saleValue -= saleValue * (discountValue / 100);
+      } else if (discountValue) {
+        saleValue -= discountValue;
+      }
 
       const costValue = budget.items.reduce(
         (sum, item) => sum + Number(item.costPrice) * item.quantity.toNumber(),
