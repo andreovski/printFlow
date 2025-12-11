@@ -154,12 +154,6 @@ export const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(
           </div>
         </div>
 
-        {/* Seller/Attendant - Static */}
-        <div className="border border-gray-400 p-2 mb-4">
-          <span className="font-bold">Atendente/Vendedor: </span>
-          <span>-</span>
-        </div>
-
         {/* Items Table */}
         <div className="border border-gray-400 mb-4">
           <table className="w-full">
@@ -186,7 +180,14 @@ export const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(
                 return (
                   <tr key={item.id} className="border-b border-gray-300 last:border-b-0">
                     <td className="p-2 border-r border-gray-300 text-center">{index + 1}</td>
-                    <td className="p-2 border-r border-gray-300">{item.name}</td>
+                    <td className="p-2 border-r border-gray-300">
+                      {item.name}
+                      {item.unitType === 'M2' && item.width && item.height && (
+                        <span className="text-xs text-gray-500 ml-1">
+                          ({item.width}m x {item.height}m)
+                        </span>
+                      )}
+                    </td>
                     <td className="p-2 border-r border-gray-300 text-center">{item.quantity}</td>
                     <td className="p-2 border-r border-gray-300 text-right">
                       {formatCurrency(item.salePrice)}
@@ -224,10 +225,20 @@ export const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(
             </div>
           )}
 
-          <div className="flex justify-end mb-1">
-            <span className="w-40">Valor do Frete:</span>
-            <span className="w-32 text-right">R$ 0,00</span>
-          </div>
+          {budget.surchargeValue && Number(budget.surchargeValue) > 0 && (
+            <div className="flex justify-end mb-1 text-blue-600">
+              <span className="w-40">
+                Acréscimo
+                {budget.surchargeType === 'PERCENT' ? ` (${budget.surchargeValue}%)` : ''}:
+              </span>
+              <span className="w-32 text-right">
+                +{' '}
+                {budget.surchargeType === 'PERCENT'
+                  ? formatCurrency((Number(budget.subtotal) * Number(budget.surchargeValue)) / 100)
+                  : formatCurrency(budget.surchargeValue)}
+              </span>
+            </div>
+          )}
 
           <div className="flex justify-end border-t border-gray-300 pt-2 mt-2 text-lg font-bold">
             <span className="w-40">TOTAL A PAGAR:</span>
@@ -266,26 +277,6 @@ export const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(
             />
           </div>
         )}
-
-        {/* Signature Area */}
-        <div className="mt-8 pt-4">
-          <div className="flex justify-between gap-8">
-            <div className="flex-1 text-center">
-              <div className="border-t border-gray-800 pt-2 mx-8">
-                <p className="font-semibold">{client.name}</p>
-                <p className="text-sm text-gray-600">Cliente</p>
-              </div>
-            </div>
-            <div className="flex-1 text-center">
-              <div className="border-t border-gray-800 pt-2 mx-8">
-                <p className="font-semibold">
-                  {organization?.fantasyName || organization?.enterpriseName || organization?.name}
-                </p>
-                <p className="text-sm text-gray-600">Vendedor</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Footer */}
         <div className="mt-8 text-center text-xs text-gray-500 border-t border-gray-300 pt-2">

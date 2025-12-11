@@ -118,6 +118,12 @@ export const ThermalReceipt = forwardRef<HTMLDivElement, ThermalReceiptProps>(
               <div key={item.id} className="mb-1">
                 <p className="break-words">
                   {index + 1}. {item.name}
+                  {item.unitType === 'M2' && item.width && item.height && (
+                    <span className="text-[7px]">
+                      {' '}
+                      ({item.width}m x {item.height}m)
+                    </span>
+                  )}
                 </p>
                 <div className="flex justify-between">
                   <span>
@@ -147,6 +153,20 @@ export const ThermalReceipt = forwardRef<HTMLDivElement, ThermalReceiptProps>(
                 {budget.discountType === 'PERCENT'
                   ? formatCurrency((Number(budget.subtotal) * Number(budget.discountValue)) / 100)
                   : formatCurrency(budget.discountValue)}
+              </span>
+            </div>
+          )}
+
+          {budget.surchargeValue && Number(budget.surchargeValue) > 0 && (
+            <div className="flex justify-between">
+              <span>
+                Acrésc.{budget.surchargeType === 'PERCENT' ? ` (${budget.surchargeValue}%)` : ''}:
+              </span>
+              <span>
+                +
+                {budget.surchargeType === 'PERCENT'
+                  ? formatCurrency((Number(budget.subtotal) * Number(budget.surchargeValue)) / 100)
+                  : formatCurrency(budget.surchargeValue)}
               </span>
             </div>
           )}

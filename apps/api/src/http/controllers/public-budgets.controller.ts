@@ -40,6 +40,9 @@ export async function getPublicBudgetController(request: FastifyRequest, reply: 
       name: string;
       quantity: number;
       salePrice: number | string;
+      width: number | null;
+      height: number | null;
+      unitType: 'M2' | 'UNIDADE' | null;
       discountType: string | null;
       discountValue: number | string | null;
       total: number | string;
@@ -72,6 +75,9 @@ export async function getPublicBudgetController(request: FastifyRequest, reply: 
         name: item.name,
         quantity: item.quantity,
         salePrice: item.salePrice,
+        width: item.width,
+        height: item.height,
+        unitType: item.unitType,
         discountType: item.discountType,
         discountValue: item.discountValue,
         total: item.total,

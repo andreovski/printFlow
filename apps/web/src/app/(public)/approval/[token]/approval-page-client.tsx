@@ -49,6 +49,9 @@ interface BudgetData {
     name: string;
     quantity: number;
     salePrice: number;
+    width: number | null;
+    height: number | null;
+    unitType: 'M2' | 'UNIDADE' | null;
     discountType: string | null;
     discountValue: number | null;
     total: number;
@@ -283,7 +286,14 @@ export function ApprovalPageClient({ token }: ApprovalPageClientProps) {
                   className="flex justify-between items-start py-2 border-b last:border-0"
                 >
                   <div className="flex-1">
-                    <p className="font-medium">{item.name}</p>
+                    <p className="font-medium">
+                      {item.name}
+                      {item.unitType === 'M2' && item.width && item.height && (
+                        <span className="text-xs text-muted-foreground ml-1">
+                          ({item.width}m x {item.height}m)
+                        </span>
+                      )}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {item.quantity}x {currencyFormatter.format(Number(item.salePrice))}
                       {item.discountValue && item.discountType === 'PERCENT' && (
