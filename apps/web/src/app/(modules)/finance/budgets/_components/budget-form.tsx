@@ -753,7 +753,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
             </div>
 
             {/* Total Display */}
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center min-w-[180px]">
               <Label className="text-sm font-semibold">Total: </Label>
               <span className="text-lg font-semibold">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(

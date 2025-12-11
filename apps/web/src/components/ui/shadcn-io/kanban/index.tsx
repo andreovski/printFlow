@@ -104,7 +104,7 @@ export const KanbanBoard = ({ id, children, className }: KanbanBoardProps) => {
       {...attributes}
       {...(isReorderMode ? listeners : {})} // Only apply listeners in reorder mode
       className={cn(
-        'flex size-full min-h-40 min-w-[230px] flex-col divide-y overflow-hidden rounded-md border bg-secondary/60 text-xs shadow-sm ring-2 transition-all',
+        'relative flex w-full max-h-[80vh] min-h-40 min-w-[230px] flex-col divide-y overflow-hidden rounded-md border bg-secondary/60 text-xs shadow-sm ring-2 transition-all',
         isOver ? 'ring-primary' : 'ring-transparent',
         isDragging && 'opacity-50',
         isReorderMode && 'cursor-grab active:cursor-grabbing',
@@ -112,6 +112,7 @@ export const KanbanBoard = ({ id, children, className }: KanbanBoardProps) => {
       )}
     >
       {children}
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-secondary to-transparent backdrop-blur-md [mask-image:linear-gradient(to_top,black,transparent)] z-10" />
     </div>
   );
 };
@@ -211,11 +212,16 @@ export const KanbanCards = <T extends KanbanItemProps = KanbanItemProps>({
   const items = filteredData.map((item) => item.id);
 
   return (
-    <ScrollArea className="overflow-hidden ">
+    <ScrollArea
+      className="flex-1 w-full min-h-0 overflow-hidden [&>[data-radix-scroll-area-viewport]>div]:!block"
+      style={{ maxHeight: 'calc(80vh - 50px)' }}
+    >
       <SortableContext items={items}>
         <div className={cn('flex flex-grow flex-col gap-2 p-2', className)} {...props}>
-          {filteredData.map((item) => (
-            <Fragment key={item.id}>{children(item)}</Fragment>
+          {filteredData.map((item, idx, arr) => (
+            <div key={item.id} className={cn(idx === arr.length - 1 && 'pb-3')}>
+              {children(item)}
+            </div>
           ))}
         </div>
       </SortableContext>

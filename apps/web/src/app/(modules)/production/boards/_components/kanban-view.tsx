@@ -172,7 +172,7 @@ export function KanbanView({
 
   return (
     <div className="h-full flex flex-col p-6">
-      <div className="flex flex-col gap-8 mb-4">
+      <div className="flex flex-col gap-8 mb-2">
         <h1 className="text-3xl font-bold tracking-tight">Quadros</h1>
         <div className="flex items-center gap-3 px-1">
           <Select value={selectedBoard.id} onValueChange={onBoardChange}>
@@ -237,7 +237,7 @@ export function KanbanView({
             <KanbanBoard
               id={column.id}
               key={column.id}
-              className="min-w-[220px] min-h-fit flex flex-col"
+              className="min-w-[260px] min-h-fit flex flex-col"
             >
               <KanbanHeader className="flex items-center border-none">
                 <div className="flex items-center gap-2 mr-auto">

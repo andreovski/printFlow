@@ -138,7 +138,9 @@ export const Kanban = ({ budgets }: KanbanProps) => {
         <KanbanBoard
           id={column.id}
           key={column.id}
-          className={columnsCollapsed.includes(column.id) ? 'h-[10px] min-h-[40px]' : ''}
+          className={
+            columnsCollapsed.includes(column.id) ? 'h-[10px] min-h-[40px]' : 'max-h-[80vh]'
+          }
         >
           <KanbanHeader>
             <div className="flex items-center gap-2">
