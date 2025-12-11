@@ -41,6 +41,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useAppContext } from '@/hooks/use-app-context';
 import { useDisclosure } from '@/hooks/use-disclosure';
 
 import {
@@ -111,6 +112,8 @@ interface BudgetFormProps {
 export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const { user } = useAppContext();
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'MASTER';
   const [isPending, setIsPending] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -488,13 +491,15 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
                   <TableRow key={field.id}>
                     <TableCell>
                       <div className="font-medium">{item.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        Custo:{' '}
-                        {new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        }).format(item.costPrice)}
-                      </div>
+                      {isAdmin && (
+                        <div className="text-xs text-muted-foreground">
+                          Custo:{' '}
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          }).format(item.costPrice)}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Input
