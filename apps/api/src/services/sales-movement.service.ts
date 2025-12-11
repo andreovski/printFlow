@@ -25,6 +25,7 @@ interface SalesMovementBudget {
   excludedFromSales: boolean;
 }
 
+// Todo: Prisma não referencia em service. A chamada ao banco deve ser feita no repository
 export class SalesMovementService {
   /**
    * Busca KPIs de vendas (considera todos os registros do período onde excludedFromSales = false)
@@ -56,6 +57,9 @@ export class SalesMovementService {
           select: {
             costPrice: true,
             quantity: true,
+            width: true,
+            height: true,
+            unitType: true,
           },
         },
       },
@@ -90,7 +94,12 @@ export class SalesMovementService {
 
       // Soma o custo de todos os itens do orçamento
       for (const item of budget.items) {
-        totalCost += Number(item.costPrice) * item.quantity.toNumber();
+        if (item.unitType === 'M2') {
+          const unitCost = Number(item.costPrice) * (Number(item.width) * Number(item.height));
+          totalCost += unitCost * item.quantity.toNumber();
+        } else {
+          totalCost += Number(item.costPrice) * item.quantity.toNumber();
+        }
       }
     }
 
@@ -152,6 +161,9 @@ export class SalesMovementService {
             select: {
               costPrice: true,
               quantity: true,
+              unitType: true,
+              width: true,
+              height: true,
             },
           },
         },
@@ -186,10 +198,14 @@ export class SalesMovementService {
         saleValue -= discountValue;
       }
 
-      const costValue = budget.items.reduce(
-        (sum, item) => sum + Number(item.costPrice) * item.quantity.toNumber(),
-        0
-      );
+      const costValue = budget.items.reduce((sum, item) => {
+        if (item.unitType === 'M2') {
+          const unitCost = Number(item.costPrice) * (Number(item.width) * Number(item.height));
+          return sum + unitCost * item.quantity.toNumber();
+        } else {
+          return sum + Number(item.costPrice) * item.quantity.toNumber();
+        }
+      }, 0);
       const profit = saleValue - costValue;
 
       return {
