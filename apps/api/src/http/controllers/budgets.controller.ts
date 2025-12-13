@@ -43,6 +43,19 @@ export async function fetchBudgetsController(request: FastifyRequest, reply: Fas
   });
 }
 
+export async function fetchBudgetsForKanbanController(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
+  const { organizationId } = request.user as { organizationId: string };
+
+  const budgetsService = new BudgetsService();
+
+  const budgets = await budgetsService.findAllForKanban(organizationId);
+
+  return reply.status(200).send({ budgets });
+}
+
 export async function fetchArchivedBudgetsController(request: FastifyRequest, reply: FastifyReply) {
   const { organizationId } = request.user as { organizationId: string };
   const { page, pageSize } = paginationQuerySchema.parse(request.query);

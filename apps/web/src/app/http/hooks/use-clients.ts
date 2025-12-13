@@ -1,17 +1,28 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { CreateClientBody, UpdateClientBody } from '@magic-system/schemas';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getClients, getClient } from '@/app/http/requests/clients';
+import {
+  createClient,
+  deleteClient,
+  getClient,
+  getClients,
+  updateClient,
+} from '@/app/http/requests/clients';
 
-interface UseClientsOptions {
-  search?: string;
+export function useClients({
+  page = 1,
+  pageSize = 10,
+  search,
+  enabled = true,
+}: {
+  page?: number;
   pageSize?: number;
+  search?: string;
   enabled?: boolean;
-}
-
-export function useClients({ search, pageSize = 10, enabled = true }: UseClientsOptions = {}) {
+} = {}) {
   return useQuery({
-    queryKey: ['clients', { search, pageSize }],
-    queryFn: () => getClients({ page: 1, pageSize, search }),
+    queryKey: ['clients', { page, pageSize, search }],
+    queryFn: () => getClients({ page, pageSize, search }),
     enabled,
   });
 }
@@ -21,6 +32,42 @@ export function useClient(id: string | undefined) {
     queryKey: ['client', id],
     queryFn: () => getClient(id!),
     enabled: !!id,
+  });
+}
+
+export function useCreateClient() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateClientBody) => createClient(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
+  });
+}
+
+export function useUpdateClient() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string } & UpdateClientBody) =>
+      updateClient({ id, ...data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['client'] });
+    },
+  });
+}
+
+export function useDeleteClient() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteClient(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['client'] });
+    },
   });
 }
 

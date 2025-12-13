@@ -1,20 +1,36 @@
 import { TagScope } from '@magic-system/schemas';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { CreateTagBody, UpdateTagBody } from '@magic-system/schemas';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getTags } from '@/app/http/requests/tags';
+import { createTag, deleteTag, getTag, getTags, updateTag } from '@/app/http/requests/tags';
 
-interface UseTagsOptions {
-  scope?: TagScope;
+export function useTags({
+  page = 1,
+  pageSize = 10,
+  search,
+  scope,
+  active,
+  enabled = true,
+}: {
+  page?: number;
+  pageSize?: number;
   search?: string;
+  scope?: TagScope;
   active?: boolean;
   enabled?: boolean;
+} = {}) {
+  return useQuery({
+    queryKey: ['tags', { page, pageSize, search, scope, active }],
+    queryFn: () => getTags({ page, pageSize, search, scope, active }),
+    enabled,
+  });
 }
 
-export function useTags({ scope, search, active = true, enabled = true }: UseTagsOptions = {}) {
+export function useTag(id: string | undefined) {
   return useQuery({
-    queryKey: ['tags', { scope, search, active }],
-    queryFn: () => getTags({ page: 1, pageSize: 50, scope, search, active }),
-    enabled,
+    queryKey: ['tag', id],
+    queryFn: () => getTag(id!),
+    enabled: !!id,
   });
 }
 
@@ -43,6 +59,41 @@ export function useTagsWithGlobal(scope: TagScope, search?: string) {
   );
 
   return { data: uniqueTags, isLoading, error };
+}
+
+export function useCreateTag() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateTagBody) => createTag(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tags'] });
+    },
+  });
+}
+
+export function useUpdateTag() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string } & UpdateTagBody) => updateTag({ id, ...data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tags'] });
+      queryClient.invalidateQueries({ queryKey: ['tag'] });
+    },
+  });
+}
+
+export function useDeleteTag() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteTag(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tags'] });
+      queryClient.invalidateQueries({ queryKey: ['tag'] });
+    },
+  });
 }
 
 // Hook para invalidar cache de tags após create/update/delete

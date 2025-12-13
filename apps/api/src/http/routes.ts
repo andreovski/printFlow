@@ -25,6 +25,7 @@ import {
 import {
   createBudgetController,
   fetchBudgetsController,
+  fetchBudgetsForKanbanController,
   fetchArchivedBudgetsController,
   getBudgetController,
   updateBudgetController,
@@ -169,6 +170,7 @@ export async function appRoutes(app: FastifyInstance) {
     // Budgets
     authRoutes.post('/budgets', createBudgetController);
     authRoutes.get('/budgets', fetchBudgetsController);
+    authRoutes.get('/budgets/kanban', fetchBudgetsForKanbanController);
     authRoutes.get('/budgets/archived', fetchArchivedBudgetsController);
     authRoutes.get('/budgets/:id', getBudgetController);
     authRoutes.put('/budgets/:id', updateBudgetController);

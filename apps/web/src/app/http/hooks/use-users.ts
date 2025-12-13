@@ -2,10 +2,20 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { deleteUser, getUser, getUsers } from '@/app/http/requests/users';
 
-export function useUsers({ enabled = true }: { enabled?: boolean } = {}) {
+export function useUsers({
+  page = 1,
+  pageSize = 10,
+  search,
+  enabled = true,
+}: {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  enabled?: boolean;
+} = {}) {
   return useQuery({
-    queryKey: ['users'],
-    queryFn: () => getUsers(),
+    queryKey: ['users', { page, pageSize, search }],
+    queryFn: () => getUsers({ page, pageSize, search }),
     enabled,
   });
 }

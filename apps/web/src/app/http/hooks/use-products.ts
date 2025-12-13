@@ -1,18 +1,73 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { CreateProductBody, UpdateProductBody } from '@magic-system/schemas';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getProducts } from '@/app/http/requests/products';
+import {
+  createProduct,
+  deleteProduct,
+  getProduct,
+  getProducts,
+  updateProduct,
+} from '@/app/http/requests/products';
 
-interface UseProductsOptions {
-  search?: string;
+export function useProducts({
+  page = 1,
+  pageSize = 10,
+  search,
+  enabled = true,
+}: {
+  page?: number;
   pageSize?: number;
+  search?: string;
   enabled?: boolean;
+} = {}) {
+  return useQuery({
+    queryKey: ['products', { page, pageSize, search }],
+    queryFn: () => getProducts({ page, pageSize, search }),
+    enabled,
+  });
 }
 
-export function useProducts({ search, pageSize = 10, enabled = true }: UseProductsOptions = {}) {
+export function useProduct(id: string | undefined) {
   return useQuery({
-    queryKey: ['products', { search, pageSize }],
-    queryFn: () => getProducts({ page: 1, pageSize, search }),
-    enabled,
+    queryKey: ['product', id],
+    queryFn: () => getProduct(id!),
+    enabled: !!id,
+  });
+}
+
+export function useCreateProduct() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateProductBody) => createProduct(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+export function useUpdateProduct() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string } & UpdateProductBody) =>
+      updateProduct({ id, ...data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product'] });
+    },
+  });
+}
+
+export function useDeleteProduct() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteProduct(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product'] });
+    },
   });
 }
 

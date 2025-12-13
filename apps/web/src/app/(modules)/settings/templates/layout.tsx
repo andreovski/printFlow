@@ -10,6 +10,7 @@ import { columns, Template } from './columns';
 async function getTemplates(): Promise<Template[]> {
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
+  // Todo: centralizar as chamadas a api dentro de http/requests e criar paginaçào
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/templates`, {
     headers: {
       Authorization: `Bearer ${token}`,

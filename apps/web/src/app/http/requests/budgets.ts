@@ -19,13 +19,22 @@ export async function createBudget(data: CreateBudgetBody): Promise<CreateBudget
 export async function getBudgets(params?: {
   page?: number;
   pageSize?: number;
+  search?: string;
 }): Promise<PaginatedResponse<Budget>> {
   const searchParams = new URLSearchParams({
     page: String(params?.page || 1),
     pageSize: String(params?.pageSize || 10),
   });
 
+  if (params?.search) {
+    searchParams.append('search', params.search);
+  }
+
   return api.get(`budgets?${searchParams.toString()}`).json<PaginatedResponse<Budget>>();
+}
+
+export async function getBudgetsForKanban(): Promise<{ budgets: Budget[] }> {
+  return api.get('budgets/kanban').json<{ budgets: Budget[] }>();
 }
 
 export async function getArchivedBudgets(params?: {

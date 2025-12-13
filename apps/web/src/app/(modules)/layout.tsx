@@ -18,6 +18,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Fetch user data from profile endpoint
   if (token) {
     try {
+      // Todo: centralizar chamadas a api dentro de http/requests
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',

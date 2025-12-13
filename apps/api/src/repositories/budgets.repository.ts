@@ -50,6 +50,23 @@ export class BudgetsRepository {
     return { data, total };
   }
 
+  async findAllForKanban(organizationId: string): Promise<Budget[]> {
+    return prisma.budget.findMany({
+      where: {
+        organizationId,
+        deletedAt: null,
+        archived: false,
+      },
+      include: {
+        client: true,
+        tags: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
   async findArchived(
     organizationId: string,
     page: number = 1,

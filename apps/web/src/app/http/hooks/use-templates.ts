@@ -1,19 +1,42 @@
 import { TemplateScope } from '@magic-system/schemas';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { CreateTemplateBody, UpdateTemplateBody } from '@magic-system/schemas';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getTemplates } from '@/app/http/requests/templates';
+import {
+  createTemplate,
+  deleteTemplate,
+  getTemplate,
+  getTemplates,
+  updateTemplate,
+} from '@/app/http/requests/templates';
 
-interface UseTemplatesOptions {
-  scope: TemplateScope;
+export function useTemplates({
+  page = 1,
+  pageSize = 10,
+  search,
+  scope,
+  active,
+  enabled = true,
+}: {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  scope?: TemplateScope;
   active?: boolean;
   enabled?: boolean;
+} = {}) {
+  return useQuery({
+    queryKey: ['templates', { page, pageSize, search, scope, active }],
+    queryFn: () => getTemplates({ page, pageSize, search, scope, active }),
+    enabled,
+  });
 }
 
-export function useTemplates({ scope, active = true, enabled = true }: UseTemplatesOptions) {
+export function useTemplate(id: string | undefined) {
   return useQuery({
-    queryKey: ['templates', { scope, active }],
-    queryFn: () => getTemplates({ page: 1, pageSize: 50, scope, active }),
-    enabled,
+    queryKey: ['template', id],
+    queryFn: () => getTemplate(id!),
+    enabled: !!id,
   });
 }
 
@@ -42,6 +65,41 @@ export function useTemplatesWithGlobal(scope: TemplateScope) {
   );
 
   return { data: uniqueTemplates, isLoading, error };
+}
+
+export function useCreateTemplate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateTemplateBody) => createTemplate(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+    },
+  });
+}
+
+export function useUpdateTemplate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string } & UpdateTemplateBody) => updateTemplate(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      queryClient.invalidateQueries({ queryKey: ['template'] });
+    },
+  });
+}
+
+export function useDeleteTemplate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteTemplate(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      queryClient.invalidateQueries({ queryKey: ['template'] });
+    },
+  });
 }
 
 // Hook para invalidar cache de templates após create/update/delete

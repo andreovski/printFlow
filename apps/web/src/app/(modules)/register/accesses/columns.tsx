@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 
 export type User = {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
   role: 'EMPLOYEE' | 'ADMIN' | 'MASTER';
 };

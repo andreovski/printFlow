@@ -6,10 +6,11 @@ import {
   RegisterUserResponse,
   CreateUserResponse,
   GetUserResponse,
-  GetUsersResponse,
   UpdateUserResponse,
   UpdateProfileBody,
   ChangePasswordBody,
+  User,
+  PaginatedResponse,
 } from '@magic-system/schemas';
 
 import { api } from '../api';
@@ -22,8 +23,21 @@ export async function createUser(data: CreateUserBody): Promise<CreateUserRespon
   return api.post('users/create', { json: data }).json<CreateUserResponse>();
 }
 
-export async function getUsers(): Promise<GetUsersResponse> {
-  return api.get('users').json<GetUsersResponse>();
+export async function getUsers(params?: {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}): Promise<PaginatedResponse<User>> {
+  const searchParams = new URLSearchParams({
+    page: String(params?.page || 1),
+    pageSize: String(params?.pageSize || 10),
+  });
+
+  if (params?.search) {
+    searchParams.append('search', params.search);
+  }
+
+  return api.get(`users?${searchParams.toString()}`).json<PaginatedResponse<User>>();
 }
 
 export async function getUser(id: string): Promise<GetUserResponse> {

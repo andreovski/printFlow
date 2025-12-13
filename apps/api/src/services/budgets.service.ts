@@ -649,6 +649,10 @@ export class BudgetsService {
     return this.budgetsRepository.findMany(organizationId, page, pageSize);
   }
 
+  async findAllForKanban(organizationId: string) {
+    return this.budgetsRepository.findAllForKanban(organizationId);
+  }
+
   async findArchived(organizationId: string, page: number = 1, pageSize: number = 10) {
     return this.budgetsRepository.findArchived(organizationId, page, pageSize);
   }
