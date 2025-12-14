@@ -12,7 +12,7 @@ export class OrganizationRepository {
         id: true,
         name: true,
         ownerId: true,
-        budgetAutoInactive: true,
+        budgetAutoDone: true,
         budgetAutoArchive: true,
         budgetShowTotalInKanban: true,
         // Company Information
@@ -44,7 +44,7 @@ export class OrganizationRepository {
   async update(
     id: string,
     data: {
-      budgetAutoInactive?: boolean;
+      budgetAutoDone?: boolean;
       budgetAutoArchive?: boolean;
       budgetShowTotalInKanban?: boolean;
       // Company Information

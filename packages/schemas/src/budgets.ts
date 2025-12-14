@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { Client } from './clients';
 import { Tag } from './tags';
 
-export const budgetStatusSchema = z.enum(['DRAFT', 'SENT', 'REJECTED', 'ACCEPTED', 'INACTIVE']);
+export const budgetStatusSchema = z.enum(['DRAFT', 'SENT', 'REJECTED', 'ACCEPTED', 'DONE', 'INACTIVE']);
 
 export const discountTypeSchema = z.enum(['PERCENT', 'VALUE']);
 
@@ -54,6 +54,7 @@ export const budgetStatusLabel: Record<BudgetStatus, string> = {
   SENT: 'Enviado',
   REJECTED: 'Rejeitado',
   ACCEPTED: 'Aprovado',
+  DONE: 'Concluído',
   INACTIVE: 'Inativo',
 };
 
@@ -62,6 +63,7 @@ export const budgetStatusColors: Record<BudgetStatus, string> = {
   SENT: '#3B82F6',
   REJECTED: '#EF4444',
   ACCEPTED: '#10B981',
+  DONE: '#6366F1',
   INACTIVE: '#f0b100',
 };
 

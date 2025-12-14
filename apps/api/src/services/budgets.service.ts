@@ -258,7 +258,7 @@ export class BudgetsService {
           total,
           ...(budgetData.status === 'ACCEPTED'
             ? { approvedAt: new Date() }
-            : budgetData.status && budgetData.status !== 'INACTIVE'
+            : budgetData.status && budgetData.status !== 'DONE'
               ? { approvedAt: null }
               : {}),
         },
@@ -344,7 +344,7 @@ export class BudgetsService {
       if (budgetData.status) {
         if (budgetData.status === 'ACCEPTED') {
           approvedAt = new Date();
-        } else if (budgetData.status !== 'INACTIVE') {
+        } else if (budgetData.status !== 'DONE') {
           approvedAt = null;
         }
       }
@@ -492,7 +492,7 @@ export class BudgetsService {
           total,
           ...(budgetData.status === 'ACCEPTED'
             ? { approvedAt: new Date() }
-            : budgetData.status && budgetData.status !== 'INACTIVE'
+            : budgetData.status && budgetData.status !== 'DONE'
               ? { approvedAt: null }
               : {}),
         },
@@ -577,7 +577,7 @@ export class BudgetsService {
       if (budgetData.status) {
         if (budgetData.status === 'ACCEPTED') {
           approvedAt = new Date();
-        } else if (budgetData.status !== 'INACTIVE') {
+        } else if (budgetData.status !== 'DONE') {
           approvedAt = null;
         }
       }
@@ -603,7 +603,7 @@ export class BudgetsService {
     let approvedAt: Date | null | undefined;
     if (status === 'ACCEPTED') {
       approvedAt = new Date();
-    } else if (status !== 'INACTIVE') {
+    } else if (status !== 'DONE') {
       approvedAt = null;
     }
 
@@ -624,7 +624,7 @@ export class BudgetsService {
     let approvedAt: Date | null | undefined;
     if (status === 'ACCEPTED') {
       approvedAt = new Date();
-    } else if (status !== 'INACTIVE') {
+    } else if (status !== 'DONE') {
       approvedAt = null;
     }
 

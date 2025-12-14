@@ -19,7 +19,7 @@ Representa o documento do orçamento.
 | `id`             | UUID            | Sim         | Chave Primária.                                                                 |
 | `code`           | String          | Sim         | Código amigável para o cliente (ex: ORC-001). Auto-incremental ou gerado.       |
 | `clientId`       | UUID            | Sim         | Chave estrangeira para a tabela de Clientes.                                    |
-| `status`         | Enum            | Sim         | Valores: `DRAFT`, `SENT`, `ACCEPTED`, `REJECTED`, `INACTIVE`. Default: `DRAFT`. |
+| `status`         | Enum            | Sim         | Valores: `DRAFT`, `SENT`, `ACCEPTED`, `REJECTED`, `DONE`. Default: `DRAFT`. |
 | `expirationDate` | DateTime        | Não         | Data de validade do orçamento.                                                  |
 | `discountType`   | Enum            | Não         | Tipo de desconto global (`PERCENT`, `VALUE`).                                   |
 | `discountValue`  | Decimal         | Não         | Valor numérico do desconto global.                                              |

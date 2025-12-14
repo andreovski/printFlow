@@ -27,7 +27,7 @@ export async function updateOrganizationController(request: FastifyRequest, repl
   const { organizationId } = request.user as { organizationId: string };
 
   const updateOrganizationBodySchema = z.object({
-    budgetAutoInactive: z.boolean().optional(),
+    budgetAutoDone: z.boolean().optional(),
     budgetAutoArchive: z.boolean().optional(),
     budgetShowTotalInKanban: z.boolean().optional(),
     // Company Information

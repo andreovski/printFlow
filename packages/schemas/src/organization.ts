@@ -31,7 +31,7 @@ export const organizationSchema = z.object({
   id: z.string(),
   name: z.string(),
   ownerId: z.string(),
-  budgetAutoInactive: z.boolean().optional(),
+  budgetAutoDone: z.boolean().optional(),
   budgetAutoArchive: z.boolean().optional(),
   budgetShowTotalInKanban: z.boolean().optional(),
   // Company Information

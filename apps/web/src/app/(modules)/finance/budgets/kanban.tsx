@@ -89,7 +89,9 @@ export const Kanban = ({ budgets }: KanbanProps) => {
     );
   }, [budgets]);
 
-  let columns = Object.entries(budgetStatusColors).map(([id, color]) => ({
+  let columns = Object.entries(budgetStatusColors)
+    .filter(([id]) => id !== 'INACTIVE') // INACTIVE está deprecated, usar DONE
+    .map(([id, color]) => ({
     id: id as BudgetStatus,
     name: budgetStatusLabel[id as BudgetStatus],
     color,

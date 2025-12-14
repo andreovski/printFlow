@@ -133,7 +133,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
 
   const attachmentsManagerRef = useRef<{ uploadFiles: (files: File[]) => void }>(null);
 
-  const isReadOnly = initialData?.status === 'SENT' || initialData?.status === 'INACTIVE';
+  const isReadOnly = initialData?.status === 'SENT' || initialData?.status === 'DONE';
 
   // Handle paste event for images
   useEffect(() => {
@@ -830,7 +830,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
             )}
 
             {initialData &&
-              (initialData.status === 'DRAFT' || initialData.status === 'INACTIVE') && (
+              (initialData.status === 'DRAFT' || initialData.status === 'DONE') && (
                 <Button
                   variant="outline"
                   type="button"

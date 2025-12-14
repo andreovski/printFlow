@@ -30,7 +30,8 @@ enum BudgetStatus {
   SENT
   ACCEPTED
   REJECTED
-  INACTIVE
+  DONE
+  INACTIVE  // @deprecated - Usar DONE. Manter temporariamente para migração.
 }
 
 enum DiscountType {
@@ -90,7 +91,7 @@ model Organization {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  budgetAutoInactive      Boolean @default(false)
+  budgetAutoDone          Boolean @default(false) @map("budgetAutoInactive")
   budgetAutoArchive       Boolean @default(false)
   budgetShowTotalInKanban Boolean @default(false)
 

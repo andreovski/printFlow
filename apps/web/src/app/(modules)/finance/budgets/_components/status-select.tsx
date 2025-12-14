@@ -14,6 +14,7 @@ export const StatusBulletColor: Record<BudgetStatus, string> = {
   SENT: 'bg-blue-500',
   ACCEPTED: 'bg-green-500',
   REJECTED: 'bg-red-500',
+  DONE: 'bg-indigo-500',
   INACTIVE: 'bg-yellow-500',
 };
 
@@ -35,7 +36,7 @@ export const StatusSelect = ({
           <Select
             value={field.value}
             onValueChange={(val) => field.onChange(val)}
-            disabled={initialStatus === 'INACTIVE'}
+            disabled={initialStatus === 'DONE'}
           >
             <SelectTrigger>
               <SelectValue
@@ -47,7 +48,9 @@ export const StatusSelect = ({
               />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(budgetStatusLabel).map(([key, value]) => {
+              {Object.entries(budgetStatusLabel)
+                .filter(([key]) => key !== 'INACTIVE') // INACTIVE está deprecated, usar DONE
+                .map(([key, value]) => {
                 return (
                   <SelectItem key={key} value={key}>
                     <span

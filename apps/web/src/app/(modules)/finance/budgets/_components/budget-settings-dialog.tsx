@@ -26,7 +26,7 @@ export function BudgetSettingsDialog({ organization }: BudgetSettingsDialogProps
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState({
-    budgetAutoInactive: organization?.budgetAutoInactive ?? false,
+    budgetAutoDone: organization?.budgetAutoDone ?? false,
     budgetAutoArchive: organization?.budgetAutoArchive ?? false,
     budgetShowTotalInKanban: organization?.budgetShowTotalInKanban ?? false,
   });
@@ -59,17 +59,17 @@ export function BudgetSettingsDialog({ organization }: BudgetSettingsDialogProps
         </DialogHeader>
         <div className="space-y-6 py-4">
           <div className="flex items-center justify-between space-x-2">
-            <Label htmlFor="auto-inactive" className="flex flex-col space-y-1">
-              <span>Inativar automaticamente</span>
+            <Label htmlFor="auto-done" className="flex flex-col space-y-1">
+              <span>Concluir automaticamente</span>
               <span className="font-normal text-sm text-muted-foreground">
-                Inativa orçamentos quando a data de vencimento ultrapassar a data atual
+                Conclui orçamentos quando a data de vencimento ultrapassar a data atual
               </span>
             </Label>
             <Switch
-              id="auto-inactive"
-              checked={settings.budgetAutoInactive}
+              id="auto-done"
+              checked={settings.budgetAutoDone}
               onCheckedChange={(checked) =>
-                setSettings((prev) => ({ ...prev, budgetAutoInactive: checked }))
+                setSettings((prev) => ({ ...prev, budgetAutoDone: checked }))
               }
             />
           </div>
@@ -78,7 +78,7 @@ export function BudgetSettingsDialog({ organization }: BudgetSettingsDialogProps
             <Label htmlFor="auto-archive" className="flex flex-col space-y-1">
               <span>Arquivar automaticamente</span>
               <span className="font-normal text-sm text-muted-foreground">
-                Arquiva orçamentos após 30 dias com status Inativo
+                Arquiva orçamentos após 30 dias com status Concluído
               </span>
             </Label>
             <Switch
