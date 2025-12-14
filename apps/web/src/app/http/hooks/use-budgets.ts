@@ -1,4 +1,3 @@
-import { Budget } from '@magic-system/schemas';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {

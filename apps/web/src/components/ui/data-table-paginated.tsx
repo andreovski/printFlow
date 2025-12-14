@@ -140,7 +140,7 @@ export function DataTablePaginated<TData, TValue>({
                 <TableRow key={index}>
                   {columns.map((_, cellIndex) => (
                     <TableCell key={cellIndex}>
-                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-9 w-full" />
                     </TableCell>
                   ))}
                 </TableRow>
