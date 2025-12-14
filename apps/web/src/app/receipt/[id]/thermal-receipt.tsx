@@ -192,6 +192,12 @@ export const ThermalReceipt = forwardRef<HTMLDivElement, ThermalReceiptProps>(
               <span>{formatCurrency(advancePayment)}</span>
             </div>
           )}
+          {budget.isPaidInFull && (
+            <div className="flex justify-between ">
+              <span className="font-semibold">Valor Pago:</span>
+              <span>{formatCurrency(budget.subtotal - advancePayment)}</span>
+            </div>
+          )}
           <div className="flex justify-between font-bold">
             <span>Saldo:</span>
             <span>{formatCurrency(balanceDue)}</span>

@@ -21,6 +21,8 @@ import {
   moveColumnController,
   fetchApprovedBudgetsController,
   toggleChecklistItemController,
+  archiveCardController,
+  getArchivedCardsController,
 } from './controllers/boards.controller';
 import {
   createBudgetController,
@@ -182,6 +184,7 @@ export async function appRoutes(app: FastifyInstance) {
     // Boards (Kanban)
     authRoutes.post('/boards', createBoardController);
     authRoutes.get('/boards', fetchBoardsController);
+    authRoutes.get('/boards/:boardId/archived-cards', getArchivedCardsController);
     authRoutes.get('/boards/approved-budgets', fetchApprovedBudgetsController);
     authRoutes.post('/columns', createColumnController);
     authRoutes.delete('/columns/:columnId', deleteColumnController);
@@ -190,6 +193,7 @@ export async function appRoutes(app: FastifyInstance) {
     authRoutes.patch('/cards/move', moveCardController);
     authRoutes.put('/cards/:id', updateCardController);
     authRoutes.delete('/cards/:id', deleteCardController);
+    authRoutes.patch('/cards/:id/archive', archiveCardController);
     authRoutes.patch('/cards/:cardId/checklist/:itemId/toggle', toggleChecklistItemController);
 
     // Etiquetas

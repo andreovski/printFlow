@@ -17,6 +17,8 @@ import {
   moveCard,
   moveColumn,
   updateCard,
+  archiveCard,
+  fetchArchivedCards,
 } from '@/app/http/requests/boards';
 
 export function useBoards({ enabled = true }: { enabled?: boolean } = {}) {
@@ -182,6 +184,29 @@ export function useMoveCard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['boards'] });
     },
+  });
+}
+
+export function useArchiveCard() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, isArchived }: { id: string; isArchived: boolean }) =>
+      archiveCard(id, isArchived),
+    onSuccess: () => {
+      // Invalidate boards to refresh the main kanban view (removes archived cards)
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+      // Invalidate archived-cards to refresh the archived dialog (adds/removes cards)
+      queryClient.invalidateQueries({ queryKey: ['archived-cards'] });
+    },
+  });
+}
+
+export function useArchivedCards(boardId: string, enabled: boolean = false) {
+  return useQuery({
+    queryKey: ['archived-cards', boardId],
+    queryFn: () => fetchArchivedCards(boardId),
+    enabled,
   });
 }
 

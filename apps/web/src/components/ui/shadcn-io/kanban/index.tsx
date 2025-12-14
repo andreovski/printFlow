@@ -121,6 +121,7 @@ export type KanbanCardProps<T extends KanbanItemProps = KanbanItemProps> = T & {
   children?: ReactNode;
   className?: string;
   onClick?: () => void;
+  disabledGrabbing?: boolean;
 };
 
 export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
@@ -129,6 +130,7 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
   children,
   className,
   onClick,
+  disabledGrabbing,
 }: KanbanCardProps<T>) => {
   const { activeCardId, isReorderMode } = useContext(KanbanContext) as KanbanContextProps;
 
@@ -160,7 +162,7 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
               {children ?? <p className="m-0 font-medium text-sm">{name}</p>}
             </div>
 
-            {!isReorderMode && (
+            {!isReorderMode && !disabledGrabbing && (
               <div
                 {...listeners}
                 className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors absolute right-2 top-2 shrink-0 bg-background/50 rounded-full p-0.5"

@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Trash2, ArrowUpDown, GripVertical } from 'lucide-react';
+import { Plus, Trash2, ArrowUpDown, GripVertical, Archive } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -30,6 +30,7 @@ import { useDisclosure } from '@/hooks/use-disclosure';
 import { cn } from '@/lib/utils';
 
 import { CreateCardDialog } from '../create/create-card-dialog';
+import { ArchivedCardsDialog } from './archived-cards-dialog';
 import { CreateColumnDialog } from './create-column-dialog';
 import { ProductionKanbanCard } from './kanban-card';
 
@@ -69,6 +70,8 @@ export function KanbanView({
   );
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [isReorderMode, setIsReorderMode] = useState(false);
+
+  const archiveDialog = useDisclosure();
 
   const dialogDelete = useDisclosure();
   const moveCardMutation = useMoveCard();
@@ -200,16 +203,16 @@ export function KanbanView({
               // Hook calls invalidateQueries
             }}
           >
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="default">
               <Plus className="md:mr-2 h-4 w-4" />
               <p className="hidden md:block">Nova Coluna</p>
             </Button>
           </CreateColumnDialog>
           <Button
             variant={isReorderMode ? 'default' : 'outline'}
-            size="sm"
+            size="default"
             onClick={() => setIsReorderMode(!isReorderMode)}
-            className="transition-all duration-300 hover:scale-105 active:scale-95"
+            className="transition-all duration-300 hover:scale-105 active:scale-95 group"
           >
             <ArrowUpDown
               className={cn(
@@ -220,6 +223,15 @@ export function KanbanView({
             <p className="hidden md:block">
               {isReorderMode ? 'Ordenar Cartões' : 'Ordenar Colunas'}
             </p>
+          </Button>
+          <Button
+            variant="outline"
+            size="default"
+            onClick={() => archiveDialog.open()}
+            className="transition-all duration-300 hover:scale-105 active:scale-95"
+          >
+            <Archive className="md:mr-2 h-4 w-4" />
+            <p className="hidden md:block">Ver Arquivados</p>
           </Button>
         </div>
       </div>
@@ -310,6 +322,14 @@ export function KanbanView({
           )}
         </KanbanProvider>
       </div>
+
+      <ArchivedCardsDialog
+        boardId={selectedBoard.id}
+        open={archiveDialog.isOpen}
+        onOpenChange={() => archiveDialog.toggle()}
+        onCardUpdated={() => {}}
+        onCardDeleted={() => {}}
+      />
 
       <DialogAction
         open={dialogDelete.isOpen}

@@ -69,6 +69,9 @@ export class BoardsRepository {
         columns: {
           include: {
             cards: {
+              where: {
+                isArchived: false,
+              },
               include: cardInclude,
               orderBy: {
                 position: 'asc',
@@ -366,6 +369,21 @@ export class BoardsRepository {
       where: { id: itemId },
       data: {
         isCompleted: !item.isCompleted,
+      },
+    });
+  }
+
+  async findArchivedCardsByBoardId(boardId: string): Promise<Card[]> {
+    return await prisma.card.findMany({
+      where: {
+        column: {
+          boardId,
+        },
+        isArchived: true,
+      },
+      include: cardInclude,
+      orderBy: {
+        updatedAt: 'desc',
       },
     });
   }

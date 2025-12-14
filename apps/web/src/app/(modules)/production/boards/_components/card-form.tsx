@@ -8,7 +8,15 @@ import {
   Template,
 } from '@magic-system/schemas';
 import { useCurrentEditor } from '@tiptap/react';
-import { ExternalLink, FileIcon, ImageIcon, Paperclip, Trash } from 'lucide-react';
+import {
+  Archive,
+  ArchiveRestore,
+  ExternalLink,
+  FileIcon,
+  ImageIcon,
+  Paperclip,
+  Trash,
+} from 'lucide-react';
 import * as React from 'react';
 import { useForm, type Path } from 'react-hook-form';
 import { z } from 'zod';
@@ -64,6 +72,7 @@ interface CardFormProps<T extends z.ZodType<any, any>> {
   onSubmit: (data: z.infer<T>) => Promise<void>;
   onCancel: () => void;
   onDelete?: () => void;
+  onArchive?: (isArchived: boolean) => void;
   submitLabel?: string;
   /**
    * Modo do formulário: 'create' permite vincular orçamento, 'edit' exibe como readonly.
@@ -78,6 +87,10 @@ interface CardFormProps<T extends z.ZodType<any, any>> {
    * Dados do orçamento vinculado (para exibição no modo edit).
    */
   linkedBudget?: CardBudget | null;
+  /**
+   * Estado de arquivamento do card
+   */
+  isArchived?: boolean;
 }
 
 interface ChecklistItemInput {
@@ -92,10 +105,12 @@ export function CardForm<T extends z.ZodType<any, any>>({
   onSubmit,
   onCancel,
   onDelete,
+  onArchive,
   submitLabel = 'Salvar',
   mode,
   cardId,
   linkedBudget,
+  isArchived = false,
 }: CardFormProps<T>) {
   const form = useForm<z.infer<T>>({
     resolver: zodResolver(schema),
@@ -426,26 +441,47 @@ export function CardForm<T extends z.ZodType<any, any>>({
           )}
         </CardContent>
 
-        <CardFooter className="flex gap-2 sticky bottom-0 right-0 justify-end p-2 bg-background/35 backdrop-blur-sm border-t">
-          {onDelete && (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={onDelete}
-              className="hover:bg-destructive hover:text-white"
-              title="Excluir cartão"
-              disabled={isUploading}
-            >
-              <Trash className="h-4 w-4" />
+        <CardFooter className="flex gap-2 sticky bottom-0 right-0 justify-between p-2 bg-background/35 backdrop-blur-sm border-t">
+          <div className="flex gap-2">
+            {onDelete && (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={onDelete}
+                className="hover:bg-destructive hover:text-white"
+                title="Excluir cartão"
+                disabled={isUploading}
+              >
+                <Trash className="h-4 w-4" />
+              </Button>
+            )}
+            {mode === 'edit' && onArchive && (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => onArchive(!isArchived)}
+                className="hover:bg-orange-500 hover:text-white"
+                title={isArchived ? 'Desarquivar cartão' : 'Arquivar cartão'}
+                disabled={isUploading}
+              >
+                {isArchived ? (
+                  <ArchiveRestore className="h-4 w-4" />
+                ) : (
+                  <Archive className="h-4 w-4" />
+                )}
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isUploading}>
+              Cancelar
             </Button>
-          )}
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isUploading}>
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isUploading}>
-            {submitLabel}
-          </Button>
+            <Button type="submit" disabled={isUploading}>
+              {submitLabel}
+            </Button>
+          </div>
         </CardFooter>
       </form>
     </Form>

@@ -260,6 +260,12 @@ export const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(
               <span className="font-semibold">Entrada (Sinal):</span>
               <span>{formatCurrency(advancePayment)}</span>
             </div>
+            {budget.isPaidInFull && (
+              <div className="flex justify-between text-green-600">
+                <span className="font-semibold">Valor Pago:</span>
+                <span>{formatCurrency(budget.subtotal - advancePayment)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-lg font-bold">
               <span>Saldo Devedor:</span>
               <span>{formatCurrency(balanceDue)}</span>

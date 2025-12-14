@@ -9,6 +9,7 @@ import {
   moveColumnBodySchema,
   updateCardBodySchema,
   approvedBudgetOptionsQuerySchema,
+  archiveCardBodySchema,
 } from '@magic-system/schemas';
 import { FastifyReply, FastifyRequest } from 'fastify';
 
@@ -162,4 +163,21 @@ export async function toggleChecklistItemController(request: FastifyRequest, rep
     }
     throw error;
   }
+}
+
+export async function archiveCardController(request: FastifyRequest, reply: FastifyReply) {
+  const { id } = cardIdParamsSchema.parse(request.params);
+  const { isArchived } = archiveCardBodySchema.parse(request.body);
+
+  const card = await boardsService.archiveCard(id, isArchived);
+
+  return reply.status(200).send(card);
+}
+
+export async function getArchivedCardsController(request: FastifyRequest, reply: FastifyReply) {
+  const { boardId } = request.params as { boardId: string };
+
+  const cards = await boardsService.getArchivedCards(boardId);
+
+  return reply.status(200).send(cards);
 }

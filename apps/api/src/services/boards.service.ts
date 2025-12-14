@@ -224,6 +224,11 @@ export class BoardsService {
     await boardsRepository.deleteCard(id);
   }
 
+  async archiveCard(id: string, isArchived: boolean): Promise<Card> {
+    const card = await boardsRepository.updateCard(id, { isArchived });
+    return card as unknown as Card;
+  }
+
   /**
    * Retorna orçamentos aprovados para seleção no vínculo com card.
    * Filtra apenas orçamentos com status ACCEPTED da organização.
@@ -249,5 +254,13 @@ export class BoardsService {
 
     const updatedItem = await boardsRepository.toggleChecklistItem(itemId);
     return updatedItem as unknown as ChecklistItem;
+  }
+
+  /**
+   * Retorna cards arquivados de um board específico.
+   */
+  async getArchivedCards(boardId: string): Promise<Card[]> {
+    const cards = await boardsRepository.findArchivedCardsByBoardId(boardId);
+    return cards as unknown as Card[];
   }
 }

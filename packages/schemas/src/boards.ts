@@ -71,11 +71,16 @@ export const checklistItemToggleParamsSchema = z.object({
   itemId: z.string().uuid(),
 });
 
+export const archiveCardBodySchema = z.object({
+  isArchived: z.boolean(),
+});
+
 // Types
 export type CreateCardBody = z.infer<typeof createCardBodySchema>;
 export type UpdateCardBody = z.infer<typeof updateCardBodySchema>;
 export type MoveCardBody = z.infer<typeof moveCardBodySchema>;
 export type MoveColumnBody = z.infer<typeof moveColumnBodySchema>;
+export type ArchiveCardBody = z.infer<typeof archiveCardBodySchema>;
 export type CreateBoardBody = z.infer<typeof createBoardBodySchema>;
 export type CreateColumnBody = z.infer<typeof createColumnBodySchema>;
 export type CardIdParams = z.infer<typeof cardIdParamsSchema>;
@@ -121,6 +126,7 @@ export interface Card {
   position: number;
   priority: CardPriority | null;
   dueDate?: string;
+  isArchived: boolean;
   columnId: string;
   budgetId?: string | null;
   budget?: CardBudget | null;

@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { useDeleteCard, useUpdateCard } from '@/app/http/hooks/use-boards';
+import { useArchiveCard, useDeleteCard, useUpdateCard } from '@/app/http/hooks/use-boards';
 import { DialogAction } from '@/components/dialog-action';
 import { ResponsiveDrawer } from '@/components/responsive-drawer';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,7 @@ export function EditCardDialog({
   const deleteDialog = useDisclosure();
   const updateCardMutation = useUpdateCard();
   const deleteCardMutation = useDeleteCard();
+  const archiveCardMutation = useArchiveCard();
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -56,6 +57,20 @@ export function EditCardDialog({
     } catch (error) {
       console.error(error);
       toast.error('Erro ao excluir cartão');
+    }
+  };
+
+  const handleArchive = async (isArchived: boolean) => {
+    try {
+      await archiveCardMutation.mutateAsync({ id: card.id, isArchived });
+      toast.success(
+        isArchived ? 'Cartão arquivado com sucesso' : 'Cartão desarquivado com sucesso'
+      );
+      setOpen(false);
+      // Query invalidation will automatically update the UI
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao arquivar cartão');
     }
   };
 
@@ -85,10 +100,12 @@ export function EditCardDialog({
           onSubmit={onSubmit}
           onCancel={() => setOpen(false)}
           onDelete={() => deleteDialog.open()}
+          onArchive={handleArchive}
           submitLabel="Salvar"
           mode="edit"
           cardId={card.id}
           linkedBudget={(card as any).budget || null}
+          isArchived={card.isArchived}
         />
       </ResponsiveDrawer>
 

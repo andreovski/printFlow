@@ -216,7 +216,7 @@ export function BudgetSelect({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[400px] p-0" align="start">
-          <Command>
+          <Command shouldFilter={false}>
             <CommandInput
               placeholder="Buscar por cliente, telefone ou código..."
               onValueChange={setSearch}

@@ -92,3 +92,13 @@ export async function toggleChecklistItem(cardId: string, itemId: string): Promi
   const response = await api.patch(`cards/${cardId}/checklist/${itemId}/toggle`, { json: {} });
   return response.json();
 }
+
+export async function archiveCard(id: string, isArchived: boolean): Promise<Card> {
+  const response = await api.patch(`cards/${id}/archive`, { json: { isArchived } });
+  return response.json();
+}
+
+export async function fetchArchivedCards(boardId: string): Promise<Card[]> {
+  const response = await api.get(`boards/${boardId}/archived-cards`);
+  return response.json();
+}
