@@ -22,14 +22,14 @@ import { BoardsService } from '@/services/boards.service';
 const boardsService = new BoardsService();
 
 export async function createBoardController(request: FastifyRequest, reply: FastifyReply) {
-  const { title, description } = createBoardBodySchema.parse(request.body);
+  const { title, description, columns } = createBoardBodySchema.parse(request.body);
   const organizationId = request.user.organizationId;
 
   if (!organizationId) {
     return reply.status(400).send({ message: 'Organization ID is required' });
   }
 
-  const board = await boardsService.createBoard(organizationId, { title, description });
+  const board = await boardsService.createBoard(organizationId, { title, description, columns });
 
   return reply.status(201).send(board);
 }

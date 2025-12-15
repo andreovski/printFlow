@@ -263,7 +263,7 @@ export function BoardManagementModal({
         </CardDescription>
       </CardContent>
 
-      <CardFooter className="flex items-center justify-between border-t py-2 px-4 h-[50px]">
+      <CardFooter className="flex items-center justify-between border-t py-2 px-4 h-[45px]">
         <div className="flex gap-4 text-sm text-muted-foreground" title="Total de colunas">
           <div className="flex items-center gap-1">
             <Kanban className="h-4 w-4" />
@@ -319,7 +319,7 @@ export function BoardManagementModal({
 
     return (
       <div className="flex items-center justify-between mt-6">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground w-full">
           Mostrando {activeBoards.length} de {data.meta.total} quadros
         </p>
         <Pagination>
@@ -364,7 +364,7 @@ export function BoardManagementModal({
   };
 
   const renderListView = () => (
-    <div className="flex flex-col h-full p-4 min-h-[520px]">
+    <div className="flex flex-col h-full px-4 py-2 min-h-[520px]">
       <div className="px-1">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -389,7 +389,7 @@ export function BoardManagementModal({
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {activeBoards.map((board) => renderBoardCard(board))}
 
                   {/* Create new board card */}
@@ -398,7 +398,7 @@ export function BoardManagementModal({
                       handleGoToBoard(newBoard.id);
                     }}
                   >
-                    <Card className="flex flex-col items-center justify-center h-full min-h-[180px] border-dashed cursor-pointer transition-all hover:border-primary hover:bg-muted/50">
+                    <Card className="flex flex-col items-center justify-center h-full min-h-[160px] border-dashed cursor-pointer transition-all hover:border-primary hover:bg-muted/50">
                       <Plus className="h-8 w-8 text-muted-foreground mb-2" />
                       <p className="font-medium">Criar novo quadro</p>
                       <p className="text-sm text-muted-foreground">

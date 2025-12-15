@@ -12,13 +12,7 @@ import {
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import {
-  useBoards,
-  useDeleteBoard,
-  useDeleteColumn,
-  useMoveCard,
-  useMoveColumn,
-} from '@/app/http/hooks/use-boards';
+import { useBoards, useDeleteBoard, useMoveCard, useMoveColumn } from '@/app/http/hooks/use-boards';
 import { Board, Card as ApiCard } from '@/app/http/requests/boards';
 import { DialogAction } from '@/components/dialog-action';
 import { Button } from '@/components/ui/button';
@@ -95,9 +89,7 @@ export function KanbanView({
   const { user } = useAppContext();
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'MASTER';
 
-  const dialogDelete = useDisclosure();
   const moveCardMutation = useMoveCard();
-  const deleteColumnMutation = useDeleteColumn();
   const deleteBoardMutation = useDeleteBoard();
   const moveColumnMutation = useMoveColumn();
 
@@ -161,18 +153,6 @@ export function KanbanView({
     }
   };
 
-  const handleDeleteColumn = async (columnId: string) => {
-    try {
-      await deleteColumnMutation.mutateAsync(columnId);
-      // Optimistic update
-      setColumns((prev) => prev.filter((c) => c.id !== columnId));
-      toast.success('Coluna excluída com sucesso');
-    } catch (error) {
-      console.error(error);
-      toast.error('Erro ao excluir coluna. Verifique se ela não possui cartões.');
-    }
-  };
-
   const handleDeleteBoard = async () => {
     try {
       await deleteBoardMutation.mutateAsync(selectedBoard.id);
@@ -214,11 +194,11 @@ export function KanbanView({
 
   return (
     <div className="h-full flex flex-col p-6">
-      <div className="flex flex-col gap-8 mb-2">
+      <div className="flex flex-col gap-4 mb-2">
         <h1 className="text-3xl font-bold tracking-tight">Quadros</h1>
-        <div className="flex items-center gap-3 px-1">
+        <div className="flex items-center gap-3 px-1 relative">
           <Select value={selectedBoard.id} onValueChange={onBoardChange}>
-            <SelectTrigger className="w-[280px]">
+            <SelectTrigger className="w-[280px] ml-11 rounded-l-none focus:transparent">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -230,7 +210,12 @@ export function KanbanView({
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="default" onClick={() => managementModal.open()}>
+          <Button
+            variant="outline"
+            size="default"
+            onClick={() => managementModal.open()}
+            className="absolute left-0 rounded-r-none"
+          >
             <Settings2 className="h-4 w-4" />
           </Button>
 
@@ -328,14 +313,6 @@ export function KanbanView({
                     isReorderMode && 'hidden'
                   )}
                 >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                    onClick={() => dialogDelete.open({ state: column.id })}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
                   <CreateCardDialog
                     columnId={column.id}
                     onCardCreated={(newCard: ApiCard) => {
@@ -384,22 +361,6 @@ export function KanbanView({
         onOpenChange={() => archiveDialog.toggle()}
         onCardUpdated={() => {}}
         onCardDeleted={() => {}}
-      />
-
-      <DialogAction
-        open={dialogDelete.isOpen}
-        onRefuse={dialogDelete.close}
-        title="Excluir coluna"
-        subtitle="Tem certeza que deseja excluir esta coluna?"
-        confirmButton={
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => [handleDeleteColumn(dialogDelete.state), dialogDelete.close()]}
-          >
-            Excluir
-          </Button>
-        }
       />
 
       <DialogAction
