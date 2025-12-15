@@ -11,6 +11,7 @@ export default function CreateTemplatePage() {
       description="Preencha os dados abaixo para criar um novo template."
       className="max-w-[600px] md:w-[50vw]"
       headerIcon={<FileText className="w-5 h-5" />}
+      redirectTo="/settings/templates"
     >
       <TemplateForm />
     </ResponsiveDrawer>

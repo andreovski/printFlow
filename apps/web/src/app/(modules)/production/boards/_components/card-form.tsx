@@ -11,6 +11,7 @@ import { useCurrentEditor } from '@tiptap/react';
 import {
   Archive,
   ArchiveRestore,
+  ArrowRightLeft,
   ExternalLink,
   FileIcon,
   ImageIcon,
@@ -91,6 +92,14 @@ interface CardFormProps<T extends z.ZodType<any, any>> {
    * Estado de arquivamento do card
    */
   isArchived?: boolean;
+  /**
+   * ID do board atual (para operações de transferência)
+   */
+  boardId?: string;
+  /**
+   * Handler para transferir o card para outro board
+   */
+  onTransfer?: () => void;
 }
 
 interface ChecklistItemInput {
@@ -111,6 +120,8 @@ export function CardForm<T extends z.ZodType<any, any>>({
   cardId,
   linkedBudget,
   isArchived = false,
+  boardId,
+  onTransfer,
 }: CardFormProps<T>) {
   const form = useForm<z.infer<T>>({
     resolver: zodResolver(schema),
@@ -471,6 +482,19 @@ export function CardForm<T extends z.ZodType<any, any>>({
                 ) : (
                   <Archive className="h-4 w-4" />
                 )}
+              </Button>
+            )}
+            {mode === 'edit' && onTransfer && boardId && (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={onTransfer}
+                className="hover:bg-blue-500 hover:text-white"
+                title="Transferir cartão para outro quadro"
+                disabled={isUploading || isArchived}
+              >
+                <ArrowRightLeft className="h-4 w-4" />
               </Button>
             )}
           </div>

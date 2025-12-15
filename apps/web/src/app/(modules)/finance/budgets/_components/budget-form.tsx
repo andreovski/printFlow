@@ -16,6 +16,13 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import {
+  useCreateBudget,
+  useUpdateBudget,
+  useDeleteBudget,
+  useArchiveBudget,
+  useDuplicateBudget,
+} from '@/app/http/hooks/use-budgets';
 import { AttachmentsManager } from '@/components/attachments-manager';
 import { DialogAction } from '@/components/dialog-action';
 import { TagSelect } from '@/components/tag-select';
@@ -45,13 +52,6 @@ import {
 import { useAppContext } from '@/hooks/use-app-context';
 import { useDisclosure } from '@/hooks/use-disclosure';
 
-import {
-  createBudgetAction,
-  updateBudgetAction,
-  deleteBudgetAction,
-  duplicateBudgetAction,
-  archiveBudgetAction,
-} from '../actions';
 import { ClientSelect } from './client-select';
 import { GenerateLinkButton } from './generate-link-button';
 import { ProductSelect } from './product-select';
@@ -116,8 +116,20 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
   const router = useRouter();
   const { user } = useAppContext();
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'MASTER';
-  const [isPending, setIsPending] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  const createBudgetMutation = useCreateBudget();
+  const updateBudgetMutation = useUpdateBudget();
+  const deleteBudgetMutation = useDeleteBudget();
+  const archiveBudgetMutation = useArchiveBudget();
+  const duplicateBudgetMutation = useDuplicateBudget();
+
+  const isPending =
+    createBudgetMutation.isPending ||
+    updateBudgetMutation.isPending ||
+    deleteBudgetMutation.isPending ||
+    archiveBudgetMutation.isPending ||
+    duplicateBudgetMutation.isPending;
 
   const deleteDialog = useDisclosure();
   const duplicateDialog = useDisclosure();
@@ -274,10 +286,14 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
   const total = isPaidInFull ? 0 : subtotal - (advancePayment || 0);
 
   const onSubmit = async (data: FormData) => {
-    setIsPending(true);
     try {
+      const payload = {
+        ...data,
+        expirationDate: data.expirationDate ? new Date(data.expirationDate) : null,
+      };
+
       if (initialData) {
-        await updateBudgetAction(initialData.id, data);
+        await updateBudgetMutation.mutateAsync({ id: initialData.id, ...payload });
         toast.success('Orçamento atualizado com sucesso');
 
         if (initialData.status !== 'ACCEPTED' && data.status === 'ACCEPTED') {
@@ -286,7 +302,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
           });
         }
       } else {
-        await createBudgetAction(data);
+        await createBudgetMutation.mutateAsync(payload);
         toast.success('Orçamento criado com sucesso');
       }
       if (onSuccess) {
@@ -297,15 +313,12 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
     } catch (error: any) {
       toast.error(error.message || 'Erro ao salvar orçamento');
       console.error(error);
-    } finally {
-      setIsPending(false);
     }
   };
 
   const handleDelete = async () => {
-    setIsPending(true);
     try {
-      await deleteBudgetAction(initialData.id);
+      await deleteBudgetMutation.mutateAsync(initialData.id);
 
       if (initialData.status === 'ACCEPTED') {
         queryClient.invalidateQueries({
@@ -315,17 +328,13 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
 
       toast.success('Orçamento excluído com sucesso');
       router.push('/finance/budgets');
-      router.refresh();
     } catch (error: any) {
       toast.error(error.message || 'Erro ao excluir orçamento');
       console.error(error);
-    } finally {
-      setIsPending(false);
     }
   };
 
   const handleDuplicate = async () => {
-    setIsPending(true);
     try {
       const duplicateData = {
         clientId: initialData.clientId,
@@ -348,14 +357,12 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
           total: Number(i.total),
         })),
       };
-      await duplicateBudgetAction(duplicateData);
+      await duplicateBudgetMutation.mutateAsync(duplicateData);
       toast.success('Orçamento duplicado com sucesso');
       router.back();
     } catch (error: any) {
       toast.error(error.message || 'Erro ao copiar orçamento');
       console.error(error);
-    } finally {
-      setIsPending(false);
     }
   };
 
@@ -377,7 +384,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
 
   const handleArchive = async () => {
     try {
-      await archiveBudgetAction(initialData.id);
+      await archiveBudgetMutation.mutateAsync(initialData.id);
       toast.success('Orçamento arquivado com sucesso');
       router.back();
     } catch (error: any) {
@@ -829,19 +836,18 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
               </Button>
             )}
 
-            {initialData &&
-              (initialData.status === 'DRAFT' || initialData.status === 'DONE') && (
-                <Button
-                  variant="outline"
-                  type="button"
-                  onClick={() => deleteDialog.open()}
-                  disabled={isPending || isUploading}
-                  title="Excluir orçamento"
-                  className="hover:bg-destructive hover:text-white"
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
-              )}
+            {initialData && (initialData.status === 'DRAFT' || initialData.status === 'DONE') && (
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => deleteDialog.open()}
+                disabled={isPending || isUploading}
+                title="Excluir orçamento"
+                className="hover:bg-destructive hover:text-white"
+              >
+                <Trash className="h-4 w-4" />
+              </Button>
+            )}
 
             <Button type="submit" disabled={isPending || isUploading}>
               {isPending ? 'Salvando...' : 'Salvar'}

@@ -7,6 +7,7 @@ export default function CreateUserPage() {
     <ResponsiveDrawer
       title="Criar Acesso"
       description="Preencha os dados abaixo para criar um novo acesso."
+      redirectTo="/register/accesses"
     >
       <CreateUserForm />
     </ResponsiveDrawer>

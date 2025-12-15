@@ -11,6 +11,7 @@ export default function CreateClientPage() {
       description="Preencha os dados abaixo para criar um novo cliente."
       className="max-w-[900px] md:w-[60vw]"
       headerIcon={<UserRoundPlus />}
+      redirectTo="/register/clients"
     >
       <ClientForm />
     </ResponsiveDrawer>

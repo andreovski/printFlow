@@ -39,6 +39,7 @@ export default async function UpdateProductPage({ params }: { params: Promise<{ 
       description="Atualize os dados do produto abaixo."
       className="max-w-[900px] md:w-[60vw]"
       headerIcon={<PencilRuler className="w-5 h-5" />}
+      redirectTo="/register/products"
     >
       <ProductForm id={id} initialData={product} />
     </ResponsiveDrawer>

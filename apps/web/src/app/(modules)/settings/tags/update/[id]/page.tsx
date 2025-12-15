@@ -37,6 +37,7 @@ export default async function UpdateTagPage({ params }: { params: Promise<{ id: 
       description="Atualize os dados da tag abaixo."
       className="max-w-[600px] md:w-[50vw]"
       headerIcon={<PencilRuler className="w-5 h-5" />}
+      redirectTo="/settings/tags"
     >
       <TagForm id={id} initialData={tag} />
     </ResponsiveDrawer>

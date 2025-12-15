@@ -27,7 +27,11 @@ export default async function UpdateUserPage({ params }: { params: Promise<{ id:
   const user = await getUser(id);
 
   return (
-    <ResponsiveDrawer title="Atualizar Acesso" description="Atualize os dados do acesso abaixo.">
+    <ResponsiveDrawer
+      title="Atualizar Acesso"
+      description="Atualize os dados do acesso abaixo."
+      redirectTo="/register/accesses"
+    >
       <UpdateUserForm id={id} initialData={user} />
     </ResponsiveDrawer>
   );

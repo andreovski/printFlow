@@ -171,7 +171,8 @@ export function ClientForm({ id, initialData, onSuccess }: ClientFormProps) {
     } else if (state?.message) {
       toast.error(state.message);
     }
-  }, [state, router, onSuccess, invalidateClients]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   return (
     <>

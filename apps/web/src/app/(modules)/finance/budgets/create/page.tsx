@@ -11,6 +11,7 @@ export default function CreateBudgetPage() {
       description="Crie um novo orçamento para um cliente."
       className="max-w-[1200px] md:w-[80vw]"
       headerIcon={<FilePlus />}
+      redirectTo="/finance/budgets"
     >
       <BudgetForm />
     </ResponsiveDrawer>

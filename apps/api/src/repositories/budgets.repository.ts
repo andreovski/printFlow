@@ -408,6 +408,7 @@ export class BudgetsRepository {
         organizationId,
         deletedAt: null,
         status: 'ACCEPTED',
+        archived: false,
         ...(search && {
           OR: [
             { client: { name: { contains: search, mode: 'insensitive' } } },
@@ -456,7 +457,7 @@ export class BudgetsRepository {
       orderBy: {
         code: 'desc',
       },
-      take: 50, // Limita a 50 resultados para performance
+      take: 10,
     });
 
     return budgets.map((budget) => ({

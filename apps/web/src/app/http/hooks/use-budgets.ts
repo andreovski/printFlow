@@ -89,3 +89,29 @@ export function useArchiveBudget() {
     },
   });
 }
+
+export function useDuplicateBudget() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: any) => {
+      const payload = {
+        ...data,
+        expirationDate: data.expirationDate ? new Date(data.expirationDate) : null,
+        status: 'DRAFT',
+        items: data.items.map((i: any) => ({
+          productId: i.productId,
+          quantity: i.quantity,
+          width: i.width || null,
+          height: i.height || null,
+          discountType: i.discountType || null,
+          discountValue: i.discountValue || null,
+        })),
+      };
+      return createBudget(payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+    },
+  });
+}

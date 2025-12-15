@@ -38,6 +38,7 @@ export default async function UpdateTemplatePage({ params }: { params: Promise<{
       description="Atualize os dados do template abaixo."
       className="max-w-[600px] md:w-[50vw]"
       headerIcon={<PencilRuler className="w-5 h-5" />}
+      redirectTo="/settings/templates"
     >
       <TemplateForm id={id} initialData={template} />
     </ResponsiveDrawer>

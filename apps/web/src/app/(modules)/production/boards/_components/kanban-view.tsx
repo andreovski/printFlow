@@ -9,7 +9,7 @@ import {
   MoreVertical,
   Settings2,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useBoards, useDeleteBoard, useMoveCard, useMoveColumn } from '@/app/http/hooks/use-boards';
@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/shadcn-io/kanban';
 import { useAppContext } from '@/hooks/use-app-context';
 import { useDisclosure } from '@/hooks/use-disclosure';
+import { useHorizontalScroll } from '@/hooks/use-horizontal-scroll';
 import { cn } from '@/lib/utils';
 
 import { CreateCardDialog } from '../create/create-card-dialog';
@@ -58,8 +59,11 @@ export function KanbanView({
 }: KanbanViewProps) {
   const { data: boards = initialBoards } = useBoards({ enabled: true });
 
-  const selectedBoard =
-    boards.find((b) => b.id === initialSelectedBoard.id) || initialSelectedBoard;
+  // Memoize selectedBoard para evitar recalculos desnecessários
+  const selectedBoard = useMemo(
+    () => boards.find((b) => b.id === initialSelectedBoard.id) || initialSelectedBoard,
+    [boards, initialSelectedBoard]
+  );
 
   const [columns, setColumns] = useState(
     (selectedBoard.columns || [])
@@ -87,7 +91,7 @@ export function KanbanView({
   const managementModal = useDisclosure();
 
   const { user } = useAppContext();
-  const isAdmin = user?.role === 'ADMIN' || user?.role === 'MASTER';
+  const isAdmin = useMemo(() => user?.role === 'ADMIN' || user?.role === 'MASTER', [user?.role]);
 
   const moveCardMutation = useMoveCard();
   const deleteBoardMutation = useDeleteBoard();
@@ -113,47 +117,50 @@ export function KanbanView({
     setCards(newCards);
   }, [selectedBoard]);
 
-  const onDragStart = (event: any) => {
+  const onDragStart = useCallback((event: any) => {
     setActiveDragId(event.active.id);
-  };
+  }, []);
 
-  const onDataChange = async (newData: typeof cards) => {
-    const movedCard = newData.find((c) => c.id === activeDragId);
-    if (!movedCard || !activeDragId) {
-      setCards(newData);
-      return;
-    }
-
-    const oldCard = cards.find((c) => c.id === activeDragId);
-
-    setCards(newData);
-    setActiveDragId(null);
-
-    const destinationColumnId = movedCard.column;
-    const cardsInDestColumn = newData.filter((c) => c.column === destinationColumnId);
-    const newPosition = cardsInDestColumn.findIndex((c) => c.id === activeDragId);
-
-    if (
-      oldCard &&
-      (oldCard.column !== destinationColumnId ||
-        cards.findIndex((c) => c.id === activeDragId) !==
-          newData.findIndex((c) => c.id === activeDragId))
-    ) {
-      try {
-        await moveCardMutation.mutateAsync({
-          cardId: activeDragId,
-          destinationColumnId,
-          newPosition,
-        });
-      } catch (error) {
-        toast.error('Erro ao mover cartão');
-        console.error(error);
-        setCards(cards); // Revert to 'cards' (the old state captured in closure)
+  const onDataChange = useCallback(
+    async (newData: typeof cards) => {
+      const movedCard = newData.find((c) => c.id === activeDragId);
+      if (!movedCard || !activeDragId) {
+        setCards(newData);
+        return;
       }
-    }
-  };
 
-  const handleDeleteBoard = async () => {
+      const oldCard = cards.find((c) => c.id === activeDragId);
+
+      setCards(newData);
+      setActiveDragId(null);
+
+      const destinationColumnId = movedCard.column;
+      const cardsInDestColumn = newData.filter((c) => c.column === destinationColumnId);
+      const newPosition = cardsInDestColumn.findIndex((c) => c.id === activeDragId);
+
+      if (
+        oldCard &&
+        (oldCard.column !== destinationColumnId ||
+          cards.findIndex((c) => c.id === activeDragId) !==
+            newData.findIndex((c) => c.id === activeDragId))
+      ) {
+        try {
+          await moveCardMutation.mutateAsync({
+            cardId: activeDragId,
+            destinationColumnId,
+            newPosition,
+          });
+        } catch (error) {
+          toast.error('Erro ao mover cartão');
+          console.error(error);
+          setCards(cards); // Revert to 'cards' (the old state captured in closure)
+        }
+      }
+    },
+    [activeDragId, cards, moveCardMutation]
+  );
+
+  const handleDeleteBoard = useCallback(async () => {
     try {
       await deleteBoardMutation.mutateAsync(selectedBoard.id);
       toast.success('Quadro excluído com sucesso');
@@ -167,34 +174,92 @@ export function KanbanView({
       console.error(error);
       toast.error('Erro ao excluir quadro');
     }
-  };
+  }, [deleteBoardMutation, selectedBoard.id, boards, onBoardChange, deleteBoardDialog]);
 
-  const handleColumnsReorder = async (newColumns: typeof columns) => {
-    const previousColumns = columns;
-    setColumns(newColumns);
+  const handleColumnsReorder = useCallback(
+    async (newColumns: typeof columns) => {
+      const previousColumns = columns;
+      setColumns(newColumns);
 
-    try {
-      await Promise.all(
-        newColumns.map((col, index) =>
-          moveColumnMutation.mutateAsync({
-            columnId: col.id,
-            boardId: selectedBoard.id,
-            newOrder: index,
-          })
-        )
-      );
-      toast.success('Colunas reordenadas com sucesso');
-      // No router.refresh needed, query invalidation handles it
-    } catch (error) {
-      console.error(error);
-      toast.error('Erro ao reordenar colunas');
-      setColumns(previousColumns);
-    }
-  };
+      try {
+        await Promise.all(
+          newColumns.map((col, index) =>
+            moveColumnMutation.mutateAsync({
+              columnId: col.id,
+              boardId: selectedBoard.id,
+              newOrder: index,
+            })
+          )
+        );
+        toast.success('Colunas reordenadas com sucesso');
+        // No router.refresh needed, query invalidation handles it
+      } catch (error) {
+        console.error(error);
+        toast.error('Erro ao reordenar colunas');
+        setColumns(previousColumns);
+      }
+    },
+    [columns, moveColumnMutation, selectedBoard.id]
+  );
+
+  const scrollContainerRef = useHorizontalScroll(3);
+
+  // Memoize handlers inline
+  const handleManagementModalOpen = useCallback(() => managementModal.open(), [managementModal]);
+  const handleToggleReorderMode = useCallback(
+    () => setIsReorderMode(!isReorderMode),
+    [isReorderMode]
+  );
+  const handleArchiveDialogOpen = useCallback(() => archiveDialog.open(), [archiveDialog]);
+  const handleDeleteBoardDialogOpen = useCallback(
+    () => deleteBoardDialog.open(),
+    [deleteBoardDialog]
+  );
+
+  const handleColumnCreated = useCallback((newColumn: any) => {
+    setColumns((prev) => [
+      ...prev,
+      { id: newColumn.id, name: newColumn.title, order: newColumn.order },
+    ]);
+  }, []);
+
+  const handleCardCreated = useCallback((newCard: ApiCard, columnId: string) => {
+    setCards((prev) => [...prev, { ...newCard, name: newCard.title, column: columnId }]);
+  }, []);
+
+  const handleCardUpdated = useCallback((updatedCard: ApiCard, columnId: string) => {
+    setCards((prev) =>
+      prev.map((c) =>
+        c.id === updatedCard.id ? { ...updatedCard, name: updatedCard.title, column: columnId } : c
+      )
+    );
+  }, []);
+
+  const handleCardDeleted = useCallback((cardId: string) => {
+    setCards((prev) => prev.filter((c) => c.id !== cardId));
+  }, []);
+
+  const handleManagementModalChange = useCallback(
+    (open: boolean) => {
+      if (!open) managementModal.close();
+      else managementModal.open();
+    },
+    [managementModal]
+  );
+
+  const handleBoardSelect = useCallback(
+    (boardId: string) => {
+      onBoardChange(boardId);
+      managementModal.close();
+    },
+    [onBoardChange, managementModal]
+  );
+
+  const handleArchiveDialogToggle = useCallback(() => archiveDialog.toggle(), [archiveDialog]);
 
   return (
-    <div className="h-full flex flex-col p-6">
-      <div className="flex flex-col gap-4 mb-2">
+    <div className="h-full flex flex-col py-6">
+      <div className="flex flex-col gap-4 mb-2 px-6">
         <h1 className="text-3xl font-bold tracking-tight">Quadros</h1>
         <div className="flex items-center gap-3 px-1 relative">
           <Select value={selectedBoard.id} onValueChange={onBoardChange}>
@@ -213,7 +278,7 @@ export function KanbanView({
           <Button
             variant="outline"
             size="default"
-            onClick={() => managementModal.open()}
+            onClick={handleManagementModalOpen}
             className="absolute left-0 rounded-r-none"
           >
             <Settings2 className="h-4 w-4" />
@@ -231,15 +296,7 @@ export function KanbanView({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <CreateColumnDialog
-                boardId={selectedBoard.id}
-                onColumnCreated={(newColumn) => {
-                  setColumns((prev) => [
-                    ...prev,
-                    { id: newColumn.id, name: newColumn.title, order: newColumn.order },
-                  ]);
-                }}
-              >
+              <CreateColumnDialog boardId={selectedBoard.id} onColumnCreated={handleColumnCreated}>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Coluna
@@ -247,7 +304,7 @@ export function KanbanView({
               </CreateColumnDialog>
 
               <DropdownMenuItem
-                onClick={() => setIsReorderMode(!isReorderMode)}
+                onClick={handleToggleReorderMode}
                 className={cn(
                   isReorderMode &&
                     'bg-primary text-primary-foreground focus:bg-primary focus:text-primary-foreground'
@@ -257,14 +314,14 @@ export function KanbanView({
                 {isReorderMode ? 'Ordenar Cartões' : 'Ordenar Colunas'}
               </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={() => archiveDialog.open()}>
+              <DropdownMenuItem onClick={handleArchiveDialogOpen}>
                 <Archive className="mr-2 h-4 w-4" />
                 Ver Arquivados
               </DropdownMenuItem>
 
               {isAdmin && (
                 <DropdownMenuItem
-                  onClick={() => deleteBoardDialog.open()}
+                  onClick={handleDeleteBoardDialogOpen}
                   className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
@@ -276,8 +333,9 @@ export function KanbanView({
         </div>
       </div>
 
-      <div className="flex-1 overflow-x-auto p-1">
+      <div className="flex-1 overflow-x-auto py-2 scroll-smooth" ref={scrollContainerRef}>
         <KanbanProvider
+          className="px-6 min-w-full w-fit"
           columns={columns}
           data={cards}
           onDataChange={onDataChange}
@@ -315,13 +373,7 @@ export function KanbanView({
                 >
                   <CreateCardDialog
                     columnId={column.id}
-                    onCardCreated={(newCard: ApiCard) => {
-                      setCards((prev) => [
-                        ...prev,
-                        { ...newCard, name: newCard.title, column: column.id },
-                      ]);
-                      // Hook calls invalidateQueries
-                    }}
+                    onCardCreated={(newCard: ApiCard) => handleCardCreated(newCard, column.id)}
                   >
                     <Button variant="ghost" size="icon" className="h-6 w-6">
                       <Plus className="h-4 w-4" />
@@ -333,20 +385,11 @@ export function KanbanView({
                 {(item) => (
                   <ProductionKanbanCard
                     item={item as unknown as ApiCard & { name: string; column: string }}
-                    onCardUpdated={(updatedCard: ApiCard) => {
-                      setCards((prev) =>
-                        prev.map((c) =>
-                          c.id === updatedCard.id
-                            ? { ...updatedCard, name: updatedCard.title, column: item.column }
-                            : c
-                        )
-                      );
-                      // Hook calls invalidateQueries
-                    }}
-                    onCardDeleted={(cardId: string) => {
-                      setCards((prev) => prev.filter((c) => c.id !== cardId));
-                      // Hook calls invalidateQueries
-                    }}
+                    boardId={selectedBoard.id}
+                    onCardUpdated={(updatedCard: ApiCard) =>
+                      handleCardUpdated(updatedCard, item.column)
+                    }
+                    onCardDeleted={handleCardDeleted}
                   />
                 )}
               </KanbanCards>
@@ -358,7 +401,7 @@ export function KanbanView({
       <ArchivedCardsDialog
         boardId={selectedBoard.id}
         open={archiveDialog.isOpen}
-        onOpenChange={() => archiveDialog.toggle()}
+        onOpenChange={handleArchiveDialogToggle}
         onCardUpdated={() => {}}
         onCardDeleted={() => {}}
       />
@@ -382,14 +425,8 @@ export function KanbanView({
 
       <BoardManagementModal
         open={managementModal.isOpen}
-        onOpenChange={(open) => {
-          if (!open) managementModal.close();
-          else managementModal.open();
-        }}
-        onBoardSelect={(boardId) => {
-          onBoardChange(boardId);
-          managementModal.close();
-        }}
+        onOpenChange={handleManagementModalChange}
+        onBoardSelect={handleBoardSelect}
       />
     </div>
   );

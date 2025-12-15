@@ -184,6 +184,29 @@ export class BoardsService {
       return;
     }
 
+    // If moving to a different column, validate that both boards belong to the same organization
+    if (oldColumnId !== destinationColumnId) {
+      const sourceColumn = await boardsRepository.findColumnById(oldColumnId);
+      const destinationColumn = await boardsRepository.findColumnById(destinationColumnId);
+
+      if (!sourceColumn || !destinationColumn) {
+        throw new Error('Column not found');
+      }
+
+      // Get boards to check organization
+      const sourceBoard = await boardsRepository.findById(sourceColumn.boardId);
+      const destinationBoard = await boardsRepository.findById(destinationColumn.boardId);
+
+      if (!sourceBoard || !destinationBoard) {
+        throw new Error('Board not found');
+      }
+
+      // Validate same organization
+      if (sourceBoard.organizationId !== destinationBoard.organizationId) {
+        throw new Error('Cannot move card between boards of different organizations');
+      }
+    }
+
     if (oldColumnId === destinationColumnId) {
       await this.moveCardWithinSameColumn(cardId, oldPosition, newPosition, oldColumnId);
     } else {

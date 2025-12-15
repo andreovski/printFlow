@@ -75,7 +75,8 @@ export function ProductForm({ id, initialData, onSuccess }: ProductFormProps) {
     } else if (state?.message) {
       toast.error(state.message);
     }
-  }, [state, router, onSuccess, invalidateProducts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {

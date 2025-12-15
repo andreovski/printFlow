@@ -1,12 +1,15 @@
 import { Suspense } from 'react';
 
 import { BudgetsContent } from './budgets-content';
+import BudgetsLoading from './loading';
 
 export default function BudgetsLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense fallback={<div className="p-6">Carregando...</div>}>
-      <BudgetsContent />
-      {children}
-    </Suspense>
+    <>
+      <Suspense fallback={<BudgetsLoading />}>
+        <BudgetsContent />
+      </Suspense>
+      <Suspense fallback={<BudgetsLoading />}>{children}</Suspense>
+    </>
   );
 }

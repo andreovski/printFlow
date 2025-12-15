@@ -13,11 +13,14 @@ import { Button } from '@/components/ui/button';
 import { useDisclosure } from '@/hooks/use-disclosure';
 
 import { CardForm } from '../_components/card-form';
+import { TransferCardDialog } from '../_components/transfer-card-dialog';
 
 type FormData = z.infer<typeof updateCardBodySchema>;
 
 interface EditCardDialogProps {
   card: Card;
+  boardId: string;
+  columnId: string;
   children: React.ReactNode;
   onCardUpdated: (card: Card) => void;
   onCardDeleted?: (cardId: string) => void;
@@ -25,11 +28,14 @@ interface EditCardDialogProps {
 
 export function EditCardDialog({
   card,
+  boardId,
+  columnId,
   children,
   onCardUpdated,
   onCardDeleted,
 }: EditCardDialogProps) {
   const [open, setOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
   const deleteDialog = useDisclosure();
   const updateCardMutation = useUpdateCard();
   const deleteCardMutation = useDeleteCard();
@@ -74,6 +80,14 @@ export function EditCardDialog({
     }
   };
 
+  const handleTransferClick = () => {
+    setTransferOpen(true);
+  };
+
+  const handleTransferComplete = () => {
+    setOpen(false);
+  };
+
   return (
     <>
       <div onClick={() => setOpen(true)} className="cursor-pointer">
@@ -101,9 +115,11 @@ export function EditCardDialog({
           onCancel={() => setOpen(false)}
           onDelete={() => deleteDialog.open()}
           onArchive={handleArchive}
+          onTransfer={handleTransferClick}
           submitLabel="Salvar"
           mode="edit"
           cardId={card.id}
+          boardId={boardId}
           linkedBudget={(card as any).budget || null}
           isArchived={card.isArchived}
         />
@@ -121,6 +137,17 @@ export function EditCardDialog({
         }
         open={deleteDialog.isOpen}
         onRefuse={() => deleteDialog.close()}
+      />
+
+      <TransferCardDialog
+        cardId={card.id}
+        currentBoardId={boardId}
+        currentColumnId={columnId}
+        cardTitle={card.title}
+        isArchived={card.isArchived}
+        open={transferOpen}
+        onOpenChange={setTransferOpen}
+        onTransferComplete={handleTransferComplete}
       />
     </>
   );

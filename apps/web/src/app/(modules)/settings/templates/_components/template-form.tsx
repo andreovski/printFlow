@@ -58,7 +58,8 @@ export function TemplateForm({ id, initialData }: TemplateFormProps) {
     } else if (state?.message && !state?.success) {
       toast.error(state.message);
     }
-  }, [state, router, invalidateTemplates]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   return (
     <Card className="border-0 shadow-none">

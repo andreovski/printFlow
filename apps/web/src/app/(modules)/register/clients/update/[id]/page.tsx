@@ -46,6 +46,7 @@ export default async function UpdateClientPage({ params }: { params: Promise<{ i
       description={Description}
       className="max-w-[900px] md:w-[60vw]"
       headerIcon={<User />}
+      redirectTo="/register/clients"
     >
       <ClientForm id={id} initialData={client} />
     </ResponsiveDrawer>

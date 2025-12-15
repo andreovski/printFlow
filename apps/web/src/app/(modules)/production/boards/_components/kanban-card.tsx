@@ -36,6 +36,7 @@ function getCoverImage(attachments?: CardAttachment[]): CardAttachment | null {
 
 interface ProductionKanbanCardProps {
   item: ApiCard & { name: string; column: string };
+  boardId: string;
   onCardUpdated: (updatedCard: ApiCard) => void;
   onCardDeleted: (cardId: string) => void;
   isArchivedMode?: boolean;
@@ -76,6 +77,7 @@ function getDueDateColor(dueDate: string): string {
 
 export function ProductionKanbanCard({
   item,
+  boardId,
   onCardUpdated,
   onCardDeleted,
   isArchivedMode,
@@ -241,7 +243,13 @@ export function ProductionKanbanCard({
       {isArchivedMode ? (
         cardContent
       ) : (
-        <EditCardDialog card={item} onCardUpdated={onCardUpdated} onCardDeleted={onCardDeleted}>
+        <EditCardDialog
+          card={item}
+          boardId={boardId}
+          columnId={item.columnId}
+          onCardUpdated={onCardUpdated}
+          onCardDeleted={onCardDeleted}
+        >
           {cardContent}
         </EditCardDialog>
       )}

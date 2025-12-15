@@ -59,7 +59,8 @@ export function TagForm({ id, initialData }: TagFormProps) {
     } else if (state?.message && !state?.success) {
       toast.error(state.message);
     }
-  }, [state, router, invalidateTags]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   return (
     <Card className="border-0 shadow-none">

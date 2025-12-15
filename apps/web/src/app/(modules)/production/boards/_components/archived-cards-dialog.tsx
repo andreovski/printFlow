@@ -50,6 +50,7 @@ export function ArchivedCardsDialog({
                     name: card.title,
                     column: card.columnId,
                   }}
+                  boardId={boardId}
                   isArchivedMode
                   onCardUpdated={onCardUpdated}
                   onCardDeleted={onCardDeleted}
