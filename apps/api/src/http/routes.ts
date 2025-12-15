@@ -70,6 +70,7 @@ import {
   listSalesMovementController,
   toggleExcludeFromSalesController,
 } from './controllers/sales-movement.controller';
+import { globalSearchController } from './controllers/search.controller';
 import {
   createTagController,
   fetchTagsController,
@@ -116,6 +117,9 @@ export async function appRoutes(app: FastifyInstance) {
 
     // Metrics
     authRoutes.get('/metrics', getMetricsController);
+
+    // Global Search
+    authRoutes.get('/search', globalSearchController);
 
     // Clients
     authRoutes.post('/clients', createClientController);

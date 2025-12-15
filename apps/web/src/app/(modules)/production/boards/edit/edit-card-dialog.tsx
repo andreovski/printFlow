@@ -21,9 +21,11 @@ interface EditCardDialogProps {
   card: Card;
   boardId: string;
   columnId: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onCardUpdated: (card: Card) => void;
   onCardDeleted?: (cardId: string) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function EditCardDialog({
@@ -33,8 +35,12 @@ export function EditCardDialog({
   children,
   onCardUpdated,
   onCardDeleted,
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange,
 }: EditCardDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = externalOnOpenChange || setInternalOpen;
   const [transferOpen, setTransferOpen] = useState(false);
   const deleteDialog = useDisclosure();
   const updateCardMutation = useUpdateCard();
@@ -90,9 +96,11 @@ export function EditCardDialog({
 
   return (
     <>
-      <div onClick={() => setOpen(true)} className="cursor-pointer">
-        {children}
-      </div>
+      {children && (
+        <div onClick={() => setOpen(true)} className="cursor-pointer">
+          {children}
+        </div>
+      )}
 
       <ResponsiveDrawer
         open={open}

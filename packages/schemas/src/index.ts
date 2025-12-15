@@ -10,3 +10,4 @@ export * from './tags';
 export * from './templates';
 export * from './attachments';
 export * from './sales-movement';
+export * from './search';
