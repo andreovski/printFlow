@@ -24,6 +24,8 @@ import {
   toggleChecklistItemController,
   archiveCardController,
   getArchivedCardsController,
+  fetchBoardsSummaryController,
+  updateBoardController,
 } from './controllers/boards.controller';
 import {
   createBudgetController,
@@ -185,6 +187,8 @@ export async function appRoutes(app: FastifyInstance) {
     // Boards (Kanban)
     authRoutes.post('/boards', createBoardController);
     authRoutes.get('/boards', fetchBoardsController);
+    authRoutes.get('/boards/summary', fetchBoardsSummaryController);
+    authRoutes.patch('/boards/:id', updateBoardController);
     authRoutes.delete(
       '/boards/:id',
       { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },

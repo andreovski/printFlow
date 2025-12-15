@@ -11,6 +11,9 @@ import {
   approvedBudgetOptionsQuerySchema,
   archiveCardBodySchema,
   deleteBoardParamsSchema,
+  boardIdParamsSchema,
+  boardsSummaryQuerySchema,
+  updateBoardBodySchema,
 } from '@magic-system/schemas';
 import { FastifyReply, FastifyRequest } from 'fastify';
 
@@ -189,4 +192,39 @@ export async function getArchivedCardsController(request: FastifyRequest, reply:
   const cards = await boardsService.getArchivedCards(boardId);
 
   return reply.status(200).send(cards);
+}
+
+export async function fetchBoardsSummaryController(request: FastifyRequest, reply: FastifyReply) {
+  const organizationId = request.user.organizationId;
+
+  if (!organizationId) {
+    return reply.status(400).send({ message: 'Organization ID is required' });
+  }
+
+  const { page, pageSize, includeArchived } = boardsSummaryQuerySchema.parse(request.query);
+
+  const result = await boardsService.getBoardsSummary(organizationId, {
+    page,
+    pageSize,
+    includeArchived,
+  });
+
+  return reply.status(200).send(result);
+}
+
+export async function updateBoardController(request: FastifyRequest, reply: FastifyReply) {
+  const { id } = boardIdParamsSchema.parse(request.params);
+  const data = updateBoardBodySchema.parse(request.body);
+
+  try {
+    const board = await boardsService.updateBoard(id, data);
+    return reply.status(200).send(board);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      if (error.message === 'Não é possível deletar colunas com cartões') {
+        return reply.status(400).send({ message: error.message });
+      }
+    }
+    throw error;
+  }
 }

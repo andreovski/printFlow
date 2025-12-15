@@ -3,6 +3,7 @@ import type {
   CreateCardBody,
   CreateColumnBody,
   UpdateCardBody,
+  UpdateBoardBody,
 } from '@magic-system/schemas';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -20,6 +21,8 @@ import {
   updateCard,
   archiveCard,
   fetchArchivedCards,
+  fetchBoardsSummary,
+  updateBoard,
 } from '@/app/http/requests/boards';
 
 export function useBoards({ enabled = true }: { enabled?: boolean } = {}) {
@@ -39,6 +42,7 @@ export function useCreateBoard() {
       queryClient.setQueryData<Board[]>(['boards'], (old) => {
         return old ? [newBoard, ...old] : [newBoard];
       });
+      queryClient.invalidateQueries({ queryKey: ['boards-summary'] });
     },
   });
 }
@@ -53,6 +57,7 @@ export function useDeleteBoard() {
         if (!old) return old;
         return old.filter((board) => board.id !== boardId);
       });
+      queryClient.invalidateQueries({ queryKey: ['boards-summary'] });
     },
   });
 }
@@ -231,4 +236,34 @@ export function useInvalidateBoards() {
   return () => {
     queryClient.invalidateQueries({ queryKey: ['boards'] });
   };
+}
+
+export function useBoardsSummary({
+  page = 1,
+  pageSize = 10,
+  includeArchived = true,
+  enabled = true,
+}: {
+  page?: number;
+  pageSize?: number;
+  includeArchived?: boolean;
+  enabled?: boolean;
+} = {}) {
+  return useQuery({
+    queryKey: ['boards-summary', page, pageSize, includeArchived],
+    queryFn: () => fetchBoardsSummary({ page, pageSize, includeArchived }),
+    enabled,
+  });
+}
+
+export function useUpdateBoard() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateBoardBody }) => updateBoard(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+      queryClient.invalidateQueries({ queryKey: ['boards-summary'] });
+    },
+  });
 }

@@ -393,4 +393,167 @@ export class BoardsRepository {
       },
     });
   }
+
+  async findManyWithSummary(
+    organizationId: string,
+    options: {
+      page: number;
+      pageSize: number;
+      includeArchived: boolean;
+    }
+  ): Promise<{
+    data: Array<{
+      id: string;
+      title: string;
+      description: string | null;
+      isArchived: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+      totalColumns: number;
+      totalCards: number;
+      totalArchivedCards: number;
+      columns: Array<{ id: string; title: string; order: number }>;
+    }>;
+    total: number;
+  }> {
+    const { page, pageSize, includeArchived } = options;
+
+    const whereClause = {
+      organizationId,
+      ...(includeArchived ? {} : { isArchived: false }),
+    };
+
+    const [boards, total] = await Promise.all([
+      prisma.board.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          isArchived: true,
+          createdAt: true,
+          updatedAt: true,
+          columns: {
+            select: {
+              id: true,
+              title: true,
+              order: true,
+              _count: {
+                select: {
+                  cards: true,
+                },
+              },
+            },
+            orderBy: {
+              order: 'asc',
+            },
+          },
+          _count: {
+            select: {
+              columns: true,
+            },
+          },
+        },
+        orderBy: [{ isArchived: 'asc' }, { createdAt: 'desc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.board.count({ where: whereClause }),
+    ]);
+
+    // Calculate card counts per board
+    const boardIds = boards.map((b) => b.id);
+    const cardCounts = await prisma.card.groupBy({
+      by: ['columnId'],
+      where: {
+        column: {
+          boardId: { in: boardIds },
+        },
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    const archivedCardCounts = await prisma.card.groupBy({
+      by: ['columnId'],
+      where: {
+        column: {
+          boardId: { in: boardIds },
+        },
+        isArchived: true,
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    // Create lookup maps
+    const cardCountByColumn = new Map(cardCounts.map((c) => [c.columnId, c._count.id]));
+    const archivedCardCountByColumn = new Map(
+      archivedCardCounts.map((c) => [c.columnId, c._count.id])
+    );
+
+    const data = boards.map((board) => {
+      const totalCards = board.columns.reduce(
+        (sum, col) => sum + (cardCountByColumn.get(col.id) || 0),
+        0
+      );
+      const totalArchivedCards = board.columns.reduce(
+        (sum, col) => sum + (archivedCardCountByColumn.get(col.id) || 0),
+        0
+      );
+
+      return {
+        id: board.id,
+        title: board.title,
+        description: board.description,
+        isArchived: board.isArchived,
+        createdAt: board.createdAt,
+        updatedAt: board.updatedAt,
+        totalColumns: board._count.columns,
+        totalCards,
+        totalArchivedCards,
+        columns: board.columns.map((col) => ({
+          id: col.id,
+          title: col.title,
+          order: col.order,
+        })),
+      };
+    });
+
+    return { data, total };
+  }
+
+  async updateBoard(
+    id: string,
+    data: {
+      title?: string;
+      description?: string | null;
+      isArchived?: boolean;
+    }
+  ): Promise<Board> {
+    return await prisma.board.update({
+      where: { id },
+      data,
+      include: {
+        columns: {
+          orderBy: { order: 'asc' },
+        },
+      },
+    });
+  }
+
+  async renameColumn(columnId: string, title: string): Promise<BoardColumn> {
+    return await prisma.boardColumn.update({
+      where: { id: columnId },
+      data: { title },
+    });
+  }
+
+  async getColumnCardCount(columnId: string): Promise<number> {
+    return await prisma.card.count({
+      where: { columnId },
+    });
+  }
 }

@@ -7,6 +7,10 @@ import type {
   CreateCardBody,
   CreateColumnBody,
   UpdateCardBody,
+  BoardSummary,
+  BoardsSummaryResponse,
+  UpdateBoardBody,
+  ColumnOperation,
 } from '@magic-system/schemas';
 
 import { AttachmentsRepository } from '@/repositories/attachments.repository';
@@ -20,13 +24,10 @@ const attachmentsRepository = new AttachmentsRepository();
 export class BoardsService {
   async createBoard(organizationId: string, data: CreateBoardBody): Promise<Board> {
     // Fallback to default columns if none provided
-    const columns = data.columns && data.columns.length > 0
-      ? data.columns
-      : [
-          { title: 'A Fazer' },
-          { title: 'Em Andamento' },
-          { title: 'Feito' },
-        ];
+    const columns =
+      data.columns && data.columns.length > 0
+        ? data.columns
+        : [{ title: 'A Fazer' }, { title: 'Em Andamento' }, { title: 'Feito' }];
 
     const board = await boardsRepository.create({
       title: data.title,
@@ -274,5 +275,87 @@ export class BoardsService {
   async getArchivedCards(boardId: string): Promise<Card[]> {
     const cards = await boardsRepository.findArchivedCardsByBoardId(boardId);
     return cards as unknown as Card[];
+  }
+
+  /**
+   * Retorna resumo dos boards com contagens otimizadas.
+   */
+  async getBoardsSummary(
+    organizationId: string,
+    options: { page: number; pageSize: number; includeArchived: boolean }
+  ): Promise<BoardsSummaryResponse> {
+    const result = await boardsRepository.findManyWithSummary(organizationId, options);
+
+    return {
+      data: result.data.map((board) => ({
+        ...board,
+        createdAt: board.createdAt.toISOString(),
+        updatedAt: board.updatedAt.toISOString(),
+      })) as BoardSummary[],
+      meta: {
+        page: options.page,
+        pageSize: options.pageSize,
+        total: result.total,
+        totalPages: Math.ceil(result.total / options.pageSize),
+      },
+    };
+  }
+
+  /**
+   * Atualiza um board (título, descrição, isArchived) e aplica operações em colunas.
+   */
+  async updateBoard(boardId: string, data: UpdateBoardBody): Promise<Board> {
+    // Update board fields
+    if (
+      data.title !== undefined ||
+      data.description !== undefined ||
+      data.isArchived !== undefined
+    ) {
+      await boardsRepository.updateBoard(boardId, {
+        title: data.title,
+        description: data.description,
+        isArchived: data.isArchived,
+      });
+    }
+
+    // Process column operations
+    if (data.columnOperations && data.columnOperations.length > 0) {
+      for (const operation of data.columnOperations) {
+        await this.processColumnOperation(boardId, operation);
+      }
+    }
+
+    // Return updated board
+    const board = await boardsRepository.findById(boardId);
+    return board as unknown as Board;
+  }
+
+  private async processColumnOperation(boardId: string, operation: ColumnOperation): Promise<void> {
+    switch (operation.action) {
+      case 'rename':
+        await boardsRepository.renameColumn(operation.id, operation.title);
+        break;
+
+      case 'add':
+        const lastOrder = await boardsRepository.getLastColumnOrder(boardId);
+        await boardsRepository.createColumn({
+          title: operation.title,
+          boardId,
+          order: lastOrder + 1,
+        });
+        break;
+
+      case 'delete':
+        const cardCount = await boardsRepository.getColumnCardCount(operation.id);
+        if (cardCount > 0) {
+          throw new Error('Não é possível deletar colunas com cartões');
+        }
+        await boardsRepository.deleteColumn(operation.id);
+        break;
+
+      case 'reorder':
+        await boardsRepository.updateManyColumnOrders(boardId, operation.columnOrders);
+        break;
+    }
   }
 }

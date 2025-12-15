@@ -170,3 +170,82 @@ export interface Board {
   createdAt: string;
   updatedAt: string;
 }
+
+// Board Management Schemas
+export const boardIdParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
+export const boardsSummaryQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(50).default(10),
+  includeArchived: z.coerce.boolean().default(false),
+});
+
+// Column operation: rename existing, add new, delete, or reorder
+export const columnOperationSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('rename'),
+    id: z.string().uuid(),
+    title: z.string().min(1, 'O título da coluna é obrigatório'),
+  }),
+  z.object({
+    action: z.literal('add'),
+    title: z.string().min(1, 'O título da coluna é obrigatório'),
+  }),
+  z.object({
+    action: z.literal('delete'),
+    id: z.string().uuid(),
+  }),
+  z.object({
+    action: z.literal('reorder'),
+    columnOrders: z.array(
+      z.object({
+        id: z.string().uuid(),
+        order: z.number().int().min(0),
+      })
+    ),
+  }),
+]);
+
+export const updateBoardBodySchema = z.object({
+  title: z.string().min(1, 'O título é obrigatório').optional(),
+  description: z.string().optional().nullable(),
+  isArchived: z.boolean().optional(),
+  columnOperations: z.array(columnOperationSchema).optional(),
+});
+
+export type BoardIdParams = z.infer<typeof boardIdParamsSchema>;
+export type BoardsSummaryQuery = z.infer<typeof boardsSummaryQuerySchema>;
+export type ColumnOperation = z.infer<typeof columnOperationSchema>;
+export type UpdateBoardBody = z.infer<typeof updateBoardBodySchema>;
+
+// Board Summary Response Types
+export interface BoardColumnSummary {
+  id: string;
+  title: string;
+  order: number;
+}
+
+export interface BoardSummary {
+  id: string;
+  title: string;
+  description?: string | null;
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt: string;
+  totalColumns: number;
+  totalCards: number;
+  totalArchivedCards: number;
+  columns: BoardColumnSummary[];
+}
+
+export interface BoardsSummaryResponse {
+  data: BoardSummary[];
+  meta: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+}

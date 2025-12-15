@@ -1,6 +1,14 @@
 'use client';
 
-import { Plus, Trash2, ArrowUpDown, GripVertical, Archive, MoreVertical } from 'lucide-react';
+import {
+  Plus,
+  Trash2,
+  ArrowUpDown,
+  GripVertical,
+  Archive,
+  MoreVertical,
+  Settings2,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -39,7 +47,7 @@ import { cn } from '@/lib/utils';
 
 import { CreateCardDialog } from '../create/create-card-dialog';
 import { ArchivedCardsDialog } from './archived-cards-dialog';
-import { CreateBoardDialog } from './create-board-dialog';
+import { BoardManagementModal } from './board-management-modal';
 import { CreateColumnDialog } from './create-column-dialog';
 import { ProductionKanbanCard } from './kanban-card';
 
@@ -82,6 +90,7 @@ export function KanbanView({
 
   const archiveDialog = useDisclosure();
   const deleteBoardDialog = useDisclosure();
+  const managementModal = useDisclosure();
 
   const { user } = useAppContext();
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'MASTER';
@@ -220,16 +229,10 @@ export function KanbanView({
               ))}
             </SelectContent>
           </Select>
-          <CreateBoardDialog
-            onBoardCreated={(newBoard) => {
-              onBoardChange(newBoard.id);
-            }}
-          >
-            <Button variant="outline" size="default">
-              <Plus className="md:mr-2 h-4 w-4" />
-              <p className="hidden md:block">Novo Quadro</p>
-            </Button>
-          </CreateBoardDialog>
+
+          <Button variant="outline" size="default" onClick={() => managementModal.open()}>
+            <Settings2 className="h-4 w-4" />
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -414,6 +417,18 @@ export function KanbanView({
             {deleteBoardMutation.isPending ? 'Excluindo...' : 'Excluir Quadro'}
           </Button>
         }
+      />
+
+      <BoardManagementModal
+        open={managementModal.isOpen}
+        onOpenChange={(open) => {
+          if (!open) managementModal.close();
+          else managementModal.open();
+        }}
+        onBoardSelect={(boardId) => {
+          onBoardChange(boardId);
+          managementModal.close();
+        }}
       />
     </div>
   );

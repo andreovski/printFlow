@@ -8,6 +8,8 @@ import type {
   CreateColumnBody,
   UpdateCardBody,
   ApprovedBudgetOptionsResponse,
+  BoardsSummaryResponse,
+  UpdateBoardBody,
 } from '@magic-system/schemas';
 
 import { api } from '../api';
@@ -104,5 +106,26 @@ export async function archiveCard(id: string, isArchived: boolean): Promise<Card
 
 export async function fetchArchivedCards(boardId: string): Promise<Card[]> {
   const response = await api.get(`boards/${boardId}/archived-cards`);
+  return response.json();
+}
+
+export async function fetchBoardsSummary(params: {
+  page?: number;
+  pageSize?: number;
+  includeArchived?: boolean;
+}): Promise<BoardsSummaryResponse> {
+  const searchParams = new URLSearchParams();
+  if (params.page) searchParams.set('page', params.page.toString());
+  if (params.pageSize) searchParams.set('pageSize', params.pageSize.toString());
+  if (params.includeArchived) searchParams.set('includeArchived', 'true');
+
+  const query = searchParams.toString();
+  const url = query ? `boards/summary?${query}` : 'boards/summary';
+  const response = await api.get(url);
+  return response.json();
+}
+
+export async function updateBoard(id: string, data: UpdateBoardBody): Promise<Board> {
+  const response = await api.patch(`boards/${id}`, { json: data });
   return response.json();
 }
