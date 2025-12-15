@@ -4,40 +4,33 @@ import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { useBoards, useCreateBoard } from '@/app/http/hooks/use-boards';
+import { useBoards } from '@/app/http/hooks/use-boards';
 import { Button } from '@/components/ui/button';
 
+import { CreateBoardDialog } from './_components/create-board-dialog';
 import { KanbanView } from './_components/kanban-view';
 
 export default function BoardsPage() {
-  const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
+  const [selectedBoardId, setSelectedBoardId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('lastSelectedBoardId');
+    }
+    return null;
+  });
 
   const { data: boards = [], isLoading: loading, error } = useBoards();
-  const createBoardMutation = useCreateBoard();
 
   if (boards.length > 0 && !selectedBoardId) {
-    setSelectedBoardId(boards[0].id);
+    const lastBoardId = boards[0].id;
+    setSelectedBoardId(lastBoardId);
+    localStorage.setItem('lastSelectedBoardId', lastBoardId);
   }
 
   if (error) {
     toast.error('Erro ao carregar quadros');
   }
 
-  const handleCreateDefaultBoard = async () => {
-    try {
-      const newBoard = await createBoardMutation.mutateAsync({
-        title: 'Produção Geral',
-        description: 'Quadro principal de produção',
-      });
-      setSelectedBoardId(newBoard.id);
-      toast.success('Quadro criado com sucesso');
-    } catch (error) {
-      console.error(error);
-      toast.error('Erro ao criar quadro');
-    }
-  };
-
-  if (loading || createBoardMutation.isPending) {
+  if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -52,7 +45,14 @@ export default function BoardsPage() {
         <p className="text-muted-foreground">
           Crie seu primeiro quadro para começar a organizar a produção.
         </p>
-        <Button onClick={handleCreateDefaultBoard}>Criar Quadro Padrão</Button>
+        <CreateBoardDialog
+          onBoardCreated={(newBoard) => {
+            setSelectedBoardId(newBoard.id);
+            localStorage.setItem('lastSelectedBoardId', newBoard.id);
+          }}
+        >
+          <Button>Criar Novo Quadro</Button>
+        </CreateBoardDialog>
       </div>
     );
   }
@@ -67,7 +67,12 @@ export default function BoardsPage() {
     );
   }
 
+  const handleBoardChange = (boardId: string) => {
+    setSelectedBoardId(boardId);
+    localStorage.setItem('lastSelectedBoardId', boardId);
+  };
+
   return (
-    <KanbanView boards={boards} selectedBoard={selectedBoard} onBoardChange={setSelectedBoardId} />
+    <KanbanView boards={boards} selectedBoard={selectedBoard} onBoardChange={handleBoardChange} />
   );
 }

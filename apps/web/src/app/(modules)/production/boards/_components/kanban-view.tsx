@@ -1,11 +1,12 @@
 'use client';
 
-import { Plus, Trash2, ArrowUpDown, GripVertical, Archive } from 'lucide-react';
+import { Plus, Trash2, ArrowUpDown, GripVertical, Archive, MoreVertical } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
   useBoards,
+  useDeleteBoard,
   useDeleteColumn,
   useMoveCard,
   useMoveColumn,
@@ -13,6 +14,12 @@ import {
 import { Board, Card as ApiCard } from '@/app/http/requests/boards';
 import { DialogAction } from '@/components/dialog-action';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -26,11 +33,13 @@ import {
   KanbanHeader,
   KanbanProvider,
 } from '@/components/ui/shadcn-io/kanban';
+import { useAppContext } from '@/hooks/use-app-context';
 import { useDisclosure } from '@/hooks/use-disclosure';
 import { cn } from '@/lib/utils';
 
 import { CreateCardDialog } from '../create/create-card-dialog';
 import { ArchivedCardsDialog } from './archived-cards-dialog';
+import { CreateBoardDialog } from './create-board-dialog';
 import { CreateColumnDialog } from './create-column-dialog';
 import { ProductionKanbanCard } from './kanban-card';
 
@@ -72,10 +81,15 @@ export function KanbanView({
   const [isReorderMode, setIsReorderMode] = useState(false);
 
   const archiveDialog = useDisclosure();
+  const deleteBoardDialog = useDisclosure();
+
+  const { user } = useAppContext();
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'MASTER';
 
   const dialogDelete = useDisclosure();
   const moveCardMutation = useMoveCard();
   const deleteColumnMutation = useDeleteColumn();
+  const deleteBoardMutation = useDeleteBoard();
   const moveColumnMutation = useMoveColumn();
 
   useEffect(() => {
@@ -150,6 +164,22 @@ export function KanbanView({
     }
   };
 
+  const handleDeleteBoard = async () => {
+    try {
+      await deleteBoardMutation.mutateAsync(selectedBoard.id);
+      toast.success('Quadro excluído com sucesso');
+      // Select the first available board after deletion
+      const remainingBoards = boards.filter((b) => b.id !== selectedBoard.id);
+      if (remainingBoards.length > 0) {
+        onBoardChange(remainingBoards[0].id);
+      }
+      deleteBoardDialog.close();
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao excluir quadro');
+    }
+  };
+
   const handleColumnsReorder = async (newColumns: typeof columns) => {
     const previousColumns = columns;
     setColumns(newColumns);
@@ -190,49 +220,71 @@ export function KanbanView({
               ))}
             </SelectContent>
           </Select>
-          <CreateColumnDialog
-            boardId={selectedBoard.id}
-            onColumnCreated={(newColumn) => {
-              // Optimistic add (or wait for query invalidation)
-              // Since we rely on onBoardChange/Query, simply waiting for invalidation is safer but slower UI
-              // But we can do optimistic add:
-              setColumns((prev) => [
-                ...prev,
-                { id: newColumn.id, name: newColumn.title, order: newColumn.order },
-              ]);
-              // Hook calls invalidateQueries
+          <CreateBoardDialog
+            onBoardCreated={(newBoard) => {
+              onBoardChange(newBoard.id);
             }}
           >
             <Button variant="outline" size="default">
               <Plus className="md:mr-2 h-4 w-4" />
-              <p className="hidden md:block">Nova Coluna</p>
+              <p className="hidden md:block">Novo Quadro</p>
             </Button>
-          </CreateColumnDialog>
-          <Button
-            variant={isReorderMode ? 'default' : 'outline'}
-            size="default"
-            onClick={() => setIsReorderMode(!isReorderMode)}
-            className="transition-all duration-300 hover:scale-105 active:scale-95 group"
-          >
-            <ArrowUpDown
-              className={cn(
-                'md:mr-2 h-4 w-4 transition-transform duration-500',
-                isReorderMode && 'rotate-180'
+          </CreateBoardDialog>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="default" className="relative">
+                <MoreVertical className="h-4 w-4" />
+                {isReorderMode && (
+                  <div className="absolute -top-1 -right-1 bg-primary rounded-full p-1 shadow-md animate-in zoom-in-50 fade-in duration-200">
+                    <ArrowUpDown className="h-3 w-3 text-primary-foreground" />
+                  </div>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <CreateColumnDialog
+                boardId={selectedBoard.id}
+                onColumnCreated={(newColumn) => {
+                  setColumns((prev) => [
+                    ...prev,
+                    { id: newColumn.id, name: newColumn.title, order: newColumn.order },
+                  ]);
+                }}
+              >
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova Coluna
+                </DropdownMenuItem>
+              </CreateColumnDialog>
+
+              <DropdownMenuItem
+                onClick={() => setIsReorderMode(!isReorderMode)}
+                className={cn(
+                  isReorderMode &&
+                    'bg-primary text-primary-foreground focus:bg-primary focus:text-primary-foreground'
+                )}
+              >
+                <ArrowUpDown className="mr-2 h-4 w-4" />
+                {isReorderMode ? 'Ordenar Cartões' : 'Ordenar Colunas'}
+              </DropdownMenuItem>
+
+              <DropdownMenuItem onClick={() => archiveDialog.open()}>
+                <Archive className="mr-2 h-4 w-4" />
+                Ver Arquivados
+              </DropdownMenuItem>
+
+              {isAdmin && (
+                <DropdownMenuItem
+                  onClick={() => deleteBoardDialog.open()}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Excluir Quadro
+                </DropdownMenuItem>
               )}
-            />
-            <p className="hidden md:block">
-              {isReorderMode ? 'Ordenar Cartões' : 'Ordenar Colunas'}
-            </p>
-          </Button>
-          <Button
-            variant="outline"
-            size="default"
-            onClick={() => archiveDialog.open()}
-            className="transition-all duration-300 hover:scale-105 active:scale-95"
-          >
-            <Archive className="md:mr-2 h-4 w-4" />
-            <p className="hidden md:block">Ver Arquivados</p>
-          </Button>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -343,6 +395,23 @@ export function KanbanView({
             onClick={() => [handleDeleteColumn(dialogDelete.state), dialogDelete.close()]}
           >
             Excluir
+          </Button>
+        }
+      />
+
+      <DialogAction
+        open={deleteBoardDialog.isOpen}
+        onRefuse={deleteBoardDialog.close}
+        title="Excluir quadro"
+        subtitle={`Tem certeza que deseja excluir o quadro "${selectedBoard.title}"? Esta ação irá excluir permanentemente todas as colunas e cartões deste quadro.`}
+        confirmButton={
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDeleteBoard}
+            disabled={deleteBoardMutation.isPending}
+          >
+            {deleteBoardMutation.isPending ? 'Excluindo...' : 'Excluir Quadro'}
           </Button>
         }
       />

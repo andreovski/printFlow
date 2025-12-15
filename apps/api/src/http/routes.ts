@@ -11,6 +11,7 @@ import {
 import { authenticateController } from './controllers/authenticate.controller';
 import {
   createBoardController,
+  deleteBoardController,
   fetchBoardsController,
   createCardController,
   moveCardController,
@@ -184,6 +185,11 @@ export async function appRoutes(app: FastifyInstance) {
     // Boards (Kanban)
     authRoutes.post('/boards', createBoardController);
     authRoutes.get('/boards', fetchBoardsController);
+    authRoutes.delete(
+      '/boards/:id',
+      { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
+      deleteBoardController
+    );
     authRoutes.get('/boards/:boardId/archived-cards', getArchivedCardsController);
     authRoutes.get('/boards/approved-budgets', fetchApprovedBudgetsController);
     authRoutes.post('/columns', createColumnController);

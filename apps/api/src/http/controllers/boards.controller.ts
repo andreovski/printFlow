@@ -10,6 +10,7 @@ import {
   updateCardBodySchema,
   approvedBudgetOptionsQuerySchema,
   archiveCardBodySchema,
+  deleteBoardParamsSchema,
 } from '@magic-system/schemas';
 import { FastifyReply, FastifyRequest } from 'fastify';
 
@@ -40,6 +41,14 @@ export async function fetchBoardsController(request: FastifyRequest, reply: Fast
   const boards = await boardsService.getBoards(organizationId);
 
   return reply.status(200).send(boards);
+}
+
+export async function deleteBoardController(request: FastifyRequest, reply: FastifyReply) {
+  const { id } = deleteBoardParamsSchema.parse(request.params);
+
+  await boardsService.deleteBoard(id);
+
+  return reply.status(204).send();
 }
 
 export async function createColumnController(request: FastifyRequest, reply: FastifyReply) {

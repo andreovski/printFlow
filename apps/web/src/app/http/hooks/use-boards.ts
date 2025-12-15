@@ -11,6 +11,7 @@ import {
   createBoard,
   createCard,
   createColumn,
+  deleteBoard,
   deleteCard,
   deleteColumn,
   fetchBoards,
@@ -37,6 +38,20 @@ export function useCreateBoard() {
     onSuccess: (newBoard) => {
       queryClient.setQueryData<Board[]>(['boards'], (old) => {
         return old ? [newBoard, ...old] : [newBoard];
+      });
+    },
+  });
+}
+
+export function useDeleteBoard() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (boardId: string) => deleteBoard(boardId),
+    onSuccess: (_, boardId) => {
+      queryClient.setQueryData<Board[]>(['boards'], (old) => {
+        if (!old) return old;
+        return old.filter((board) => board.id !== boardId);
       });
     },
   });

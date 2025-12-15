@@ -37,6 +37,10 @@ export async function createBoard(data: CreateBoardBody): Promise<Board> {
   return response.json();
 }
 
+export async function deleteBoard(boardId: string): Promise<void> {
+  await api.delete(`boards/${boardId}`);
+}
+
 export async function createColumn(data: CreateColumnBody): Promise<BoardColumn> {
   const response = await api.post('columns', { json: data });
   return response.json();

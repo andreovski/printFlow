@@ -50,11 +50,23 @@ export const moveColumnBodySchema = z.object({
 export const createBoardBodySchema = z.object({
   title: z.string().min(1, 'O título é obrigatório'),
   description: z.string().optional(),
+  columns: z
+    .array(
+      z.object({
+        title: z.string().min(1, 'O título da coluna é obrigatório'),
+      })
+    )
+    .min(1, 'Pelo menos uma coluna é obrigatória')
+    .optional(),
 });
 
 export const createColumnBodySchema = z.object({
   title: z.string().min(1, 'O título é obrigatório'),
   boardId: z.string().uuid(),
+});
+
+export const deleteBoardParamsSchema = z.object({
+  id: z.string().uuid(),
 });
 
 // Params Schemas
@@ -83,6 +95,7 @@ export type MoveColumnBody = z.infer<typeof moveColumnBodySchema>;
 export type ArchiveCardBody = z.infer<typeof archiveCardBodySchema>;
 export type CreateBoardBody = z.infer<typeof createBoardBodySchema>;
 export type CreateColumnBody = z.infer<typeof createColumnBodySchema>;
+export type DeleteBoardParams = z.infer<typeof deleteBoardParamsSchema>;
 export type CardIdParams = z.infer<typeof cardIdParamsSchema>;
 export type ColumnIdParams = z.infer<typeof columnIdParamsSchema>;
 export type ChecklistItemToggleParams = z.infer<typeof checklistItemToggleParamsSchema>;

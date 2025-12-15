@@ -19,16 +19,24 @@ const attachmentsRepository = new AttachmentsRepository();
 
 export class BoardsService {
   async createBoard(organizationId: string, data: CreateBoardBody): Promise<Board> {
+    // Fallback to default columns if none provided
+    const columns = data.columns && data.columns.length > 0
+      ? data.columns
+      : [
+          { title: 'A Fazer' },
+          { title: 'Em Andamento' },
+          { title: 'Feito' },
+        ];
+
     const board = await boardsRepository.create({
       title: data.title,
       description: data.description,
       organizationId,
       columns: {
-        create: [
-          { title: 'A Fazer', order: 0 },
-          { title: 'Em Andamento', order: 1 },
-          { title: 'Feito', order: 2 },
-        ],
+        create: columns.map((column, index) => ({
+          title: column.title,
+          order: index,
+        })),
       },
     });
     return board as unknown as Board;
@@ -37,6 +45,10 @@ export class BoardsService {
   async getBoards(organizationId: string): Promise<Board[]> {
     const boards = await boardsRepository.findMany(organizationId);
     return boards as unknown as Board[];
+  }
+
+  async deleteBoard(boardId: string): Promise<void> {
+    await boardsRepository.deleteBoard(boardId);
   }
 
   async createColumn(data: CreateColumnBody): Promise<BoardColumn> {

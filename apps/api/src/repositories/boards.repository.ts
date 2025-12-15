@@ -154,6 +154,12 @@ export class BoardsRepository {
     });
   }
 
+  async deleteBoard(id: string): Promise<void> {
+    await prisma.board.delete({
+      where: { id },
+    });
+  }
+
   async deleteColumn(id: string): Promise<void> {
     await prisma.boardColumn.delete({
       where: { id },
