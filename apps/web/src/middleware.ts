@@ -9,6 +9,7 @@ export function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/auth/sign-in') ||
     request.nextUrl.pathname.startsWith('/auth/sign-up') ||
     request.nextUrl.pathname.startsWith('/approval') ||
+    request.nextUrl.pathname.startsWith('/a/') ||
     request.nextUrl.pathname.startsWith('/api/uploadthing');
 
   // 1. Unauthenticated users trying to access protected routes
