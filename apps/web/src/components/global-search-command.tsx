@@ -1,8 +1,8 @@
 'use client';
 
-import { FileText, Hash, Inbox, Loader2, Square } from 'lucide-react';
+import { Columns2, FileText, Hash, Inbox, Kanban, Loader2, SquareDashedKanban } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useGlobalSearch } from '@/app/http/hooks/use-global-search';
 import { Badge } from '@/components/ui/badge';
@@ -14,8 +14,9 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command';
+import { useAppContext } from '@/hooks/use-app-context';
 import { formatCurrency } from '@/lib/format-currency';
-import { cn } from '@/lib/utils';
+import { cn, stripHtml } from '@/lib/utils';
 
 interface GlobalSearchCommandProps {
   open: boolean;
@@ -30,25 +31,15 @@ const budgetStatusMap: Record<string, string> = {
   DONE: 'Concluído',
 };
 
-const cardPriorityMap: Record<string, string> = {
-  LOW: 'Baixa',
-  MEDIUM: 'Média',
-  HIGH: 'Alta',
-  URGENT: 'Urgente',
-};
-
 export function GlobalSearchCommand({ open, onOpenChange }: GlobalSearchCommandProps) {
+  const { user } = useAppContext();
   const [query, setQuery] = useState('');
   const router = useRouter();
 
-  console.log('[GlobalSearchCommand] State:', { open, query });
-
-  const { data, isLoading, isFetching, error } = useGlobalSearch({
+  const { data, isLoading, isFetching } = useGlobalSearch({
     query,
     enabled: open,
   });
-
-  console.log('[GlobalSearchCommand] Query result:', { data, isLoading, isFetching, error });
 
   const isCodeSearch = query.trim().startsWith('#');
   const hasResults = data && (data.budgets.length > 0 || data.cards.length > 0);
@@ -68,6 +59,14 @@ export function GlobalSearchCommand({ open, onOpenChange }: GlobalSearchCommandP
   const handleSelectCard = (cardId: string) => {
     router.push(`/production/boards?cardId=${cardId}`);
     onOpenChange(false);
+  };
+
+  const isAdmin = useMemo(() => {
+    return user?.role === 'ADMIN' || user?.role === 'MASTER';
+  }, [user?.role]);
+
+  const descriptionFormatted = (description: string) => {
+    return stripHtml(String(description));
   };
 
   return (
@@ -128,7 +127,7 @@ export function GlobalSearchCommand({ open, onOpenChange }: GlobalSearchCommandP
                   </div>
                   <div className="flex flex-1 flex-col gap-1">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="font-mono text-xs">
+                      <Badge variant="secondary" className="font-mono text-xs">
                         #{budget.code}
                       </Badge>
                       <span className="text-sm font-medium">{budget.client.name}</span>
@@ -137,10 +136,13 @@ export function GlobalSearchCommand({ open, onOpenChange }: GlobalSearchCommandP
                       <span>{budget.client.phone}</span>
                       <span>•</span>
                       <span>{budgetStatusMap[budget.status] || budget.status}</span>
-                      <span>•</span>
-                      <span className="font-medium text-foreground">
-                        {formatCurrency(Number(budget.total))}
-                      </span>
+                      {isAdmin && (
+                        <>
+                          <span>•</span>
+                          {formatCurrency(Number(budget.total))}
+                        </>
+                      )}
+                      <span className="font-medium text-foreground"></span>
                     </div>
                   </div>
                 </CommandItem>
@@ -163,42 +165,31 @@ export function GlobalSearchCommand({ open, onOpenChange }: GlobalSearchCommandP
               >
                 <div
                   className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-md',
-                    card.priority === 'URGENT' && 'bg-red-500/10',
-                    card.priority === 'HIGH' && 'bg-orange-500/10',
-                    card.priority === 'MEDIUM' && 'bg-blue-500/10',
-                    card.priority === 'LOW' && 'bg-gray-500/10',
-                    !card.priority && 'bg-gray-500/10'
+                    'flex h-10 w-10 items-center justify-center rounded-md bg-primary/10'
                   )}
                 >
-                  <Square
-                    className={cn(
-                      'h-5 w-5',
-                      card.priority === 'URGENT' && 'text-red-500',
-                      card.priority === 'HIGH' && 'text-orange-500',
-                      card.priority === 'MEDIUM' && 'text-blue-500',
-                      card.priority === 'LOW' && 'text-gray-500',
-                      !card.priority && 'text-gray-500'
-                    )}
-                  />
+                  <SquareDashedKanban className={cn('h-5 w-5 text-primary')} />
                 </div>
                 <div className="flex flex-1 flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{card.title}</span>
-                    {card.priority && (
-                      <Badge variant="outline" className="text-xs">
-                        {cardPriorityMap[card.priority]}
-                      </Badge>
-                    )}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{card.column.board.title}</span>
+                    <span className="flex items-center gap-1">
+                      <Kanban className="!w-4 !h-4" />
+                      {card.column.board.title}
+                    </span>
                     <span>•</span>
-                    <span>{card.column.title}</span>
+                    <span className="flex items-end gap-1">
+                      <Columns2 className="!w-4 !h-4" />
+                      {card.column.title}
+                    </span>
                     {card.description && (
                       <>
                         <span>•</span>
-                        <span className="line-clamp-1">{card.description}</span>
+                        <span className="line-clamp-1">
+                          {descriptionFormatted(card.description)}
+                        </span>
                       </>
                     )}
                   </div>

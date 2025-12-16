@@ -32,7 +32,13 @@ export default function BoardsPage() {
   // Handle cardId from URL
   useEffect(() => {
     const findAndOpenCard = async () => {
-      if (!cardIdFromUrl || boards.length === 0) return;
+      if (!cardIdFromUrl || boards.length === 0) {
+        console.log('[BoardsPage] No cardId or no boards', {
+          cardIdFromUrl,
+          boardsLength: boards.length,
+        });
+        return;
+      }
 
       // Find the card in all boards (including active cards)
       let foundCard = null;
@@ -44,6 +50,11 @@ export default function BoardsPage() {
           if (card) {
             foundCard = card;
             foundBoardId = board.id;
+            console.log('[BoardsPage] Found card in active cards:', {
+              cardId: card.id,
+              boardId: board.id,
+              columnId: column.id,
+            });
             break;
           }
         }
@@ -52,6 +63,7 @@ export default function BoardsPage() {
 
       // If not found in active cards, search in archived cards of all boards
       if (!foundCard) {
+        console.log('[BoardsPage] Card not found in active cards, searching archived...');
         for (const board of boards) {
           try {
             const archivedCards = await fetchArchivedCards(board.id);
@@ -84,7 +96,7 @@ export default function BoardsPage() {
 
     findAndOpenCard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardIdFromUrl]);
+  }, [cardIdFromUrl, boards]);
 
   // Handle closing card dialog
   const handleCardDialogClose = (open: boolean) => {

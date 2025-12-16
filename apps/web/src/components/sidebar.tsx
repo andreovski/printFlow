@@ -23,14 +23,13 @@ import {
   Kanban,
   Building2,
   Menu,
-  Loader2,
   TrendingUp,
+  Search,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { useFormStatus } from 'react-dom';
 
 import { signOutAction } from '@/app/auth/actions';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -49,33 +48,6 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   module: NavigationSubjectType;
-}
-
-interface SignOutButtonProps {
-  isMobile: boolean;
-  collapsedOpen: boolean;
-}
-
-function SignOutButton({ isMobile, collapsedOpen }: SignOutButtonProps) {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button
-      variant="ghost"
-      disabled={pending}
-      className={cn(
-        'w-full flex items-center gap-3 justify-start text-muted-foreground hover:text-foreground',
-        !isMobile && collapsedOpen && 'justify-center px-0'
-      )}
-    >
-      {pending ? (
-        <Loader2 className="h-5 w-5 shrink-0 animate-spin" />
-      ) : (
-        <LogOut className="h-5 w-5 shrink-0" />
-      )}
-      {(isMobile || !collapsedOpen) && <span>{pending ? 'Saindo...' : 'Sair'}</span>}
-    </Button>
-  );
 }
 
 export function Sidebar() {
@@ -104,8 +76,9 @@ export function Sidebar() {
   // State for mobile sidebar
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isMac, setIsMac] = useState(false);
 
-  // Detect mobile screen size
+  // Detect mobile screen size and OS
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
@@ -114,6 +87,9 @@ export function Sidebar() {
         setMobileOpen(false);
       }
     };
+
+    // Detect macOS
+    setIsMac(/(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent));
 
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -638,42 +614,98 @@ export function Sidebar() {
           )}
         </nav>
 
-        {/* User Profile */}
+        {/* Search Button */}
+        <div className="p-2">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              // Trigger the same keyboard shortcut that opens the search
+              const event = new KeyboardEvent('keydown', {
+                key: 'k',
+                metaKey: true,
+                bubbles: true,
+              });
+              document.dispatchEvent(event);
+            }}
+            className={cn(
+              'w-full flex items-center gap-3 justify-start text-muted-foreground hover:text-foreground',
+              !isMobile && collapsed.isOpen && 'justify-center px-0'
+            )}
+          >
+            <Search className="h-5 w-5 shrink-0" />
+            {(isMobile || !collapsed.isOpen) && (
+              <>
+                <span className="flex-1 text-left">Buscar</span>
+                <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                  <span className="text-xs">{isMac ? '⌘' : 'Ctrl'}</span>K
+                </kbd>
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* User Profile & Logout */}
         <div className="p-4 border-t">
           <div
             className={cn(
-              'flex items-center gap-3',
-              !isMobile && collapsed.isOpen && 'justify-center'
+              'flex items-center gap-2',
+              !isMobile && collapsed.isOpen && 'flex-col gap-2'
             )}
           >
-            <Avatar>
-              <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-                {getInitials(userName || userEmail || 'User')}
-              </AvatarFallback>
-            </Avatar>
-            {(isMobile || !collapsed.isOpen) && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{userName || 'Usuário'}</p>
-                <p className="text-xs text-muted-foreground truncate">{userEmail || 'Sem email'}</p>
-              </div>
-            )}
-            {(isMobile || !collapsed.isOpen) && (
-              <ProfileDrawer
-                trigger={
-                  <Button variant="ghost" size="icon">
-                    <UserCog className="h-4 w-4 shrink-0" />
-                  </Button>
-                }
-              />
-            )}
-          </div>
-        </div>
+            {/* Avatar and user info */}
+            <div
+              className={cn(
+                'flex items-center gap-3 flex-1 min-w-0',
+                !isMobile && collapsed.isOpen && 'justify-center'
+              )}
+            >
+              <Avatar>
+                <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                  {getInitials(userName || userEmail || 'User')}
+                </AvatarFallback>
+              </Avatar>
+              {(isMobile || !collapsed.isOpen) && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{userName || 'Usuário'}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {userEmail || 'Sem email'}
+                  </p>
+                </div>
+              )}
+            </div>
 
-        {/* Logout */}
-        <div className="p-4 border-t">
-          <form action={signOutAction}>
-            <SignOutButton isMobile={isMobile} collapsedOpen={collapsed.isOpen} />
-          </form>
+            {/* Profile and Logout buttons */}
+            <div
+              className={cn(
+                'flex items-center gap-1',
+                !isMobile && collapsed.isOpen && 'flex-col gap-1'
+              )}
+            >
+              {(isMobile || !collapsed.isOpen) && (
+                <ProfileDrawer
+                  trigger={
+                    <Button variant="ghost" size="icon">
+                      <UserCog className="h-4 w-4 shrink-0" />
+                    </Button>
+                  }
+                />
+              )}
+              <form action={signOutAction}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={false}
+                  type="submit"
+                  className={cn(
+                    'text-muted-foreground hover:text-foreground',
+                    !isMobile && collapsed.isOpen && 'px-0'
+                  )}
+                >
+                  <LogOut className="h-4 w-4 shrink-0" />
+                </Button>
+              </form>
+            </div>
+          </div>
         </div>
       </aside>
     </>
