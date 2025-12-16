@@ -12,6 +12,7 @@ interface SalesReceiptProps {
   organization?: Organization;
   /** Reserved for future use - company logo URL */
   logoUrl?: string;
+  hideValues?: boolean;
 }
 
 const formatCurrency = (value: number | null | undefined): string => {
@@ -29,7 +30,7 @@ const formatDocument = (document: string, personType: string): string => {
 };
 
 export const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(
-  ({ budget, logoUrl, organization: propOrganization }, ref) => {
+  ({ budget, hideValues, logoUrl, organization: propOrganization }, ref) => {
     const context = useAppContext();
     const organization = propOrganization || context.organization;
 
@@ -160,11 +161,21 @@ export const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(
             <thead>
               <tr className="bg-gray-100 border-b border-gray-400">
                 <th className="text-left p-2 border-r border-gray-400 w-12">#</th>
-                <th className="text-left p-2 border-r border-gray-400">Descrição</th>
+                <th
+                  className={
+                    hideValues ? 'text-left p-2' : 'text-left p-2 border-r border-gray-400'
+                  }
+                >
+                  Descrição
+                </th>
                 <th className="text-center p-2 border-r border-gray-400 w-16">Qtd</th>
-                <th className="text-right p-2 border-r border-gray-400 w-28">Vlr. Unit.</th>
-                <th className="text-right p-2 border-r border-gray-400 w-24">Desc.</th>
-                <th className="text-right p-2 w-28">Total</th>
+                {!hideValues && (
+                  <>
+                    <th className="text-right p-2 border-r border-gray-400 w-28">Vlr. Unit.</th>
+                    <th className="text-right p-2 border-r border-gray-400 w-24">Desc.</th>
+                    <th className="text-right p-2 w-28">Total</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -180,7 +191,7 @@ export const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(
                 return (
                   <tr key={item.id} className="border-b border-gray-300 last:border-b-0">
                     <td className="p-2 border-r border-gray-300 text-center">{index + 1}</td>
-                    <td className="p-2 border-r border-gray-300">
+                    <td className={hideValues ? 'p-2' : 'p-2 border-r border-gray-300'}>
                       {item.name}
                       {item.unitType === 'M2' && item.width && item.height && (
                         <span className="text-xs text-gray-500 ml-1">
@@ -189,13 +200,17 @@ export const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(
                       )}
                     </td>
                     <td className="p-2 border-r border-gray-300 text-center">{item.quantity}</td>
-                    <td className="p-2 border-r border-gray-300 text-right">
-                      {formatCurrency(item.salePrice)}
-                    </td>
-                    <td className="p-2 border-r border-gray-300 text-right">
-                      {itemDiscount > 0 ? formatCurrency(itemDiscount) : '-'}
-                    </td>
-                    <td className="p-2 text-right">{formatCurrency(item.total)}</td>
+                    {!hideValues && (
+                      <>
+                        <td className="p-2 border-r border-gray-300 text-right">
+                          {formatCurrency(item.salePrice)}
+                        </td>
+                        <td className="p-2 border-r border-gray-300 text-right">
+                          {itemDiscount > 0 ? formatCurrency(itemDiscount) : '-'}
+                        </td>
+                        <td className="p-2 text-right">{formatCurrency(item.total)}</td>
+                      </>
+                    )}
                   </tr>
                 );
               })}
@@ -204,74 +219,80 @@ export const SalesReceipt = forwardRef<HTMLDivElement, SalesReceiptProps>(
         </div>
 
         {/* Totals Block */}
-        <div className="border border-gray-400 p-4 mb-4 bg-gray-50">
-          <div className="flex justify-end mb-1">
-            <span className="w-40">Subtotal:</span>
-            <span className="w-32 text-right">{formatCurrency(budget.subtotal)}</span>
-          </div>
-
-          {budget.discountValue && Number(budget.discountValue) > 0 && (
-            <div className="flex justify-end mb-1 text-red-600">
-              <span className="w-40">
-                Desconto
-                {budget.discountType === 'PERCENT' ? ` (${budget.discountValue}%)` : ''}:
-              </span>
-              <span className="w-32 text-right">
-                -{' '}
-                {budget.discountType === 'PERCENT'
-                  ? formatCurrency((Number(budget.subtotal) * Number(budget.discountValue)) / 100)
-                  : formatCurrency(budget.discountValue)}
-              </span>
+        {!hideValues && (
+          <div className="border border-gray-400 p-4 mb-4 bg-gray-50">
+            <div className="flex justify-end mb-1">
+              <span className="w-40">Subtotal:</span>
+              <span className="w-32 text-right">{formatCurrency(budget.subtotal)}</span>
             </div>
-          )}
 
-          {budget.surchargeValue && Number(budget.surchargeValue) > 0 && (
-            <div className="flex justify-end mb-1 text-blue-600">
-              <span className="w-40">
-                Acréscimo
-                {budget.surchargeType === 'PERCENT' ? ` (${budget.surchargeValue}%)` : ''}:
-              </span>
-              <span className="w-32 text-right">
-                +{' '}
-                {budget.surchargeType === 'PERCENT'
-                  ? formatCurrency((Number(budget.subtotal) * Number(budget.surchargeValue)) / 100)
-                  : formatCurrency(budget.surchargeValue)}
-              </span>
-            </div>
-          )}
-
-          <div className="flex justify-end border-t border-gray-300 pt-2 mt-2 text-lg font-bold">
-            <span className="w-40">TOTAL A PAGAR:</span>
-            <span className="w-32 text-right">{formatCurrency(total)}</span>
-          </div>
-        </div>
-
-        {/* Payment Info */}
-        <div className="border border-gray-400 p-4 mb-4">
-          <h3 className="font-bold text-base mb-2 border-b border-gray-300 pb-1">
-            INFORMAÇÕES DE PAGAMENTO
-          </h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex justify-between">
-              <span className="font-semibold">Forma de Pagamento:</span>
-              <span>{budget.paymentType ? paymentTypeLabel[budget.paymentType] : '-'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-semibold">Entrada (Sinal):</span>
-              <span>{formatCurrency(advancePayment)}</span>
-            </div>
-            {budget.isPaidInFull && (
-              <div className="flex justify-between text-green-600">
-                <span className="font-semibold">Valor Pago:</span>
-                <span>{formatCurrency(budget.subtotal - advancePayment)}</span>
+            {budget.discountValue && Number(budget.discountValue) > 0 && (
+              <div className="flex justify-end mb-1 text-red-600">
+                <span className="w-40">
+                  Desconto
+                  {budget.discountType === 'PERCENT' ? ` (${budget.discountValue}%)` : ''}:
+                </span>
+                <span className="w-32 text-right">
+                  -{' '}
+                  {budget.discountType === 'PERCENT'
+                    ? formatCurrency((Number(budget.subtotal) * Number(budget.discountValue)) / 100)
+                    : formatCurrency(budget.discountValue)}
+                </span>
               </div>
             )}
-            <div className="flex justify-between text-lg font-bold">
-              <span>Saldo Devedor:</span>
-              <span>{formatCurrency(balanceDue)}</span>
+
+            {budget.surchargeValue && Number(budget.surchargeValue) > 0 && (
+              <div className="flex justify-end mb-1 text-blue-600">
+                <span className="w-40">
+                  Acréscimo
+                  {budget.surchargeType === 'PERCENT' ? ` (${budget.surchargeValue}%)` : ''}:
+                </span>
+                <span className="w-32 text-right">
+                  +{' '}
+                  {budget.surchargeType === 'PERCENT'
+                    ? formatCurrency(
+                        (Number(budget.subtotal) * Number(budget.surchargeValue)) / 100
+                      )
+                    : formatCurrency(budget.surchargeValue)}
+                </span>
+              </div>
+            )}
+
+            <div className="flex justify-end border-t border-gray-300 pt-2 mt-2 text-lg font-bold">
+              <span className="w-40">TOTAL A PAGAR:</span>
+              <span className="w-32 text-right">{formatCurrency(total)}</span>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Payment Info */}
+        {!hideValues && (
+          <div className="border border-gray-400 p-4 mb-4">
+            <h3 className="font-bold text-base mb-2 border-b border-gray-300 pb-1">
+              INFORMAÇÕES DE PAGAMENTO
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex justify-between">
+                <span className="font-semibold">Forma de Pagamento:</span>
+                <span>{budget.paymentType ? paymentTypeLabel[budget.paymentType] : '-'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-semibold">Entrada (Sinal):</span>
+                <span>{formatCurrency(advancePayment)}</span>
+              </div>
+              {budget.isPaidInFull && (
+                <div className="flex justify-between text-green-600">
+                  <span className="font-semibold">Valor Pago:</span>
+                  <span>{formatCurrency(budget.subtotal - advancePayment)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-lg font-bold">
+                <span>Saldo Devedor:</span>
+                <span>{formatCurrency(balanceDue)}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Notes */}
         {budget.notes && (

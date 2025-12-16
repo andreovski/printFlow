@@ -10,6 +10,7 @@ import { useAppContext } from '@/hooks/use-app-context';
 interface ThermalReceiptProps {
   budget: Budget;
   organization?: Organization;
+  hideValues?: boolean;
 }
 
 const formatCurrency = (value: number | null | undefined): string => {
@@ -27,7 +28,7 @@ const formatDocument = (document: string, personType: string): string => {
 };
 
 export const ThermalReceipt = forwardRef<HTMLDivElement, ThermalReceiptProps>(
-  ({ budget, organization: propOrganization }, ref) => {
+  ({ budget, hideValues, organization: propOrganization }, ref) => {
     const context = useAppContext();
     const organization = propOrganization || context.organization;
 
@@ -126,12 +127,18 @@ export const ThermalReceipt = forwardRef<HTMLDivElement, ThermalReceiptProps>(
                   )}
                 </p>
                 <div className="flex justify-between">
-                  <span>
-                    {item.quantity}x {formatCurrency(item.salePrice)}
-                  </span>
-                  <span>{formatCurrency(item.total)}</span>
+                  {hideValues ? (
+                    <span>Qtd: {item.quantity}</span>
+                  ) : (
+                    <>
+                      <span>
+                        {item.quantity}x {formatCurrency(item.salePrice)}
+                      </span>
+                      <span>{formatCurrency(item.total)}</span>
+                    </>
+                  )}
                 </div>
-                {itemDiscount > 0 && (
+                {!hideValues && itemDiscount > 0 && (
                   <p className="text-right">Desc: -{formatCurrency(itemDiscount)}</p>
                 )}
               </div>
@@ -142,67 +149,73 @@ export const ThermalReceipt = forwardRef<HTMLDivElement, ThermalReceiptProps>(
         <p className="text-center">{divider}</p>
 
         {/* Totals */}
-        <div className="my-1">
-          {budget.discountValue && Number(budget.discountValue) > 0 && (
-            <div className="flex justify-between">
-              <span>
-                Desconto{budget.discountType === 'PERCENT' ? ` (${budget.discountValue}%)` : ''}:
-              </span>
-              <span>
-                -
-                {budget.discountType === 'PERCENT'
-                  ? formatCurrency((Number(budget.subtotal) * Number(budget.discountValue)) / 100)
-                  : formatCurrency(budget.discountValue)}
-              </span>
-            </div>
-          )}
+        {!hideValues && (
+          <div className="my-1">
+            {budget.discountValue && Number(budget.discountValue) > 0 && (
+              <div className="flex justify-between">
+                <span>
+                  Desconto{budget.discountType === 'PERCENT' ? ` (${budget.discountValue}%)` : ''}:
+                </span>
+                <span>
+                  -
+                  {budget.discountType === 'PERCENT'
+                    ? formatCurrency((Number(budget.subtotal) * Number(budget.discountValue)) / 100)
+                    : formatCurrency(budget.discountValue)}
+                </span>
+              </div>
+            )}
 
-          {budget.surchargeValue && Number(budget.surchargeValue) > 0 && (
-            <div className="flex justify-between">
-              <span>
-                Acrésc.{budget.surchargeType === 'PERCENT' ? ` (${budget.surchargeValue}%)` : ''}:
-              </span>
-              <span>
-                +
-                {budget.surchargeType === 'PERCENT'
-                  ? formatCurrency((Number(budget.subtotal) * Number(budget.surchargeValue)) / 100)
-                  : formatCurrency(budget.surchargeValue)}
-              </span>
-            </div>
-          )}
+            {budget.surchargeValue && Number(budget.surchargeValue) > 0 && (
+              <div className="flex justify-between">
+                <span>
+                  Acrésc.{budget.surchargeType === 'PERCENT' ? ` (${budget.surchargeValue}%)` : ''}:
+                </span>
+                <span>
+                  +
+                  {budget.surchargeType === 'PERCENT'
+                    ? formatCurrency(
+                        (Number(budget.subtotal) * Number(budget.surchargeValue)) / 100
+                      )
+                    : formatCurrency(budget.surchargeValue)}
+                </span>
+              </div>
+            )}
 
-          <div className="flex justify-between font-bold text-[10px] mt-1 border-t border-dashed border-black pt-1">
-            <span>TOTAL:</span>
-            <span>{formatCurrency(total)}</span>
+            <div className="flex justify-between font-bold text-[10px] mt-1 border-t border-dashed border-black pt-1">
+              <span>TOTAL:</span>
+              <span>{formatCurrency(total)}</span>
+            </div>
           </div>
-        </div>
+        )}
 
         <p className="text-center">{divider}</p>
 
         {/* Payment Info */}
-        <div className="my-1">
-          <p className="font-bold">PAGAMENTO:</p>
-          <div className="flex justify-between">
-            <span>Forma:</span>
-            <span>{budget.paymentType ? paymentTypeLabel[budget.paymentType] : '-'}</span>
-          </div>
-          {advancePayment > 0 && (
+        {!hideValues && (
+          <div className="my-1">
+            <p className="font-bold">PAGAMENTO:</p>
             <div className="flex justify-between">
-              <span>Entrada:</span>
-              <span>{formatCurrency(advancePayment)}</span>
+              <span>Forma:</span>
+              <span>{budget.paymentType ? paymentTypeLabel[budget.paymentType] : '-'}</span>
             </div>
-          )}
-          {budget.isPaidInFull && (
-            <div className="flex justify-between ">
-              <span className="font-semibold">Valor Pago:</span>
-              <span>{formatCurrency(budget.subtotal - advancePayment)}</span>
+            {advancePayment > 0 && (
+              <div className="flex justify-between">
+                <span>Entrada:</span>
+                <span>{formatCurrency(advancePayment)}</span>
+              </div>
+            )}
+            {budget.isPaidInFull && (
+              <div className="flex justify-between ">
+                <span className="font-semibold">Valor Pago:</span>
+                <span>{formatCurrency(budget.subtotal - advancePayment)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-bold">
+              <span>Saldo:</span>
+              <span>{formatCurrency(balanceDue)}</span>
             </div>
-          )}
-          <div className="flex justify-between font-bold">
-            <span>Saldo:</span>
-            <span>{formatCurrency(balanceDue)}</span>
           </div>
-        </div>
+        )}
 
         {/* Notes */}
         {budget.notes && (
