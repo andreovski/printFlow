@@ -6,14 +6,14 @@ import { globalSearch } from '../requests/search';
 
 interface UseGlobalSearchParams {
   query: string;
-  types?: ('budgets' | 'cards')[];
+  types?: ('budgets' | 'cards' | 'clients' | 'products')[];
   limit?: number;
   enabled?: boolean;
 }
 
 export function useGlobalSearch({
   query,
-  types = ['budgets', 'cards'],
+  types = ['budgets', 'cards', 'clients', 'products'],
   limit = 25,
   enabled = true,
 }: UseGlobalSearchParams) {

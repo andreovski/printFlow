@@ -4,7 +4,7 @@ import { api } from '../api';
 
 interface GlobalSearchParams {
   q: string;
-  types?: ('budgets' | 'cards')[];
+  types?: ('budgets' | 'cards' | 'clients' | 'products')[];
   limit?: number;
 }
 

@@ -28,17 +28,42 @@ interface SearchResultCard {
   rank: number;
 }
 
+interface SearchResultClient {
+  id: string;
+  name: string;
+  phone: string;
+  email: string | null;
+  document: string;
+  active: boolean;
+  rank: number;
+}
+
+interface SearchResultProduct {
+  id: string;
+  title: string;
+  code: string | null;
+  costPrice: number;
+  salePrice: number;
+  stock: number;
+  active: boolean;
+  rank: number;
+}
+
 export interface GlobalSearchResult {
   budgets: SearchResultBudget[];
   cards: SearchResultCard[];
+  clients: SearchResultClient[];
+  products: SearchResultProduct[];
   totalBudgets: number;
   totalCards: number;
+  totalClients: number;
+  totalProducts: number;
 }
 
 interface SearchOptions {
   query: string;
   organizationId: string;
-  types?: ('budgets' | 'cards')[];
+  types?: ('budgets' | 'cards' | 'clients' | 'products')[];
   limit?: number;
 }
 
@@ -50,30 +75,48 @@ export class GlobalSearchService {
   }
 
   async search(options: SearchOptions): Promise<GlobalSearchResult> {
-    const { query, organizationId, types = ['budgets', 'cards'], limit = 25 } = options;
+    const {
+      query,
+      organizationId,
+      types = ['budgets', 'cards', 'clients', 'products'],
+      limit = 25,
+    } = options;
 
     // Minimum query length validation
     if (query.trim().length < 3) {
       return {
         budgets: [],
         cards: [],
+        clients: [],
+        products: [],
         totalBudgets: 0,
         totalCards: 0,
+        totalClients: 0,
+        totalProducts: 0,
       };
     }
 
+    // Detect search prefixes
     const isCodeSearch = query.trim().startsWith('#');
-    const searchQuery = isCodeSearch ? query.trim().substring(1) : query.trim();
+    const isClientSearch = query.trim().startsWith('@');
+    const isProductSearch = query.trim().startsWith('$');
+
+    const searchQuery =
+      isCodeSearch || isClientSearch || isProductSearch ? query.trim().substring(1) : query.trim();
 
     const results: GlobalSearchResult = {
       budgets: [],
       cards: [],
+      clients: [],
+      products: [],
       totalBudgets: 0,
       totalCards: 0,
+      totalClients: 0,
+      totalProducts: 0,
     };
 
-    // Search budgets
-    if (types.includes('budgets')) {
+    // Search budgets (only when not using @ or $ prefixes)
+    if (types.includes('budgets') && !isClientSearch && !isProductSearch) {
       if (isCodeSearch) {
         // Search only by code when # prefix is present
         const codeNumber = parseInt(searchQuery, 10);
@@ -137,8 +180,8 @@ export class GlobalSearchService {
       }
     }
 
-    // Search cards (only when # prefix is NOT present)
-    if (types.includes('cards') && !isCodeSearch) {
+    // Search cards (only when no special prefix is present)
+    if (types.includes('cards') && !isCodeSearch && !isClientSearch && !isProductSearch) {
       // Use Full-Text Search OR partial match for title/description
       const searchPattern = `%${searchQuery}%`;
       const cards = await this.prisma.$queryRaw<SearchResultCard[]>`
@@ -173,6 +216,69 @@ export class GlobalSearchService {
       `;
       results.cards = cards;
       results.totalCards = cards.length;
+    }
+
+    // Search clients (only when @ prefix is present)
+    if (types.includes('clients') && isClientSearch) {
+      const searchPattern = `%${searchQuery}%`;
+      const clients = await this.prisma.$queryRaw<SearchResultClient[]>`
+        SELECT
+          c.id,
+          c.name,
+          c.phone,
+          c.email,
+          c.document,
+          c.active,
+          CASE
+            WHEN c.search_vector @@ plainto_tsquery('portuguese', ${searchQuery})
+              THEN ts_rank(c.search_vector, plainto_tsquery('portuguese', ${searchQuery}))
+            ELSE 0.5
+          END as rank
+        FROM clients c
+        WHERE c."organizationId" = ${organizationId}
+          AND (
+            c.search_vector @@ plainto_tsquery('portuguese', ${searchQuery})
+            OR c.name ILIKE ${searchPattern}
+            OR c.phone ILIKE ${searchPattern}
+            OR c.document ILIKE ${searchPattern}
+            OR c.email ILIKE ${searchPattern}
+          )
+        ORDER BY rank DESC, c."createdAt" DESC
+        LIMIT ${limit}
+      `;
+      results.clients = clients;
+      results.totalClients = clients.length;
+    }
+
+    // Search products (only when $ prefix is present)
+    if (types.includes('products') && isProductSearch) {
+      const searchPattern = `%${searchQuery}%`;
+      const products = await this.prisma.$queryRaw<SearchResultProduct[]>`
+        SELECT
+          p.id,
+          p.title,
+          p.code,
+          p."costPrice"::numeric as "costPrice",
+          p."salePrice"::numeric as "salePrice",
+          p.stock,
+          p.active,
+          CASE
+            WHEN p.search_vector @@ plainto_tsquery('portuguese', ${searchQuery})
+              THEN ts_rank(p.search_vector, plainto_tsquery('portuguese', ${searchQuery}))
+            ELSE 0.5
+          END as rank
+        FROM products p
+        WHERE p."organizationId" = ${organizationId}
+          AND (
+            p.search_vector @@ plainto_tsquery('portuguese', ${searchQuery})
+            OR p.title ILIKE ${searchPattern}
+            OR p.code ILIKE ${searchPattern}
+          )
+        ORDER BY rank DESC, p."createdAt" DESC
+        LIMIT ${limit}
+      `;
+      results.products = products;
+      results.totalProducts = products.length;
     }
 
     return results;
