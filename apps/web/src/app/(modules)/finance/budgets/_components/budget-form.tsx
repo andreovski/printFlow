@@ -57,7 +57,6 @@ import { GenerateLinkButton } from './generate-link-button';
 import { ProductSelect } from './product-select';
 import { StatusSelect } from './status-select';
 
-// Component to sync external content changes to the editor
 function EditorContentSync({ content }: { content: string | null }) {
   const { editor } = useCurrentEditor();
   const lastSyncedContent = useRef<string | null>(null);
@@ -187,7 +186,7 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
       ? {
           clientId: initialData.clientId,
           expirationDate: initialData.expirationDate
-            ? new Date(initialData.expirationDate).toISOString().split('T')[0]
+            ? new Date(initialData.expirationDate).toDateString()
             : '',
           discountType: initialData.discountType || 'VALUE',
           discountValue: initialData.discountValue ? Number(initialData.discountValue) : 0,
@@ -421,7 +420,16 @@ export function BudgetForm({ initialData, onSuccess }: BudgetFormProps) {
                 render={({ field }) => (
                   <DatePicker
                     value={field.value ? new Date(field.value) : undefined}
-                    onChange={(date) => field.onChange(date ? date?.toISOString() : undefined)}
+                    onChange={(date) => {
+                      if (date) {
+                        // Set time to noon to avoid timezone issues
+                        const dateAtNoon = new Date(date);
+                        dateAtNoon.setHours(12, 0, 0, 0);
+                        field.onChange(dateAtNoon.toISOString());
+                      } else {
+                        field.onChange(undefined);
+                      }
+                    }}
                     placeholder="Selecione uma data"
                     disabled={isReadOnly}
                   />

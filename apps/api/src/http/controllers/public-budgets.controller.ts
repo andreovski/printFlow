@@ -22,16 +22,10 @@ export async function getPublicBudgetController(request: FastifyRequest, reply: 
     return reply.status(404).send({ message: 'Budget not found or link is invalid' });
   }
 
-  // Check if budget is still in SENT status (can be approved/rejected)
-  if (budget.status !== 'SENT') {
-    return reply.status(400).send({
-      message: 'This budget has already been processed',
-      status: budget.status,
-    });
-  }
-
-  // Check if expired based on expirationDate
-  const isExpired = budget.expirationDate ? new Date() > new Date(budget.expirationDate) : false;
+  // Check if expired based on expirationDate (valid until end of day)
+  const isExpired = budget.expirationDate
+    ? new Date() > new Date(new Date(budget.expirationDate).setHours(23, 59, 59, 999))
+    : false;
 
   // Type assertion for the relations included by findByApprovalToken
   const budgetWithRelations = budget as typeof budget & {
@@ -70,6 +64,8 @@ export async function getPublicBudgetController(request: FastifyRequest, reply: 
       advancePayment: budgetWithRelations.advancePayment,
       paymentType: budgetWithRelations.paymentType,
       notes: budgetWithRelations.notes,
+      publicApprovedRejectedAt: budgetWithRelations.approvedAt,
+      rejectionReason: budgetWithRelations.rejectionReason,
       items: budgetWithRelations.items.map((item) => ({
         id: item.id,
         name: item.name,
@@ -110,8 +106,11 @@ export async function approvePublicBudgetController(request: FastifyRequest, rep
     });
   }
 
-  // Check if expired
-  if (budget.expirationDate && new Date() > new Date(budget.expirationDate)) {
+  // Check if expired (valid until end of day)
+  const expirationEndOfDay = budget.expirationDate
+    ? new Date(new Date(budget.expirationDate).setHours(23, 59, 59, 999))
+    : null;
+  if (expirationEndOfDay && new Date() > expirationEndOfDay) {
     return reply.status(400).send({ message: 'This budget has expired' });
   }
 
@@ -149,8 +148,11 @@ export async function rejectPublicBudgetController(request: FastifyRequest, repl
     });
   }
 
-  // Check if expired
-  if (budget.expirationDate && new Date() > new Date(budget.expirationDate)) {
+  // Check if expired (valid until end of day)
+  const expirationEndOfDay = budget.expirationDate
+    ? new Date(new Date(budget.expirationDate).setHours(23, 59, 59, 999))
+    : null;
+  if (expirationEndOfDay && new Date() > expirationEndOfDay) {
     return reply.status(400).send({ message: 'This budget has expired' });
   }
 
