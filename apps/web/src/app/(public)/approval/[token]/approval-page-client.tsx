@@ -44,6 +44,8 @@ interface BudgetData {
   advancePayment: number | null;
   paymentType: string | null;
   notes: string | null;
+  publicApprovedRejectedAt: string | null;
+  rejectionReason: string | null;
   items: Array<{
     id: string;
     name: string;
@@ -96,9 +98,6 @@ export function ApprovalPageClient({ token }: ApprovalPageClientProps) {
   const [showApproveDialog, setShowApproveDialog] = React.useState(false);
   const [showRejectDialog, setShowRejectDialog] = React.useState(false);
   const [rejectionReason, setRejectionReason] = React.useState('');
-  const [actionCompleted, setActionCompleted] = React.useState<'approved' | 'rejected' | null>(
-    null
-  );
 
   React.useEffect(() => {
     async function loadBudget() {
@@ -127,9 +126,12 @@ export function ApprovalPageClient({ token }: ApprovalPageClientProps) {
     try {
       setIsProcessing(true);
       await approvePublicBudget(token);
-      setActionCompleted('approved');
       setShowApproveDialog(false);
       toast.success('Orçamento aprovado com sucesso!');
+      // Recarregar o orçamento para atualizar o status
+      const response = await getPublicBudget(token);
+      setBudget(response.budget as unknown as BudgetData);
+      setIsExpired(response.isExpired);
     } catch (_err) {
       toast.error('Erro ao aprovar orçamento');
     } finally {
@@ -141,9 +143,12 @@ export function ApprovalPageClient({ token }: ApprovalPageClientProps) {
     try {
       setIsProcessing(true);
       await rejectPublicBudget(token, rejectionReason || undefined);
-      setActionCompleted('rejected');
       setShowRejectDialog(false);
       toast.success('Orçamento recusado');
+      // Recarregar o orçamento para atualizar o status
+      const response = await getPublicBudget(token);
+      setBudget(response.budget as unknown as BudgetData);
+      setIsExpired(response.isExpired);
     } catch (_err) {
       toast.error('Erro ao recusar orçamento');
     } finally {
@@ -171,37 +176,6 @@ export function ApprovalPageClient({ token }: ApprovalPageClientProps) {
               <XCircle className="h-12 w-12 text-destructive" />
               <h2 className="text-xl font-semibold">Erro</h2>
               <p className="text-muted-foreground">{error}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (actionCompleted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center gap-4 text-center">
-              {actionCompleted === 'approved' ? (
-                <>
-                  <CheckCircle2 className="h-16 w-16 text-green-500" />
-                  <h2 className="text-2xl font-semibold">Orçamento Aprovado!</h2>
-                  <p className="text-muted-foreground">
-                    Obrigado! O orçamento #{budget?.code} foi aprovado com sucesso. A empresa
-                    entrará em contato em breve.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <XCircle className="h-16 w-16 text-red-500" />
-                  <h2 className="text-2xl font-semibold">Orçamento Recusado</h2>
-                  <p className="text-muted-foreground">
-                    O orçamento #{budget?.code} foi recusado. Agradecemos seu feedback.
-                  </p>
-                </>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -241,8 +215,73 @@ export function ApprovalPageClient({ token }: ApprovalPageClientProps) {
           </CardHeader>
         </Card>
 
+        {/* Status Banner - Approved */}
+        {budget.status === 'ACCEPTED' && (
+          <Card className="border-green-500 bg-green-50">
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-3 text-green-700">
+                <CheckCircle2 className="h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-medium">Orçamento aprovado</p>
+                  <p className="text-sm">
+                    Este orçamento foi aprovado
+                    {budget.publicApprovedRejectedAt &&
+                      ` em ${dateFormatter.format(new Date(budget.publicApprovedRejectedAt))}`}
+                    . A empresa entrará em contato em breve para dar continuidade.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Status Banner - Rejected */}
+        {budget.status === 'REJECTED' && (
+          <Card className="border-red-500 bg-red-50">
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-3 text-red-700">
+                <XCircle className="h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-medium">Orçamento recusado</p>
+                  <p className="text-sm">
+                    Este orçamento foi recusado
+                    {budget.publicApprovedRejectedAt &&
+                      ` em ${dateFormatter.format(new Date(budget.publicApprovedRejectedAt))}`}
+                    .
+                    {budget.rejectionReason && (
+                      <>
+                        <br />
+                        <strong>Motivo:</strong> {budget.rejectionReason}
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Status Banner - Other Status */}
+        {budget.status !== 'SENT' &&
+          budget.status !== 'ACCEPTED' &&
+          budget.status !== 'REJECTED' && (
+            <Card className="border-blue-500 bg-blue-50">
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-3 text-blue-700">
+                  <Info className="h-5 w-5 shrink-0" />
+                  <div>
+                    <p className="font-medium">Visualização do orçamento</p>
+                    <p className="text-sm">
+                      Este orçamento não está mais disponível para aprovação ou recusa.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
         {/* Expired Warning */}
-        {isExpired && (
+        {isExpired && budget.status === 'SENT' && (
           <Card className="border-yellow-500 bg-yellow-50">
             <CardContent className="pt-4">
               <div className="flex items-center gap-3 text-yellow-700">
@@ -265,7 +304,9 @@ export function ApprovalPageClient({ token }: ApprovalPageClientProps) {
           <CardHeader>
             <CardTitle className="text-base">Olá, {budget.client.name}!</CardTitle>
             <CardDescription>
-              Você recebeu um orçamento. Revise os detalhes abaixo e aprove ou recuse.
+              {budget.status === 'SENT'
+                ? 'Você recebeu um orçamento. Revise os detalhes abaixo e aprove ou recuse.'
+                : 'Detalhes do orçamento abaixo.'}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -296,14 +337,18 @@ export function ApprovalPageClient({ token }: ApprovalPageClientProps) {
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {item.quantity}x {currencyFormatter.format(Number(item.salePrice))}
-                      {item.discountValue && item.discountType === 'PERCENT' && (
-                        <span className="ml-1 text-green-600">(-{item.discountValue}%)</span>
-                      )}
-                      {item.discountValue && item.discountType === 'VALUE' && (
-                        <span className="ml-1 text-green-600">
-                          (-{currencyFormatter.format(Number(item.discountValue))})
-                        </span>
-                      )}
+                      {item.discountValue &&
+                        Number(item.discountValue) > 0 &&
+                        item.discountType === 'PERCENT' && (
+                          <span className="ml-1 text-green-600">(-{item.discountValue}%)</span>
+                        )}
+                      {item.discountValue &&
+                        Number(item.discountValue) > 0 &&
+                        item.discountType === 'VALUE' && (
+                          <span className="ml-1 text-green-600">
+                            (-{currencyFormatter.format(Number(item.discountValue))})
+                          </span>
+                        )}
                     </p>
                   </div>
                   <p className="font-medium">{currencyFormatter.format(Number(item.total))}</p>
@@ -320,7 +365,7 @@ export function ApprovalPageClient({ token }: ApprovalPageClientProps) {
                 <span>{currencyFormatter.format(Number(budget.subtotal))}</span>
               </div>
 
-              {budget.discountValue && (
+              {budget.discountValue && Number(budget.discountValue) > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
                   <span>
                     Desconto {budget.discountType === 'PERCENT' && `(${budget.discountValue}%)`}
@@ -405,8 +450,8 @@ export function ApprovalPageClient({ token }: ApprovalPageClientProps) {
           </CardContent>
         </Card>
 
-        {/* Action Buttons */}
-        {!isExpired && (
+        {/* Action Buttons - Only show for SENT status and not expired */}
+        {!isExpired && budget.status === 'SENT' && (
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               size="lg"

@@ -23,10 +23,11 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 import {
   createContext,
-  Fragment,
   type HTMLAttributes,
   type ReactNode,
   useContext,
+  useEffect,
+  useRef,
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -34,6 +35,7 @@ import tunnel from 'tunnel-rat';
 
 import { Card } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { useConditionalVirtualizer } from '@/hooks/use-conditional-virtualizer';
 import { cn } from '@/lib/utils';
 
 const t = tunnel();
@@ -91,7 +93,6 @@ export const KanbanBoard = ({ id, children, className }: KanbanBoardProps) => {
     transform: CSS.Transform.toString(transform),
   };
 
-  // Combine refs
   const combinedRef = (node: HTMLDivElement | null) => {
     setNodeRef(node);
     setDroppableRef(node);
@@ -213,18 +214,91 @@ export const KanbanCards = <T extends KanbanItemProps = KanbanItemProps>({
   const filteredData = data.filter((item) => item.column === props.id);
   const items = filteredData.map((item) => item.id);
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLElement | null>(null);
+
+  // Get the actual scrolling viewport element from ScrollArea
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const viewport = scrollAreaRef.current.querySelector(
+        '[data-radix-scroll-area-viewport]'
+      ) as HTMLElement;
+      viewportRef.current = viewport;
+    }
+  }, []);
+
+  // Create a stable key that changes when items change to force virtualizer reset
+  const itemsKey =
+    items.length > 0 ? `${items.length}-${items[0]}-${items[items.length - 1]}` : 'empty';
+
+  const virtualizer = useConditionalVirtualizer({
+    count: filteredData.length,
+    parentRef: viewportRef,
+    estimateSize: () => 200,
+    overscan: 5,
+  });
+
+  // Force virtualizer to recalculate when items change
+  useEffect(() => {
+    if (virtualizer) {
+      virtualizer.measure();
+    }
+  }, [itemsKey, virtualizer]);
+
   return (
     <ScrollArea
+      ref={scrollAreaRef}
       className="flex-1 w-full min-h-0 overflow-hidden [&>[data-radix-scroll-area-viewport]>div]:!block"
       style={{ maxHeight: 'calc(80vh - 50px)' }}
     >
       <SortableContext items={items}>
-        <div className={cn('flex flex-grow flex-col gap-2 p-2', className)} {...props}>
-          {filteredData.map((item, idx, arr) => (
-            <div key={item.id} className={cn(idx === arr.length - 1 && 'pb-3')}>
-              {children(item)}
+        <div
+          ref={scrollRef}
+          className={cn('flex flex-grow flex-col', virtualizer ? '' : 'gap-2', 'p-2', className)}
+          {...props}
+        >
+          {virtualizer ? (
+            <div
+              key={itemsKey}
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                width: '100%',
+                position: 'relative',
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualItem) => {
+                const item = filteredData[virtualItem.index];
+                if (!item) return null;
+
+                const isLastItem = virtualItem.index === filteredData.length - 1;
+
+                return (
+                  <div
+                    key={item.id}
+                    data-index={virtualItem.index}
+                    ref={virtualizer.measureElement}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualItem.start}px)`,
+                      paddingBottom: isLastItem ? '12px' : `8px`,
+                    }}
+                  >
+                    {children(item)}
+                  </div>
+                );
+              })}
             </div>
-          ))}
+          ) : (
+            filteredData.map((item, idx, arr) => (
+              <div key={item.id} className={cn(idx === arr.length - 1 && 'pb-3')}>
+                {children(item)}
+              </div>
+            ))
+          )}
         </div>
       </SortableContext>
       <ScrollBar orientation="vertical" />
@@ -315,9 +389,6 @@ export const KanbanProvider = <
       return;
     }
 
-    // Removido onDataChange para evitar atualização prematura durante o drag
-    // A atualização agora só acontece no handleDragEnd quando o card é solto
-
     onDragOver?.(event);
   };
 
@@ -360,13 +431,11 @@ export const KanbanProvider = <
     const overCardColumn =
       overItem?.column || columns.find((col) => col.id === over.id)?.id || columns[0]?.id;
 
-    // Se mudou de coluna, atualiza a propriedade column
     if (activeCardColumn !== overCardColumn) {
       const activeIndex = newData.findIndex((item) => item.id === active.id);
       newData[activeIndex] = { ...newData[activeIndex], column: overCardColumn };
     }
 
-    // Reordena os items se necessário
     if (active.id !== over.id) {
       const oldIndex = newData.findIndex((item) => item.id === active.id);
       const newIndex = newData.findIndex((item) => item.id === over.id);

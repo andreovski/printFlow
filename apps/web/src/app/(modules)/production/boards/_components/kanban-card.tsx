@@ -11,7 +11,7 @@ import {
   Paperclip,
 } from 'lucide-react';
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { toast } from 'sonner';
 
 import { useArchiveCard } from '@/app/http/hooks/use-boards';
@@ -28,11 +28,12 @@ function isImageMimeType(mimeType: string | null): boolean {
   return mimeType.startsWith('image/');
 }
 
-function getCoverImage(attachments?: CardAttachment[]): CardAttachment | null {
+// Pure helper function to find the first image attachment
+const getCoverImage = (attachments?: CardAttachment[]): CardAttachment | null => {
   if (!attachments || attachments.length === 0) return null;
   // Retorna a primeira imagem encontrada como capa
   return attachments.find((att) => isImageMimeType(att.mimeType)) || null;
-}
+};
 
 interface ProductionKanbanCardProps {
   item: ApiCard & { name: string; column: string };
@@ -75,13 +76,13 @@ function getDueDateColor(dueDate: string): string {
   return 'text-green-600'; // Vence em mais de 2 dias
 }
 
-export function ProductionKanbanCard({
+const ProductionKanbanCardComponent = ({
   item,
   boardId,
   onCardUpdated,
   onCardDeleted,
   isArchivedMode,
-}: ProductionKanbanCardProps) {
+}: ProductionKanbanCardProps) => {
   const priorityInfo = item.priority ? priorityConfig[item.priority] : null;
   const plainDescription = item.description ? stripHtml(String(item.description)) : null;
   const archiveCardMutation = useArchiveCard();
@@ -255,4 +256,44 @@ export function ProductionKanbanCard({
       )}
     </KanbanCard>
   );
-}
+};
+
+// Memoize component to prevent unnecessary re-renders
+// Only re-render if item data, callbacks, or archived mode changes
+export const ProductionKanbanCard = memo(ProductionKanbanCardComponent, (prevProps, nextProps) => {
+  // Compare item properties that affect rendering
+  // Helper to compare array contents by IDs
+  const compareArrayByIds = (arr1?: any[], arr2?: any[]) => {
+    if (!arr1 && !arr2) return true;
+    if (!arr1 || !arr2) return false;
+    if (arr1.length !== arr2.length) return false;
+    return arr1.map(item => item.id).join(',') === arr2.map(item => item.id).join(',');
+  };
+
+  // For checklistItems, also compare completion state
+  const compareChecklistItems = (arr1?: any[], arr2?: any[]) => {
+    if (!compareArrayByIds(arr1, arr2)) return false;
+    const completed1 = arr1?.filter(i => i.isCompleted).length || 0;
+    const completed2 = arr2?.filter(i => i.isCompleted).length || 0;
+    return completed1 === completed2;
+  };
+
+  return (
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.item.name === nextProps.item.name &&
+    prevProps.item.description === nextProps.item.description &&
+    prevProps.item.priority === nextProps.item.priority &&
+    prevProps.item.dueDate === nextProps.item.dueDate &&
+    prevProps.item.column === nextProps.item.column &&
+    compareArrayByIds(prevProps.item.attachments, nextProps.item.attachments) &&
+    compareChecklistItems(prevProps.item.checklistItems, nextProps.item.checklistItems) &&
+    compareArrayByIds(prevProps.item.tags, nextProps.item.tags) &&
+    prevProps.item.budget?.id === nextProps.item.budget?.id &&
+    prevProps.boardId === nextProps.boardId &&
+    prevProps.isArchivedMode === nextProps.isArchivedMode &&
+    prevProps.onCardUpdated === nextProps.onCardUpdated &&
+    prevProps.onCardDeleted === nextProps.onCardDeleted
+  );
+});
+
+ProductionKanbanCard.displayName = 'ProductionKanbanCard';

@@ -214,6 +214,8 @@ export interface PublicBudgetResponse {
     advancePayment: number | null;
     paymentType: PaymentType | null;
     notes: string | null;
+    publicApprovedRejectedAt: Date | null;
+    rejectionReason: string | null;
     items: Array<{
       id: string;
       name: string;

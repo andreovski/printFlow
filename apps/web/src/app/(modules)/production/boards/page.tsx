@@ -98,6 +98,15 @@ export default function BoardsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardIdFromUrl, boards]);
 
+  // Se não há board selecionado ou o board selecionado não existe mais, seleciona o primeiro
+  useEffect(() => {
+    if (boards.length > 0 && (!selectedBoardId || !boards.find((b) => b.id === selectedBoardId))) {
+      const firstBoardId = boards[0].id;
+      setSelectedBoardId(firstBoardId);
+      localStorage.setItem('lastSelectedBoardId', firstBoardId);
+    }
+  }, [boards, selectedBoardId]);
+
   // Handle closing card dialog
   const handleCardDialogClose = (open: boolean) => {
     setCardDialogOpen(open);
@@ -107,12 +116,6 @@ export default function BoardsPage() {
       setSelectedCard(null);
     }
   };
-
-  if (boards.length > 0 && !selectedBoardId) {
-    const lastBoardId = boards[0].id;
-    setSelectedBoardId(lastBoardId);
-    localStorage.setItem('lastSelectedBoardId', lastBoardId);
-  }
 
   if (error) {
     toast.error('Erro ao carregar quadros');
