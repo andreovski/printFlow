@@ -27,6 +27,7 @@ import {
   type HTMLAttributes,
   type ReactNode,
   useContext,
+  useRef,
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -34,6 +35,7 @@ import tunnel from 'tunnel-rat';
 
 import { Card } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { useConditionalVirtualizer } from '@/hooks/use-conditional-virtualizer';
 import { cn } from '@/lib/utils';
 
 const t = tunnel();
@@ -213,18 +215,72 @@ export const KanbanCards = <T extends KanbanItemProps = KanbanItemProps>({
   const filteredData = data.filter((item) => item.column === props.id);
   const items = filteredData.map((item) => item.id);
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Create a stable key that changes when items change to force virtualizer reset
+  const itemsKey = items.join(',');
+
+  const virtualizer = useConditionalVirtualizer({
+    count: filteredData.length,
+    parentRef: scrollRef,
+    estimateSize: () => 200,
+    overscan: 5,
+  });
+
   return (
     <ScrollArea
       className="flex-1 w-full min-h-0 overflow-hidden [&>[data-radix-scroll-area-viewport]>div]:!block"
       style={{ maxHeight: 'calc(80vh - 50px)' }}
     >
       <SortableContext items={items}>
-        <div className={cn('flex flex-grow flex-col gap-2 p-2', className)} {...props}>
-          {filteredData.map((item, idx, arr) => (
-            <div key={item.id} className={cn(idx === arr.length - 1 && 'pb-3')}>
-              {children(item)}
+        <div
+          ref={scrollRef}
+          className={cn('flex flex-grow flex-col', virtualizer ? '' : 'gap-2', 'p-2', className)}
+          {...props}
+        >
+          {virtualizer ? (
+            // Renderização virtualizada (20+ cards)
+            <div
+              key={itemsKey}
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                width: '100%',
+                position: 'relative',
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualItem) => {
+                const item = filteredData[virtualItem.index];
+                if (!item) return null;
+
+                const isLastItem = virtualItem.index === filteredData.length - 1;
+
+                return (
+                  <div
+                    key={item.id}
+                    data-index={virtualItem.index}
+                    ref={virtualizer.measureElement}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualItem.start}px)`,
+                      paddingBottom: isLastItem ? '12px' : `8px`,
+                    }}
+                  >
+                    {children(item)}
+                  </div>
+                );
+              })}
             </div>
-          ))}
+          ) : (
+            // Renderização normal (< 20 cards)
+            filteredData.map((item, idx, arr) => (
+              <div key={item.id} className={cn(idx === arr.length - 1 && 'pb-3')}>
+                {children(item)}
+              </div>
+            ))
+          )}
         </div>
       </SortableContext>
       <ScrollBar orientation="vertical" />

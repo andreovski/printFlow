@@ -108,12 +108,6 @@ export default function BoardsPage() {
     }
   };
 
-  if (boards.length > 0 && !selectedBoardId) {
-    const lastBoardId = boards[0].id;
-    setSelectedBoardId(lastBoardId);
-    localStorage.setItem('lastSelectedBoardId', lastBoardId);
-  }
-
   if (error) {
     toast.error('Erro ao carregar quadros');
   }
@@ -143,6 +137,13 @@ export default function BoardsPage() {
         </CreateBoardDialog>
       </div>
     );
+  }
+
+  // Se não há board selecionado ou o board selecionado não existe mais, seleciona o primeiro
+  if (boards.length > 0 && (!selectedBoardId || !boards.find((b) => b.id === selectedBoardId))) {
+    const firstBoardId = boards[0].id;
+    setSelectedBoardId(firstBoardId);
+    localStorage.setItem('lastSelectedBoardId', firstBoardId);
   }
 
   const selectedBoard = boards.find((b) => b.id === selectedBoardId);
