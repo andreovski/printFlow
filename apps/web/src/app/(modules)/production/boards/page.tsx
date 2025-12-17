@@ -98,6 +98,15 @@ export default function BoardsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardIdFromUrl, boards]);
 
+  // Se não há board selecionado ou o board selecionado não existe mais, seleciona o primeiro
+  useEffect(() => {
+    if (boards.length > 0 && (!selectedBoardId || !boards.find((b) => b.id === selectedBoardId))) {
+      const firstBoardId = boards[0].id;
+      setSelectedBoardId(firstBoardId);
+      localStorage.setItem('lastSelectedBoardId', firstBoardId);
+    }
+  }, [boards, selectedBoardId]);
+
   // Handle closing card dialog
   const handleCardDialogClose = (open: boolean) => {
     setCardDialogOpen(open);
@@ -137,13 +146,6 @@ export default function BoardsPage() {
         </CreateBoardDialog>
       </div>
     );
-  }
-
-  // Se não há board selecionado ou o board selecionado não existe mais, seleciona o primeiro
-  if (boards.length > 0 && (!selectedBoardId || !boards.find((b) => b.id === selectedBoardId))) {
-    const firstBoardId = boards[0].id;
-    setSelectedBoardId(firstBoardId);
-    localStorage.setItem('lastSelectedBoardId', firstBoardId);
   }
 
   const selectedBoard = boards.find((b) => b.id === selectedBoardId);

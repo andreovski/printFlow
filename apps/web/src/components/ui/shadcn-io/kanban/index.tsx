@@ -23,10 +23,10 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 import {
   createContext,
-  Fragment,
   type HTMLAttributes,
   type ReactNode,
   useContext,
+  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -93,7 +93,6 @@ export const KanbanBoard = ({ id, children, className }: KanbanBoardProps) => {
     transform: CSS.Transform.toString(transform),
   };
 
-  // Combine refs
   const combinedRef = (node: HTMLDivElement | null) => {
     setNodeRef(node);
     setDroppableRef(node);
@@ -216,19 +215,40 @@ export const KanbanCards = <T extends KanbanItemProps = KanbanItemProps>({
   const items = filteredData.map((item) => item.id);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLElement | null>(null);
+
+  // Get the actual scrolling viewport element from ScrollArea
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const viewport = scrollAreaRef.current.querySelector(
+        '[data-radix-scroll-area-viewport]'
+      ) as HTMLElement;
+      viewportRef.current = viewport;
+    }
+  }, []);
 
   // Create a stable key that changes when items change to force virtualizer reset
-  const itemsKey = items.join(',');
+  const itemsKey =
+    items.length > 0 ? `${items.length}-${items[0]}-${items[items.length - 1]}` : 'empty';
 
   const virtualizer = useConditionalVirtualizer({
     count: filteredData.length,
-    parentRef: scrollRef,
+    parentRef: viewportRef,
     estimateSize: () => 200,
     overscan: 5,
   });
 
+  // Force virtualizer to recalculate when items change
+  useEffect(() => {
+    if (virtualizer) {
+      virtualizer.measure();
+    }
+  }, [itemsKey, virtualizer]);
+
   return (
     <ScrollArea
+      ref={scrollAreaRef}
       className="flex-1 w-full min-h-0 overflow-hidden [&>[data-radix-scroll-area-viewport]>div]:!block"
       style={{ maxHeight: 'calc(80vh - 50px)' }}
     >
@@ -239,7 +259,6 @@ export const KanbanCards = <T extends KanbanItemProps = KanbanItemProps>({
           {...props}
         >
           {virtualizer ? (
-            // Renderização virtualizada (20+ cards)
             <div
               key={itemsKey}
               style={{
@@ -274,7 +293,6 @@ export const KanbanCards = <T extends KanbanItemProps = KanbanItemProps>({
               })}
             </div>
           ) : (
-            // Renderização normal (< 20 cards)
             filteredData.map((item, idx, arr) => (
               <div key={item.id} className={cn(idx === arr.length - 1 && 'pb-3')}>
                 {children(item)}
@@ -371,9 +389,6 @@ export const KanbanProvider = <
       return;
     }
 
-    // Removido onDataChange para evitar atualização prematura durante o drag
-    // A atualização agora só acontece no handleDragEnd quando o card é solto
-
     onDragOver?.(event);
   };
 
@@ -416,13 +431,11 @@ export const KanbanProvider = <
     const overCardColumn =
       overItem?.column || columns.find((col) => col.id === over.id)?.id || columns[0]?.id;
 
-    // Se mudou de coluna, atualiza a propriedade column
     if (activeCardColumn !== overCardColumn) {
       const activeIndex = newData.findIndex((item) => item.id === active.id);
       newData[activeIndex] = { ...newData[activeIndex], column: overCardColumn };
     }
 
-    // Reordena os items se necessário
     if (active.id !== over.id) {
       const oldIndex = newData.findIndex((item) => item.id === active.id);
       const newIndex = newData.findIndex((item) => item.id === over.id);

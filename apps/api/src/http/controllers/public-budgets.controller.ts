@@ -64,7 +64,7 @@ export async function getPublicBudgetController(request: FastifyRequest, reply: 
       advancePayment: budgetWithRelations.advancePayment,
       paymentType: budgetWithRelations.paymentType,
       notes: budgetWithRelations.notes,
-      publicApprovedRejectedAt: budgetWithRelations.approvedAt,
+      approvedAt: budgetWithRelations.approvedAt,
       rejectionReason: budgetWithRelations.rejectionReason,
       items: budgetWithRelations.items.map((item) => ({
         id: item.id,
