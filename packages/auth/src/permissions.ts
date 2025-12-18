@@ -22,6 +22,7 @@ function defineNavigationPermissions(can: AbilityBuilder<AppAbility>['can'], rol
       can('access', NavigationSubject.RegisterAccesses);
       can('access', NavigationSubject.FinanceBudgets);
       can('access', NavigationSubject.FinanceSalesMovement);
+      can('access', NavigationSubject.FinanceAccountsPayable);
       can('access', NavigationSubject.ProductionBoards);
       can('access', NavigationSubject.SettingsCompany);
       can('access', NavigationSubject.SettingsTags);

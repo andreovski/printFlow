@@ -28,7 +28,7 @@ export const DialogAction = ({
   return (
     <Dialog open={open} modal={modal}>
       <DialogContent
-        className="gap-2 w-[400px] p-3"
+        className="gap-2 min-w-[400px] p-3"
         onInteractOutside={(e) => {
           if (disabled) e.preventDefault();
         }}

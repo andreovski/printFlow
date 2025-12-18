@@ -150,6 +150,12 @@ export function Sidebar() {
       icon: TrendingUp,
       module: NavigationSubject.FinanceSalesMovement,
     },
+    {
+      href: '/finance/accounts-payable',
+      label: 'Contas a Pagar',
+      icon: DollarSign,
+      module: NavigationSubject.FinanceAccountsPayable,
+    },
   ];
 
   const productionItems: NavItem[] = [

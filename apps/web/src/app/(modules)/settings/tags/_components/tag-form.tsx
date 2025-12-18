@@ -97,6 +97,7 @@ export function TagForm({ id, initialData }: TagFormProps) {
                   <SelectItem value="GLOBAL">Global</SelectItem>
                   <SelectItem value="BUDGET">Orçamentos</SelectItem>
                   <SelectItem value="BOARD">Quadros</SelectItem>
+                  <SelectItem value="PAYABLES">Contas a Pagar</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">

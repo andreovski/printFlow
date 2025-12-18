@@ -11,3 +11,4 @@ export * from './templates';
 export * from './attachments';
 export * from './sales-movement';
 export * from './search';
+export * from './accounts-payable';
