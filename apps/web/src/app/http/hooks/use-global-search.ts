@@ -22,24 +22,14 @@ export function useGlobalSearch({
 
   const shouldFetch = enabled && debouncedQuery.trim().length >= 3;
 
-  console.log('[useGlobalSearch]', {
-    query,
-    debouncedQuery,
-    shouldFetch,
-    types,
-    limit,
-  });
-
   return useQuery({
     queryKey: ['global-search', debouncedQuery, types, limit],
     queryFn: async () => {
-      console.log('[useGlobalSearch] Fetching:', { q: debouncedQuery, types, limit });
       const result = await globalSearch({
         q: debouncedQuery,
         types,
         limit,
       });
-      console.log('[useGlobalSearch] Result:', result);
       return result;
     },
     enabled: shouldFetch,
