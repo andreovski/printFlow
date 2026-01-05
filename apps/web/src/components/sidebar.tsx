@@ -26,6 +26,7 @@ import {
   TrendingUp,
   Search,
   type LucideIcon,
+  Bell,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -634,10 +635,14 @@ export function Sidebar() {
               document.dispatchEvent(event);
             }}
             className={cn(
-              'w-full flex items-center gap-3 justify-start text-muted-foreground hover:text-foreground',
+              'w-full flex items-center gap-3 justify-start text-muted-foreground hover:text-foreground group',
               !isMobile && collapsed.isOpen && 'justify-center px-0'
             )}
           >
+            {!collapsed.isOpen && <Bell className="h-5 w-5 shrink-0" />}
+            {!collapsed.isOpen && (
+              <span className="border-r w-1 h-full border-muted group-hover:border-muted-foreground transition-colors" />
+            )}
             <Search className="h-5 w-5 shrink-0" />
             {(isMobile || !collapsed.isOpen) && (
               <>
