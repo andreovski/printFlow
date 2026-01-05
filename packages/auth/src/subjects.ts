@@ -53,6 +53,7 @@ export const NavigationSubject = {
   // Finance submodules
   FinanceBudgets: 'FinanceBudgets',
   FinanceSalesMovement: 'FinanceSalesMovement',
+  FinanceAccountsPayable: 'FinanceAccountsPayable',
 
   // Production submodules
   ProductionBoards: 'ProductionBoards',

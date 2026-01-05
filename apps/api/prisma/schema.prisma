@@ -55,11 +55,18 @@ enum CardPriority {
   URGENT
 }
 
+enum AccountsPayableStatus {
+  PENDING
+  PAID
+  OVERDUE
+}
+
 // Define onde a tag/template será visível
 enum TagScope {
   GLOBAL      // Disponível em Orçamentos e Produção
   BUDGET      // Apenas Orçamentos
   BOARD       // Apenas Produção (Quadros)
+  PAYABLES    // Apenas Contas a Pagar
 }
 model User {
   id             String        @id @default(uuid())
@@ -80,13 +87,14 @@ model Organization {
   name      String
   ownerId   String
 
-  users     User[]
-  clients   Client[]
-  products  Product[]
-  budgets   Budget[]
-  boards    Board[]
-  tags      Tag[]
-  templates Template[]
+  users           User[]
+  clients         Client[]
+  products        Product[]
+  budgets         Budget[]
+  boards          Board[]
+  tags            Tag[]
+  templates       Template[]
+  accountsPayable AccountsPayable[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -147,7 +155,11 @@ model Client {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
+  // Full-text search (generated column)
+  searchVector   Unsupported("tsvector")?
+
   @@unique([document, organizationId])
+  @@index([searchVector(ops: raw("gist_tsvector_ops"))], type: Gist, map: "clients_search_vector_idx")
   @@map("clients")
 }
 
@@ -172,6 +184,10 @@ model Product {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
+  // Full-text search (generated column)
+  searchVector   Unsupported("tsvector")?
+
+  @@index([searchVector(ops: raw("gist_tsvector_ops"))], type: Gist, map: "products_search_vector_idx")
   @@map("products")
 }
 
@@ -227,6 +243,10 @@ model Budget {
   isPaidInFull   Boolean       @default(false)
   archived       Boolean       @default(false)
 
+  // Full-text search (maintained by trigger)
+  searchVector   Unsupported("tsvector")?
+
+  @@index([searchVector(ops: raw("gist_tsvector_ops"))], type: Gist, map: "budgets_search_vector_idx")
   @@map("budgets")
 }
 
@@ -318,8 +338,12 @@ model Card {
 
   tags        Tag[]
 
+  // Full-text search (generated column)
+  searchVector Unsupported("tsvector")?
+
   @@index([columnId])
   @@index([budgetId])
+  @@index([searchVector(ops: raw("gist_tsvector_ops"))], type: Gist, map: "cards_search_vector_idx")
   @@map("cards")
 }
 
@@ -357,6 +381,7 @@ model Tag {
   // Relação many-to-many com Budget
   budgets        Budget[]
   cards          Card[]
+  accountsPayable AccountsPayable[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -444,4 +469,43 @@ model ShortUrl {
 
   @@index([code])
   @@map("short_urls")
+}
+
+model AccountsPayable {
+  id             String                 @id @default(uuid())
+
+  organizationId String
+  organization   Organization           @relation(fields: [organizationId], references: [id])
+
+  supplier       String
+  icon           String?                // Lucide icon name (DollarSign, Receipt, etc)
+  dueDate        DateTime
+  amount         Decimal                @db.Decimal(10, 2)
+  status         AccountsPayableStatus  @default(PENDING)
+
+  installments   Int                    @default(1)  // 1-99
+  totalAmount    Decimal                @db.Decimal(10, 2)  // amount * installments
+
+  // Campos de parcelamento
+  parentId          String?
+  parent            AccountsPayable?   @relation("InstallmentRelation", fields: [parentId], references: [id], onDelete: Cascade)
+  children          AccountsPayable[]  @relation("InstallmentRelation")
+  installmentNumber Int?               // 1, 2, 3, ..., N
+  installmentOf     Int?               // Total de parcelas (8, 12, etc)
+
+  description    String?                @db.Text
+  paidDate       DateTime?              // Preenchido quando status = PAID
+
+  tags           Tag[]
+
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  deletedAt      DateTime?              // Soft delete
+
+  @@index([organizationId])
+  @@index([dueDate])
+  @@index([status])
+  @@index([parentId])
+  @@index([installmentNumber])
+  @@map("accounts_payable")
 }
