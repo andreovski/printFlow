@@ -1,6 +1,16 @@
 import { FastifyInstance } from 'fastify';
 
 import {
+  createAccountsPayableController,
+  listAccountsPayableController,
+  getAccountsPayableController,
+  updateAccountsPayableController,
+  deleteAccountsPayableController,
+  getAccountsPayableKPIsController,
+  getDatesWithBillsController,
+  getDeleteAccountsPayableInfoController,
+} from './controllers/accounts-payable.controller';
+import {
   createBudgetAttachmentsController,
   fetchBudgetAttachmentsController,
   deleteBudgetAttachmentController,
@@ -252,6 +262,48 @@ export async function appRoutes(app: FastifyInstance) {
       '/sales-movement/:id/toggle-exclude',
       { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
       toggleExcludeFromSalesController
+    );
+
+    // Accounts Payable (Admin/Master only)
+    authRoutes.post(
+      '/accounts-payable',
+      { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
+      createAccountsPayableController
+    );
+    authRoutes.get(
+      '/accounts-payable',
+      { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
+      listAccountsPayableController
+    );
+    authRoutes.get(
+      '/accounts-payable/kpis',
+      { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
+      getAccountsPayableKPIsController
+    );
+    authRoutes.get(
+      '/accounts-payable/dates-with-bills',
+      { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
+      getDatesWithBillsController
+    );
+    authRoutes.get(
+      '/accounts-payable/:id',
+      { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
+      getAccountsPayableController
+    );
+    authRoutes.get(
+      '/accounts-payable/:id/delete-info',
+      { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
+      getDeleteAccountsPayableInfoController
+    );
+    authRoutes.put(
+      '/accounts-payable/:id',
+      { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
+      updateAccountsPayableController
+    );
+    authRoutes.delete(
+      '/accounts-payable/:id',
+      { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
+      deleteAccountsPayableController
     );
   });
 }

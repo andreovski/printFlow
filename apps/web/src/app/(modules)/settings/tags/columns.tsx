@@ -11,7 +11,7 @@ export type Tag = {
   id: string;
   name: string;
   color: string;
-  scope: 'GLOBAL' | 'BUDGET' | 'BOARD';
+  scope: 'GLOBAL' | 'BUDGET' | 'BOARD' | 'PAYABLES';
   active: boolean;
 };
 
@@ -19,6 +19,7 @@ const scopeLabels: Record<Tag['scope'], string> = {
   GLOBAL: 'Global',
   BUDGET: 'Orçamentos',
   BOARD: 'Quadros',
+  PAYABLES: 'Contas a Pagar',
 };
 
 export const columns: ColumnDef<Tag>[] = [
