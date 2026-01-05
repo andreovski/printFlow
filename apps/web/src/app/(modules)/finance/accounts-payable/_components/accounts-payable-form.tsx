@@ -7,7 +7,7 @@ import {
   AccountsPayable,
   accountsPayableStatusLabel,
 } from '@magic-system/schemas';
-import { useForm } from 'react-hook-form';
+import { useForm, Resolver } from 'react-hook-form';
 import { z } from 'zod';
 
 import { IconPicker } from '@/components/icon-picker';
@@ -35,6 +35,8 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { maskCurrency } from '@/lib/masks';
 
+// Use the create schema as the base FormData type since it includes all fields
+// The update schema is a subset, so we cast it appropriately in the form
 type FormData = z.infer<typeof createAccountsPayableSchema>;
 
 interface AccountsPayableFormProps {
@@ -56,7 +58,9 @@ export function AccountsPayableForm({
   const schema = initialData ? updateAccountsPayableSchema : createAccountsPayableSchema;
 
   const form = useForm<FormData>({
-    resolver: zodResolver(schema),
+    // Cast through unknown because update schema has installments as optional
+    // while create schema has it as required. Both produce compatible data at runtime.
+    resolver: zodResolver(schema) as Resolver<FormData>,
     defaultValues: initialData
       ? {
           supplier: initialData.supplier,
@@ -198,7 +202,7 @@ export function AccountsPayableForm({
                         : ''
                     }
                     onChange={(e) => {
-                      const numericValue = e.target.value.replace(/\D/g, '');
+                      const numericValue = e.target.value.replaceAll(/\D/g, '');
                       const value = Number(numericValue) / 100;
                       handleAmountChange(value);
                     }}

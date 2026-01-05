@@ -52,7 +52,7 @@ export const createAccountsPayableSchema = z
     }
   );
 
-// Schema de atualização (sem installments que não pode ser alterado)
+// Schema de atualização (installments as optional since it cannot be changed after creation)
 export const updateAccountsPayableSchema = z
   .object({
     supplier: z.string().min(1, 'Fornecedor é obrigatório'),
@@ -68,6 +68,13 @@ export const updateAccountsPayableSchema = z
       })
       .positive('Valor deve ser maior que zero'),
     status: accountsPayableStatusSchema.default('PENDING'),
+    // installments is optional in update schema since it cannot be changed after creation
+    installments: z.coerce
+      .number()
+      .int('Parcelas deve ser um número inteiro')
+      .min(1, 'Mínimo de 1 parcela')
+      .max(99, 'Máximo de 99 parcelas')
+      .optional(),
     tagIds: z.array(z.string().uuid()).optional(),
     description: z.string().optional().nullable(),
     paidDate: z.coerce.date().optional().nullable(),
