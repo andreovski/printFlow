@@ -56,6 +56,7 @@ import {
   deleteClientController,
 } from './controllers/clients.controller';
 import { getMetricsController } from './controllers/metrics.controller';
+import { getNotificationsController } from './controllers/notifications.controller';
 import {
   getOrganizationController,
   updateOrganizationController,
@@ -130,6 +131,9 @@ export async function appRoutes(app: FastifyInstance) {
 
     // Global Search
     authRoutes.get('/search', globalSearchController);
+
+    // Notifications
+    authRoutes.get('/notifications', getNotificationsController);
 
     // Clients
     authRoutes.post('/clients', createClientController);

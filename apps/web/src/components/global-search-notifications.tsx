@@ -1,72 +1,21 @@
 'use client';
 
-import { ChevronDown, ChevronUp, Bell, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
-import { useState } from 'react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Bell,
+  AlertTriangle,
+  CheckCircle,
+  Info,
+  Loader2,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
+import { useNotifications } from '@/app/http/hooks/use-notifications';
+import { Notification } from '@/app/http/requests/notifications';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-
-export interface Notification {
-  id: string;
-  title: string;
-  description: string;
-  type: 'info' | 'warning' | 'success' | 'error';
-  date: string;
-  read: boolean;
-  route?: string;
-}
-
-const initialNotifications: Notification[] = [
-  {
-    id: '1',
-    title: 'Financeiro / Vendas',
-    description: 'Você tem 2 contas a vencer no dia de hoje!',
-    type: 'warning',
-    date: 'Hoje',
-    read: false,
-  },
-  {
-    id: '2',
-    title: 'Financeiro / Orçamento',
-    description: 'Você tem 2 orçamentos a vencer hoje!',
-    type: 'info',
-    date: 'Ontem',
-    read: false,
-  },
-  {
-    id: '3',
-    title: 'Produção / Quadros',
-    description: 'Você tem 4 quadros com a data limite de hoje!',
-    type: 'error',
-    date: 'Hoje',
-    read: true,
-  },
-  {
-    id: '4',
-    title: 'Financeiro / Vendas',
-    description: 'O orçamento #333 foi recusado pelo cliente.',
-    type: 'error',
-    date: 'Hoje',
-    read: false,
-  },
-  {
-    id: '5',
-    title: 'Sistema',
-    description: 'Backup realizado com sucesso.',
-    type: 'success',
-    date: 'Ontem',
-    read: true,
-  },
-  {
-    id: '6',
-    title: 'Financeiro / Vendas',
-    description: 'Nova proposta aprovada!',
-    type: 'success',
-    date: 'Ontem',
-    read: false,
-  },
-];
 
 const getNotificationIcon = (type: Notification['type']) => {
   switch (type) {
@@ -85,17 +34,23 @@ const getNotificationIcon = (type: Notification['type']) => {
 interface GlobalSearchNotificationsProps {
   expanded: boolean;
   onToggle: () => void;
+  onClose?: () => void;
 }
 
 export function GlobalSearchNotifications({
   expanded,
   onToggle,
+  onClose,
 }: Readonly<GlobalSearchNotificationsProps>) {
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const router = useRouter();
+  const { data: notifications = [], isLoading } = useNotifications();
 
-  const handleDelete = (id: string, e: React.MouseEvent) => {
+  const handleNotificationClick = (notification: Notification, e: React.MouseEvent) => {
     e.stopPropagation();
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    if (notification.route) {
+      onClose?.();
+      router.push(notification.route);
+    }
   };
 
   // We'll show the top 3 notifications in collapsed state
@@ -130,33 +85,41 @@ export function GlobalSearchNotifications({
           expanded ? 'opacity-100 visible' : 'opacity-0 invisible h-0'
         )}
       >
-        <ScrollArea className="h-full w-full pr-4">
-          <div className="flex flex-col gap-2 p-2">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className="group relative flex flex-col gap-1 rounded-lg border bg-background p-3 hover:bg-background/80 transition-all"
-              >
-                <button
-                  onClick={(e) => handleDelete(notification.id, e)}
-                  className="absolute -right-2 -top-2 rounded-full p-1 opacity-0 group-hover:opacity-100 bg-background hover:bg-red-600 transition-all"
-                >
-                  <X className="h-4 w-4 text-muted-foreground hover:text-white" />
-                </button>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {getNotificationIcon(notification.type)}
-                    <span className="text-xs font-semibold text-muted-foreground">
-                      {notification.title}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground">{notification.date}</span>
-                </div>
-                <p className="text-sm font-medium pl-6">{notification.description}</p>
-              </div>
-            ))}
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        </ScrollArea>
+        ) : notifications.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-sm text-muted-foreground">Nenhuma notificação</p>
+          </div>
+        ) : (
+          <ScrollArea className="h-full w-full pr-4">
+            <div className="flex flex-col gap-2 p-2">
+              {notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  onClick={(e) => handleNotificationClick(notification, e)}
+                  className={cn(
+                    'group relative flex flex-col gap-1 rounded-lg border bg-background p-3 hover:bg-background/80 transition-all',
+                    notification.route && 'cursor-pointer'
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {getNotificationIcon(notification.type)}
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        {notification.title}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{notification.date}</span>
+                  </div>
+                  <p className="text-sm font-medium pl-6">{notification.description}</p>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
       </div>
 
       {/* Collapsed Content (Stacked Cards) */}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Columns2,
   FileText,
@@ -15,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useGlobalSearch } from '@/app/http/hooks/use-global-search';
+import { notificationsQueryKey } from '@/app/http/hooks/use-notifications';
 import { Badge } from '@/components/ui/badge';
 import {
   Command,
@@ -71,6 +73,14 @@ export function GlobalSearchCommand({ open, onOpenChange }: Readonly<GlobalSearc
       setQuery('');
     }
   }, [open]);
+
+  // Invalidar notificações quando o dialog abre para buscar atualizações
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (open) {
+      queryClient.invalidateQueries({ queryKey: notificationsQueryKey });
+    }
+  }, [open, queryClient]);
 
   const handleSelectBudget = (budgetId: string) => {
     router.push(`/finance/budgets/${budgetId}`);
@@ -413,6 +423,7 @@ export function GlobalSearchCommand({ open, onOpenChange }: Readonly<GlobalSearc
           <GlobalSearchNotifications
             expanded={isNotificationsExpanded}
             onToggle={() => setIsNotificationsExpanded(!isNotificationsExpanded)}
+            onClose={() => onOpenChange(false)}
           />
         </div>
       </DialogContent>
