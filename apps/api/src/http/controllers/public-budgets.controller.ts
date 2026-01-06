@@ -6,6 +6,7 @@ import {
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
+import { getPrimaryFrontendUrl } from '@/lib/env';
 import { BudgetsService } from '@/services/budgets.service';
 import { shortUrlService } from '@/services/short-url.service';
 
@@ -196,14 +197,14 @@ export async function generateApprovalLinkController(request: FastifyRequest, re
   const { token, expiresAt } = await budgetsService.generateApprovalToken(id);
 
   // Build the approval URL using the frontend URL from environment
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const frontendUrl = getPrimaryFrontendUrl();
   const approvalUrl = `${frontendUrl}/approval/${token}`;
 
-  // Generate short URL
+  // Generate short URL (no expiration - access should always work,
+  // expiration is only checked when approving/rejecting)
   const { shortUrl } = await shortUrlService.createShortUrl({
     targetUrl: `/approval/${token}`,
     budgetId: id,
-    expiresAt: expiresAt || undefined,
   });
 
   return reply.status(200).send({

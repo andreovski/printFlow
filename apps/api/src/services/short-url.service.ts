@@ -1,3 +1,4 @@
+import { getPrimaryFrontendUrl } from '@/lib/env';
 import { shortUrlRepository } from '@/repositories/short-url.repository';
 
 /**
@@ -45,7 +46,7 @@ export class ShortUrlService {
       expiresAt: params.expiresAt,
     });
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = getPrimaryFrontendUrl();
     const shortUrl = `${frontendUrl}/a/${code}`;
 
     return { code, shortUrl };
@@ -84,7 +85,7 @@ export class ShortUrlService {
       return null;
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = getPrimaryFrontendUrl();
     return `${frontendUrl}/a/${shortUrl.code}`;
   }
 }
