@@ -26,15 +26,20 @@ export class NotificationsService {
   /**
    * Busca todas as notificações para a organização
    */
-  async getNotifications(organizationId: string): Promise<Notification[]> {
+  async getNotifications(organizationId: string, userRole: string): Promise<Notification[]> {
     const today = new Date();
     const tomorrow = addDays(today, 1);
+
+    // Notificações de contas a pagar são apenas para ADMIN e MASTER
+    const shouldIncludeAccountsPayable = userRole === 'ADMIN' || userRole === 'MASTER';
 
     const [budgetNotifications, boardNotifications, accountsPayableNotifications] =
       await Promise.all([
         this.getBudgetNotifications(organizationId, today, tomorrow),
         this.getBoardNotifications(organizationId, today, tomorrow),
-        this.getAccountsPayableNotifications(organizationId, today, tomorrow),
+        shouldIncludeAccountsPayable
+          ? this.getAccountsPayableNotifications(organizationId, today, tomorrow)
+          : Promise.resolve([]),
       ]);
 
     const allNotifications: NotificationItem[] = [
