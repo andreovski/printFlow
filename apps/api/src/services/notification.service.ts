@@ -18,7 +18,7 @@ export class NotificationService {
         type: data.type,
         title: data.title,
         message: data.message,
-        metadata: data.metadata,
+        metadata: data.metadata as never,
       },
     });
   }
