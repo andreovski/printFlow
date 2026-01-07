@@ -7,6 +7,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
 import { AccountsPayableService } from '@/services/accounts-payable.service';
+import { RecurringJobService } from '@/services/recurring-job.service';
 
 const getAccountsPayableParamsSchema = z.object({
   id: z.string().uuid(),
@@ -22,10 +23,27 @@ export async function createAccountsPayableController(
   reply: FastifyReply
 ) {
   const body = createAccountsPayableSchema.parse(request.body);
-  const { organizationId } = request.user as { organizationId: string };
+  const { organizationId, sub: userId } = request.user as { organizationId: string; sub: string };
 
+  // Se for recorrente, usar o RecurringJobService
+  if (body.isRecurring) {
+    const recurringService = new RecurringJobService();
+    const parent = await recurringService.createRecurringAccounts({
+      ...body,
+      organizationId,
+      userId,
+    });
+
+    // Retornar apenas o parent (primeira conta), o job criará as outras 59
+    return reply.status(201).send({
+      accountsPayable: [parent],
+      count: 1,
+      message: '60 contas recorrentes estão sendo criadas em segundo plano',
+    });
+  }
+
+  // Criar conta normal (ou parcelada)
   const service = new AccountsPayableService();
-
   const result = await service.create({
     ...body,
     organizationId,
@@ -60,6 +78,7 @@ export async function getAccountsPayableController(request: FastifyRequest, repl
 
 const updateAccountsPayableQuerySchema = z.object({
   recalculateNext: z.coerce.boolean().optional().default(false),
+  applyToFuture: z.coerce.boolean().optional().default(false),
 });
 
 export async function updateAccountsPayableController(
@@ -68,10 +87,32 @@ export async function updateAccountsPayableController(
 ) {
   const { id } = getAccountsPayableParamsSchema.parse(request.params);
   const body = updateAccountsPayableSchema.parse(request.body);
-  const { recalculateNext } = updateAccountsPayableQuerySchema.parse(request.query);
+  const { recalculateNext, applyToFuture } = updateAccountsPayableQuerySchema.parse(request.query);
 
+  // Verificar se é conta recorrente
   const service = new AccountsPayableService();
+  const existing = await service.findById(id);
 
+  if (!existing) {
+    return reply.status(404).send({ message: 'Conta a pagar não encontrada' });
+  }
+
+  // Se for recorrente e applyToFuture = true, usar RecurringJobService
+  if (existing.isRecurring && applyToFuture) {
+    const recurringService = new RecurringJobService();
+    try {
+      const { sub: userId } = request.user as { sub: string };
+      const accountPayable = await recurringService.updateRecurring(id, { ...body, userId }, true);
+      return reply.status(200).send({ accountPayable });
+    } catch (error) {
+      if (error instanceof Error) {
+        return reply.status(400).send({ message: error.message });
+      }
+      throw error;
+    }
+  }
+
+  // Atualizar normalmente (com ou sem recálculo de parcelas)
   try {
     const accountPayable = await service.updateWithRecalculation(id, body, recalculateNext);
     return reply.status(200).send({ accountPayable });
@@ -107,6 +148,10 @@ export async function deleteAccountsPayableController(
   reply: FastifyReply
 ) {
   const { id } = getAccountsPayableParamsSchema.parse(request.params);
+  const querySchema = z.object({
+    deleteAllFuture: z.coerce.boolean().optional().default(false),
+  });
+  const { deleteAllFuture } = querySchema.parse(request.query);
 
   const service = new AccountsPayableService();
 
@@ -114,6 +159,20 @@ export async function deleteAccountsPayableController(
   const accountPayable = await service.findById(id);
   if (!accountPayable) {
     return reply.status(404).send({ message: 'Conta a pagar não encontrada' });
+  }
+
+  // Se for recorrente e deleteAllFuture = true, usar RecurringJobService
+  if (accountPayable.isRecurring && deleteAllFuture) {
+    const recurringService = new RecurringJobService();
+    try {
+      await recurringService.deleteRecurring(id, true);
+      return reply.status(204).send();
+    } catch (error) {
+      if (error instanceof Error) {
+        return reply.status(400).send({ message: error.message });
+      }
+      throw error;
+    }
   }
 
   await service.delete(id);
@@ -147,4 +206,42 @@ export async function getDatesWithBillsController(request: FastifyRequest, reply
   const dates = await service.getDatesWithBills(organizationId, startDate, endDate);
 
   return reply.status(200).send({ dates });
+}
+
+export async function getRecurringDeleteInfoController(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
+  const { id } = getAccountsPayableParamsSchema.parse(request.params);
+
+  const service = new AccountsPayableService();
+  const accountPayable = await service.findById(id);
+
+  if (!accountPayable) {
+    return reply.status(404).send({ message: 'Conta a pagar não encontrada' });
+  }
+
+  if (!accountPayable.isRecurring) {
+    return reply.status(200).send({
+      isRecurring: false,
+      hasFuture: false,
+      futureCount: 0,
+    });
+  }
+
+  // Buscar informações da série recorrente
+  const recurringService = new RecurringJobService();
+  try {
+    const parent = await recurringService['getRecurringInfo'](id);
+
+    return reply.status(200).send({
+      isRecurring: true,
+      hasFuture: parent.futureCount > 0,
+      futureCount: parent.futureCount,
+      position: accountPayable.recurringPosition,
+      totalInSeries: 60,
+    });
+  } catch (error) {
+    return reply.status(400).send({ message: 'Erro ao buscar informações de recorrência' });
+  }
 }

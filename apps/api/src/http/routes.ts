@@ -9,6 +9,7 @@ import {
   getAccountsPayableKPIsController,
   getDatesWithBillsController,
   getDeleteAccountsPayableInfoController,
+  getRecurringDeleteInfoController,
 } from './controllers/accounts-payable.controller';
 import {
   createBudgetAttachmentsController,
@@ -56,6 +57,11 @@ import {
   deleteClientController,
 } from './controllers/clients.controller';
 import { getMetricsController } from './controllers/metrics.controller';
+import {
+  getUnreadNotificationsController,
+  markNotificationAsReadController,
+  markAllNotificationsAsReadController,
+} from './controllers/notification.controller';
 import { getNotificationsController } from './controllers/notifications.controller';
 import {
   getOrganizationController,
@@ -299,6 +305,11 @@ export async function appRoutes(app: FastifyInstance) {
       { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
       getDeleteAccountsPayableInfoController
     );
+    authRoutes.get(
+      '/accounts-payable/:id/recurring-info',
+      { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
+      getRecurringDeleteInfoController
+    );
     authRoutes.put(
       '/accounts-payable/:id',
       { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
@@ -309,5 +320,10 @@ export async function appRoutes(app: FastifyInstance) {
       { onRequest: [verifyUserRole(['ADMIN', 'MASTER'])] },
       deleteAccountsPayableController
     );
+
+    // Notifications
+    authRoutes.get('/notifications/unread', getUnreadNotificationsController);
+    authRoutes.put('/notifications/:id/read', markNotificationAsReadController);
+    authRoutes.put('/notifications/mark-all-read', markAllNotificationsAsReadController);
   });
 }

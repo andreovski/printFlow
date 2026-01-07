@@ -7,18 +7,22 @@ import {
   AccountsPayable,
   accountsPayableStatusLabel,
 } from '@magic-system/schemas';
+import { Info, Repeat } from 'lucide-react';
 import { useForm, Resolver } from 'react-hook-form';
 import { z } from 'zod';
 
 import { IconPicker } from '@/components/icon-picker';
 import { TagSelect } from '@/components/tag-select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardFooter } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DatePicker } from '@/components/ui/date-picker';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -74,20 +78,24 @@ export function AccountsPayableForm({
           tagIds: initialData.tags?.map((t) => t.id) ?? [],
           description: initialData.description,
           paidDate: initialData.paidDate ? new Date(initialData.paidDate) : null,
+          isRecurring: initialData.isRecurring || false,
         }
       : {
           status: 'PENDING' as const,
           installments: 1,
           tagIds: [],
           icon: 'Ellipsis',
+          isRecurring: false,
         },
   });
 
   const watchStatus = form.watch('status');
   const watchAmount = form.watch('amount');
   const watchInstallments = form.watch('installments');
+  const watchIsRecurring = form.watch('isRecurring');
 
   const isInstallment = initialData && initialData.installmentNumber && initialData.installmentOf;
+  const isRecurringAccount = initialData && initialData.isRecurring;
 
   // Se está editando uma parcela, amount já é o valor individual
   // Se está criando, amount é o total que será dividido
@@ -256,14 +264,23 @@ export function AccountsPayableForm({
                     onChange={(e) => {
                       const value = e.target.value;
                       field.onChange(value === '' ? '' : Number(value));
+                      // Se mudar para > 1, desmarcar recorrência
+                      if (Number(value) > 1) {
+                        form.setValue('isRecurring', false);
+                      }
                     }}
-                    disabled={!!initialData}
+                    disabled={!!initialData || watchIsRecurring}
                   />
                 </FormControl>
+                {watchIsRecurring && !initialData && (
+                  <FormDescription className="text-xs text-muted-foreground">
+                    Desativado ao selecionar recorrência
+                  </FormDescription>
+                )}
                 {!!initialData && (
-                  <p className="text-xs text-muted-foreground">
+                  <FormDescription className="text-xs text-muted-foreground">
                     O número de parcelas não pode ser alterado após a criação
-                  </p>
+                  </FormDescription>
                 )}
                 <FormMessage />
               </FormItem>
@@ -271,9 +288,108 @@ export function AccountsPayableForm({
           />
         </div>
 
+        {/* Checkbox de Recorrência - Apenas na criação */}
+        {!initialData && (
+          <FormField
+            control={form.control}
+            name="isRecurring"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={(checked) => {
+                      field.onChange(checked);
+                      // Se marcar recorrência, resetar parcelas para 1
+                      if (checked) {
+                        form.setValue('installments', 1);
+                      }
+                    }}
+                    disabled={watchInstallments > 1}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="flex items-center gap-2">
+                    <Repeat className="h-4 w-4" />
+                    Conta Recorrente (mensal)
+                  </FormLabel>
+                  <FormDescription>
+                    {watchInstallments > 1 ? (
+                      <span className="text-warning">
+                        Não é possível combinar recorrência com parcelamento
+                      </span>
+                    ) : field.value ? (
+                      <span className="font-medium text-primary">
+                        Criará 60 contas mensais automaticamente em segundo plano
+                      </span>
+                    ) : (
+                      'Marque para criar uma conta que se repete todo mês (até 60 meses)'
+                    )}
+                  </FormDescription>
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
+        )}
+
+        {/* Badge de status de recorrência na edição */}
+        {isRecurringAccount && (
+          <Alert>
+            <Repeat className="h-4 w-4" />
+            <AlertDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Conta Recorrente</p>
+                  <p className="text-sm text-muted-foreground">
+                    Esta é uma conta recorrente (posição {initialData.recurringPosition}/60)
+                  </p>
+                </div>
+                {initialData.creationJobStatus === 'PROCESSING' && (
+                  <Badge variant="secondary">Processando...</Badge>
+                )}
+                {initialData.creationJobStatus === 'COMPLETED' && (
+                  <Badge variant="default">Concluído</Badge>
+                )}
+                {initialData.creationJobStatus === 'FAILED' && (
+                  <Badge variant="destructive">Falhou</Badge>
+                )}
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Total Calculado */}
         <div className="rounded-md bg-muted p-3 space-y-2">
-          {watchInstallments > 1 || isInstallment ? (
+          {watchIsRecurring && !initialData ? (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium flex items-center gap-2">
+                  <Repeat className="h-4 w-4" />
+                  Valor mensal:
+                </span>
+                <span className="text-lg font-bold">
+                  {new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                  }).format(watchAmount || 0)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t">
+                <span className="text-xs text-muted-foreground">Total acumulado (60 meses):</span>
+                <span className="text-sm font-semibold text-muted-foreground">
+                  {new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                  }).format((watchAmount || 0) * 60)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
+                <Info className="h-3 w-3" />
+                <span>As contas serão criadas automaticamente após salvar</span>
+              </div>
+            </>
+          ) : watchInstallments > 1 || isInstallment ? (
             <>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">

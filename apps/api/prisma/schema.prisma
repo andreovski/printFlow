@@ -61,6 +61,13 @@ enum AccountsPayableStatus {
   OVERDUE
 }
 
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
 // Define onde a tag/template será visível
 enum TagScope {
   GLOBAL      // Disponível em Orçamentos e Produção
@@ -68,6 +75,13 @@ enum TagScope {
   BOARD       // Apenas Produção (Quadros)
   PAYABLES    // Apenas Contas a Pagar
 }
+
+enum NotificationType {
+  RECURRING_JOB_COMPLETED
+  RECURRING_JOB_FAILED
+  GENERAL
+}
+
 model User {
   id             String        @id @default(uuid())
   email          String        @unique
@@ -76,10 +90,33 @@ model User {
   role           Role          @default(EMPLOYEE)
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  notifications  Notification[]
+
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
   @@map("users")
+}
+
+model Notification {
+  id        String            @id @default(uuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      NotificationType  @default(GENERAL)
+  title     String
+  message   String            @db.Text
+  read      Boolean           @default(false)
+
+  // Dados adicionais para contexto (JSON)
+  metadata  Json?
+
+  createdAt DateTime          @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
 }
 
 model Organization {
@@ -156,7 +193,7 @@ model Client {
   updatedAt      DateTime     @updatedAt
 
   // Full-text search (generated column)
-  searchVector   Unsupported("tsvector")?
+  searchVector   Unsupported("tsvector")? @map("search_vector")
 
   @@unique([document, organizationId])
   @@index([searchVector(ops: raw("gist_tsvector_ops"))], type: Gist, map: "clients_search_vector_idx")
@@ -185,7 +222,7 @@ model Product {
   updatedAt      DateTime     @updatedAt
 
   // Full-text search (generated column)
-  searchVector   Unsupported("tsvector")?
+  searchVector   Unsupported("tsvector")? @map("search_vector")
 
   @@index([searchVector(ops: raw("gist_tsvector_ops"))], type: Gist, map: "products_search_vector_idx")
   @@map("products")
@@ -244,7 +281,7 @@ model Budget {
   archived       Boolean       @default(false)
 
   // Full-text search (maintained by trigger)
-  searchVector   Unsupported("tsvector")?
+  searchVector   Unsupported("tsvector")? @map("search_vector")
 
   @@index([searchVector(ops: raw("gist_tsvector_ops"))], type: Gist, map: "budgets_search_vector_idx")
   @@map("budgets")
@@ -339,7 +376,7 @@ model Card {
   tags        Tag[]
 
   // Full-text search (generated column)
-  searchVector Unsupported("tsvector")?
+  searchVector Unsupported("tsvector")? @map("search_vector")
 
   @@index([columnId])
   @@index([budgetId])
@@ -493,6 +530,14 @@ model AccountsPayable {
   installmentNumber Int?               // 1, 2, 3, ..., N
   installmentOf     Int?               // Total de parcelas (8, 12, etc)
 
+  // Campos de recorrência (60 meses máximo)
+  isRecurring           Boolean              @default(false)
+  recurringParentId     String?
+  recurringParent       AccountsPayable?     @relation("RecurringRelation", fields: [recurringParentId], references: [id], onDelete: Cascade)
+  recurringChildren     AccountsPayable[]    @relation("RecurringRelation")
+  recurringPosition     Int?                 // 1, 2, 3, ..., 60
+  creationJobStatus     JobStatus?           // Status do job de criação das 60 contas
+
   description    String?                @db.Text
   paidDate       DateTime?              // Preenchido quando status = PAID
 
@@ -507,5 +552,7 @@ model AccountsPayable {
   @@index([status])
   @@index([parentId])
   @@index([installmentNumber])
+  @@index([recurringParentId])
+  @@index([recurringPosition])
   @@map("accounts_payable")
 }

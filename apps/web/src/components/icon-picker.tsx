@@ -5,17 +5,23 @@ import {
   Calculator,
   CreditCard,
   DollarSign,
-  FileText,
-  Landmark,
   PiggyBank,
-  Receipt,
   ShoppingCart,
-  TrendingUp,
   Truck,
-  Wallet,
   Wifi,
   Banknote,
   Ellipsis,
+  Boxes,
+  Drill,
+  Factory,
+  GraduationCap,
+  HardDrive,
+  Laptop,
+  RefreshCcw,
+  ShoppingBasket,
+  Ham,
+  Database,
+  Container,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -25,21 +31,27 @@ import { Label } from './ui/label';
 
 // Mapeamento de ícones financeiros disponíveis
 export const FINANCIAL_ICONS = {
-  Ellipsis: Ellipsis,
-  DollarSign: DollarSign,
-  Receipt: Receipt,
-  Wallet: Wallet,
-  CreditCard: CreditCard,
-  Banknote: Banknote,
-  FileText: FileText,
-  Calculator: Calculator,
-  TrendingUp: TrendingUp,
-  Building2: Building2,
-  Landmark: Landmark,
-  PiggyBank: PiggyBank,
-  ShoppingCart: ShoppingCart,
-  Truck: Truck,
-  Wifi: Wifi,
+  Ellipsis,
+  DollarSign,
+  CreditCard,
+  Banknote,
+  Boxes,
+  Drill,
+  Factory,
+  GraduationCap,
+  HardDrive,
+  Laptop,
+  RefreshCcw,
+  ShoppingBasket,
+  Ham,
+  Database,
+  Container,
+  Calculator,
+  Building2,
+  PiggyBank,
+  ShoppingCart,
+  Truck,
+  Wifi,
 } as const;
 
 export type FinancialIconName = keyof typeof FINANCIAL_ICONS;
@@ -50,16 +62,11 @@ interface IconPickerProps {
   label?: string;
 }
 
-export function IconPicker({ value, onChange, label = 'Ícone' }: IconPickerProps) {
+export function IconPicker({ value, onChange, label = 'Ícone' }: Readonly<IconPickerProps>) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSelectIcon = (iconName: string) => {
     onChange(iconName);
-    setIsOpen(false);
-  };
-
-  const handleClear = () => {
-    onChange(null);
     setIsOpen(false);
   };
 

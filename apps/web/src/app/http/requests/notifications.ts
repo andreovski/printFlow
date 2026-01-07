@@ -3,9 +3,20 @@ import { api } from '../api';
 export interface Notification {
   id: string;
   title: string;
-  description: string;
-  type: 'info' | 'warning' | 'success' | 'error';
-  date: string;
+  description?: string;
+  message?: string;
+  type:
+    | 'info'
+    | 'warning'
+    | 'success'
+    | 'error'
+    | 'RECURRING_JOB_COMPLETED'
+    | 'RECURRING_JOB_FAILED'
+    | 'GENERAL';
+  date?: string;
+  createdAt?: string;
+  read?: boolean;
+  metadata?: Record<string, unknown>;
   route?: string;
 }
 

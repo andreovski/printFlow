@@ -34,6 +34,7 @@ export const createAccountsPayableSchema = z
       .min(1, 'Mínimo de 1 parcela')
       .max(99, 'Máximo de 99 parcelas')
       .default(1),
+    isRecurring: z.boolean().default(false),
     tagIds: z.array(z.string().uuid()).optional(),
     description: z.string().optional().nullable(),
     paidDate: z.coerce.date().optional().nullable(),
@@ -49,6 +50,19 @@ export const createAccountsPayableSchema = z
     {
       message: 'Data de pagamento é obrigatória quando o status é "Pago"',
       path: ['paidDate'],
+    }
+  )
+  .refine(
+    (data) => {
+      // Não pode ter recorrência e parcelamento ao mesmo tempo
+      if (data.isRecurring && data.installments > 1) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Não é possível combinar recorrência com parcelamento',
+      path: ['isRecurring'],
     }
   );
 
@@ -75,6 +89,7 @@ export const updateAccountsPayableSchema = z
       .min(1, 'Mínimo de 1 parcela')
       .max(99, 'Máximo de 99 parcelas')
       .optional(),
+    isRecurring: z.boolean().optional(),
     tagIds: z.array(z.string().uuid()).optional(),
     description: z.string().optional().nullable(),
     paidDate: z.coerce.date().optional().nullable(),
@@ -119,6 +134,10 @@ export interface AccountsPayable {
   parentId?: string | null;
   installmentNumber?: number | null;
   installmentOf?: number | null;
+  isRecurring: boolean;
+  recurringParentId?: string | null;
+  recurringPosition?: number | null;
+  creationJobStatus?: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | null;
   description: string | null;
   paidDate: string | null;
   tags?: Array<{
@@ -147,4 +166,10 @@ export interface AccountsPayableKPIs {
   totalToPay: number;
   totalPaid: number;
   totalPending: number;
+}
+
+// Tipos para ações de recorrência
+export interface RecurringActionOptions {
+  applyToFuture?: boolean;
+  deleteAllFuture?: boolean;
 }

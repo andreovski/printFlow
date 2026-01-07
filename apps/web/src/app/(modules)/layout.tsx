@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 
 import { FloatingActionMenu } from '@/components/floating-action-menu';
 import { GlobalSearchProvider } from '@/components/global-search-provider';
+import { NotificationListener } from '@/components/notification-listener';
 import { Sidebar } from '@/components/sidebar';
 
 import { AppContextProvider } from '../../hooks/use-app-context';
@@ -56,6 +57,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <AppContextProvider organization={organization} user={user}>
       <GlobalSearchProvider>
+        <NotificationListener />
         <div className="flex h-screen overflow-hidden">
           <Sidebar />
           <main className="flex-1 overflow-y-auto">{children}</main>

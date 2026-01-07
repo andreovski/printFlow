@@ -3,7 +3,7 @@
 import { AccountsPayable } from '@magic-system/schemas';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CheckCircle2, Edit, Trash2 } from 'lucide-react';
+import { CheckCircle2, Edit, Repeat, Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { FINANCIAL_ICONS, FinancialIconName } from '@/components/icon-picker';
@@ -77,13 +77,15 @@ export function TimelineView({ accountsPayable, onEdit, onDelete, onPay }: Timel
                   : FINANCIAL_ICONS.DollarSign;
 
                 const isInstallment = item.installmentNumber && item.installmentOf;
+                const isRecurring = item.isRecurring;
 
                 return (
                   <Card
                     key={item.id}
                     className={cn(
                       'hover:shadow-md transition-shadow',
-                      isInstallment && 'border-l-4 border-l-primary/30'
+                      isInstallment && 'border-l-4 border-l-primary/30',
+                      isRecurring && 'border-l-4 border-l-purple-500/30'
                     )}
                   >
                     <CardContent className="p-2">
@@ -106,6 +108,15 @@ export function TimelineView({ accountsPayable, onEdit, onDelete, onPay }: Timel
                                 {isInstallment && (
                                   <Badge variant="secondary" className="text-xs">
                                     {item.installmentNumber}/{item.installmentOf}
+                                  </Badge>
+                                )}
+                                {isRecurring && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs flex items-center gap-1"
+                                  >
+                                    <Repeat className="h-3 w-3" />
+                                    {item.recurringPosition}/60
                                   </Badge>
                                 )}
                               </div>
