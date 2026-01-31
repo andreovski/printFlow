@@ -18,6 +18,9 @@ export class ClientsRepository {
   ): Promise<{ data: Client[]; total: number }> {
     const skip = (page - 1) * pageSize;
 
+    // Normalizar documento removendo caracteres não-numéricos
+    const normalizedSearch = search ? search.replaceAll(/\D/g, '') : undefined;
+
     const where: Prisma.ClientWhereInput = {
       organizationId,
       ...(search
@@ -25,6 +28,9 @@ export class ClientsRepository {
             OR: [
               { name: { contains: search, mode: 'insensitive' } },
               { document: { contains: search } },
+              ...(normalizedSearch && normalizedSearch.length >= 11
+                ? [{ document: { equals: normalizedSearch } }]
+                : []),
               { email: { contains: search, mode: 'insensitive' } },
             ],
           }

@@ -74,6 +74,14 @@ export class GlobalSearchService {
     this.prisma = new PrismaClient();
   }
 
+  /**
+   * Normaliza documento removendo caracteres não-numéricos
+   * Exemplo: '123.456.789-01' -> '12345678901'
+   */
+  private normalizeDocument(query: string): string {
+    return query.replaceAll(/\D/g, '');
+  }
+
   async search(options: SearchOptions): Promise<GlobalSearchResult> {
     const {
       query,
@@ -221,33 +229,48 @@ export class GlobalSearchService {
     // Search clients (only when @ prefix is present)
     if (types.includes('clients') && isClientSearch) {
       const searchPattern = `%${searchQuery}%`;
-      const clients = await this.prisma.$queryRaw<SearchResultClient[]>`
-        SELECT
-          c.id,
-          c.name,
-          c.phone,
-          c.email,
-          c.document,
-          c.active,
-          CASE
-            WHEN c.search_vector @@ plainto_tsquery('portuguese', ${searchQuery})
-              THEN ts_rank(c.search_vector, plainto_tsquery('portuguese', ${searchQuery}))
-            ELSE 0.5
-          END as rank
-        FROM clients c
-        WHERE c."organizationId" = ${organizationId}
-          AND (
-            c.search_vector @@ plainto_tsquery('portuguese', ${searchQuery})
-            OR c.name ILIKE ${searchPattern}
-            OR c.phone ILIKE ${searchPattern}
-            OR c.document ILIKE ${searchPattern}
-            OR c.email ILIKE ${searchPattern}
-          )
-        ORDER BY rank DESC, c."createdAt" DESC
-        LIMIT ${limit}
-      `;
-      results.clients = clients;
-      results.totalClients = clients.length;
+      const normalizedDocument = this.normalizeDocument(searchQuery);
+
+      // Validar tamanho mínimo do documento (11 dígitos para CPF, 14 para CNPJ)
+      // Se o usuário está digitando apenas números, validar tamanho
+      const isDocumentSearch = /^\d+$/.test(normalizedDocument);
+      const hasValidDocumentLength =
+        normalizedDocument.length >= 11 || normalizedDocument.length === 0;
+
+      // Se busca por documento inválida, retornar vazio
+      if (isDocumentSearch && !hasValidDocumentLength) {
+        results.clients = [];
+        results.totalClients = 0;
+      } else {
+        const clients = await this.prisma.$queryRaw<SearchResultClient[]>`
+          SELECT
+            c.id,
+            c.name,
+            c.phone,
+            c.email,
+            c.document,
+            c.active,
+            CASE
+              WHEN c.search_vector @@ plainto_tsquery('portuguese', ${searchQuery})
+                THEN ts_rank(c.search_vector, plainto_tsquery('portuguese', ${searchQuery}))
+              ELSE 0.5
+            END as rank
+          FROM clients c
+          WHERE c."organizationId" = ${organizationId}
+            AND (
+              c.search_vector @@ plainto_tsquery('portuguese', ${searchQuery})
+              OR c.name ILIKE ${searchPattern}
+              OR c.phone ILIKE ${searchPattern}
+              OR c.document ILIKE ${searchPattern}
+              OR c.document = ${normalizedDocument}
+              OR c.email ILIKE ${searchPattern}
+            )
+          ORDER BY rank DESC, c."createdAt" DESC
+          LIMIT ${limit}
+        `;
+        results.clients = clients;
+        results.totalClients = clients.length;
+      }
     }
 
     // Search products (only when $ prefix is present)

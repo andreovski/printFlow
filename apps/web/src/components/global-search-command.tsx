@@ -29,6 +29,7 @@ import {
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useAppContext } from '@/hooks/use-app-context';
 import { formatCurrency } from '@/lib/format-currency';
+import { formatDocument } from '@/lib/masks';
 import { cn, stripHtml } from '@/lib/utils';
 
 import { GlobalSearchNotifications } from './global-search-notifications';
@@ -334,7 +335,7 @@ export function GlobalSearchCommand({ open, onOpenChange }: Readonly<GlobalSearc
                             </>
                           )}
                           <span>•</span>
-                          <span>{client.document}</span>
+                          <span>{formatDocument(client.document)}</span>
                         </div>
                       </div>
                     </CommandItem>

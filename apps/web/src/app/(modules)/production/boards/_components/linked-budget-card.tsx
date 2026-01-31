@@ -1,7 +1,14 @@
 'use client';
 
 import { CardBudget, CardBudgetItem } from '@magic-system/schemas';
-import { ChevronDown, ChevronUp, ExternalLink, Link as LinkIcon, Package } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Link as LinkIcon,
+  Package,
+  Printer,
+} from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
 
@@ -35,14 +42,27 @@ export function LinkedBudgetCard({ budget }: LinkedBudgetCardProps) {
           <LinkIcon className="h-3 w-3 shrink-0 text-primary" />
           Orçamento Vinculado
         </p>
-        <Link
-          href={`/finance/budgets/${budget.id}`}
-          target="_blank"
-          className="p-1 hover:bg-primary/20 rounded-md transition-colors"
-          title="Abrir orçamento em nova aba"
-        >
-          <ExternalLink className="h-3.5 w-3.5 text-primary" />
-        </Link>
+
+        <div className="flex gap-2 items-center">
+          {budget.id && (
+            <Link
+              href={`/receipt/${budget.id}`}
+              target="_blank"
+              title="Imprimir Recibo"
+              className="p-1 hover:bg-primary/20 rounded-md transition-colors"
+            >
+              <Printer className="h-3.5 w-3.5 text-primary" />
+            </Link>
+          )}
+          <Link
+            href={`/finance/budgets/${budget.id}`}
+            target="_blank"
+            className="p-1 hover:bg-primary/20 rounded-md transition-colors"
+            title="Abrir orçamento em nova aba"
+          >
+            <ExternalLink className="h-3.5 w-3.5 text-primary" />
+          </Link>
+        </div>
       </div>
 
       {/* Budget Info */}
