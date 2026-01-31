@@ -1,7 +1,25 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "buildCommand": "cd ../.. && pnpm install --frozen-lockfile && pnpm build --filter=web && cp -r apps/web/public apps/web/.next/standalone/apps/web/ && cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/"
+    "builder": "NIXPACKS",
+    "nixpacksPlan": {
+      "phases": {
+        "install": {
+          "cmds": [
+            "corepack enable",
+            "corepack prepare pnpm@9.0.0 --activate",
+            "cd ../.. && pnpm install --frozen-lockfile"
+          ]
+        },
+        "build": {
+          "cmds": [
+            "cd ../.. && pnpm build --filter=web",
+            "cp -r apps/web/public apps/web/.next/standalone/apps/web/",
+            "cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/"
+          ]
+        }
+      }
+    }
   },
   "deploy": {
     "startCommand": "node apps/web/.next/standalone/apps/web/server.js",

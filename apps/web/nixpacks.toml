@@ -1,7 +1,10 @@
 [phases.setup]
-nixPkgs = ["nodejs_22", "pnpm"]
+nixPkgs = ["nodejs_22"]
 
 [phases.install]
-cmds = ["echo 'Skipping install phase - will be handled in build command'"]
+cmds = [
+  "corepack enable",
+  "corepack prepare pnpm@9.0.0 --activate"
+]
 
 # Build and Start commands are configured in railway.json
