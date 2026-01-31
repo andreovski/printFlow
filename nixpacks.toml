@@ -1,7 +1,19 @@
 [phases.setup]
-nixPkgs = ["nodejs_22", "pnpm"]
+nixPkgs = ["nodejs_22"]
 
 [phases.install]
-cmds = ["pnpm install --frozen-lockfile"]
+cmds = [
+  "corepack enable",
+  "corepack prepare pnpm@9.0.0 --activate",
+  "pnpm install --frozen-lockfile"
+]
 
-# Build and Start commands are configured in Railway Service Settings
+[phases.build]
+cmds = [
+  "pnpm build --filter=web",
+  "cp -r apps/web/public apps/web/.next/standalone/apps/web/",
+  "cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/"
+]
+
+[start]
+cmd = "node apps/web/.next/standalone/apps/web/server.js"
