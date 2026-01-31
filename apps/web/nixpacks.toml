@@ -1,5 +1,6 @@
 [phases.setup]
 nixPkgs = ["nodejs_22"]
+aptPkgs = []
 
 [phases.install]
 cmds = [
@@ -7,4 +8,5 @@ cmds = [
   "corepack prepare pnpm@9.0.0 --activate"
 ]
 
-# Build and Start commands are configured in railway.json
+[start]
+cmd = "echo 'Start command is configured in railway.json'"
