@@ -5,8 +5,16 @@ aptPkgs = []
 [phases.install]
 cmds = [
   "corepack enable",
-  "corepack prepare pnpm@9.0.0 --activate"
+  "corepack prepare pnpm@9.0.0 --activate",
+  "pnpm install --frozen-lockfile"
+]
+
+[phases.build]
+cmds = [
+  "pnpm build --filter=web",
+  "cp -r apps/web/public apps/web/.next/standalone/apps/web/",
+  "cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/"
 ]
 
 [start]
-cmd = "echo 'Start command is configured in railway.json'"
+cmd = "node apps/web/.next/standalone/apps/web/server.js"
