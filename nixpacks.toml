@@ -16,4 +16,4 @@ cmds = [
 ]
 
 [start]
-cmd = "node apps/web/.next/standalone/apps/web/server.js"
+cmd = "PORT=${PORT:-3000} HOSTNAME=0.0.0.0 node apps/web/.next/standalone/apps/web/server.js"
