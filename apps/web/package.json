@@ -6,8 +6,8 @@
     "dev": "next dev",
     "prod": "export $(grep -v '^#' .env.prod | xargs) && next dev",
     "build": "next build",
-    "start": "next start",
-    "start:prod": "next start -H 0.0.0.0 -p ${PORT:-3000}",
+    "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
+    "start:dev": "next start",
     "lint": "next lint"
   },
   "dependencies": {
